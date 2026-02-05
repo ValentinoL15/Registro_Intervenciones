@@ -1,3 +1,32 @@
 spring:
   application:
     name: intervenciones
+
+  datasource:
+    url: ${DB_URL_APP}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+
+security:
+  jwt:
+    private:
+      key: ${PRIVATE_KEY}
+    user:
+      generator: ${USER_GENERATOR}
+    expiration: 60000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+server:
+  port: 8080
