@@ -29,6 +29,7 @@ public class Profesional extends User{
     private List<String> days = new ArrayList<>();
     @Enumerated(EnumType.STRING)
     private DaysType turno;
+    private boolean active;
 
     public Profesional(){
 

@@ -13,10 +13,6 @@ public interface IProfesionalService {
 
     public ProfesionalDto getProfesional(Long user_id);
 
-    public GeneralResponse saveProfesional(CreateProfesionalDto profesionalDto);
-
-    public GeneralResponse editProfesional(EditProfesionalDto profesionalDto);
-
-    public GeneralResponse deleteProfesional(Long user_id);
+    public GeneralResponse editProfesional(EditProfesionalDto profesionalDto, String currentUser);
 
 }

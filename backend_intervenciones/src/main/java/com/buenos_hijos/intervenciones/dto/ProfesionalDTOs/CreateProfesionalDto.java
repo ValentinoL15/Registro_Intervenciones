@@ -54,5 +54,7 @@ public class CreateProfesionalDto {
     private List<String> days;
     @NotBlank(message = "Debes colocar el turno en el que el profesional trabaja en la escuela")
     private Profesional.DaysType turno;
+    @NotBlank(message = "Debes colocar si el usuario esta activo o no")
+    private boolean active;
 
 }
