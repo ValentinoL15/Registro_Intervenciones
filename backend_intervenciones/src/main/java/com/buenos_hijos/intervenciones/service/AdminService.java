@@ -98,10 +98,13 @@ public class AdminService implements IAdminService {
 
         Admin admin = new Admin();
         admin.setName(adminDto.getName());
-        admin.setLastname(admin.getLastname());
-        admin.setEmail(admin.getEmail());
-        admin.setPassword(encryptPassword(admin.getPassword()));
+        admin.setLastname(adminDto.getLastname());
+        admin.setEmail(adminDto.getEmail());
+        admin.setUsername(adminDto.getUsername());
+        admin.setPassword(encryptPassword(adminDto.getPassword()));
         admin.setRole(User.RoleType.ADMIN);
+
+        adminRepository.save(admin);
         return new GeneralResponse(
                 new Date(),
                 "Administrador creado con éxito",
@@ -110,6 +113,7 @@ public class AdminService implements IAdminService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse saveProfesional(CreateProfesionalDto profesionalDto, String currentUser) {
 
         Admin admin = adminRepository.findByUsername(currentUser)
@@ -129,6 +133,7 @@ public class AdminService implements IAdminService {
         profesional.setDays(profesionalDto.getDays());
         profesional.setHourly(profesionalDto.getHourly());
         profesional.setTurno(profesionalDto.getTurno());
+        profesional.setActive(true);
 
         profesionalRepository.save(profesional);
         emailVerificationService.sendEmailWithCredentials(profesional.getEmail(),profesional.getPassword());

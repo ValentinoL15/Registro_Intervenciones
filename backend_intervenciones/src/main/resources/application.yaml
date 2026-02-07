@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
@@ -37,7 +37,7 @@ security:
       key: ${PRIVATE_KEY}
     user:
       generator: ${USER_GENERATOR}
-    expiration: 60000
+    expiration: 6000000000
 
 logging:
   level:

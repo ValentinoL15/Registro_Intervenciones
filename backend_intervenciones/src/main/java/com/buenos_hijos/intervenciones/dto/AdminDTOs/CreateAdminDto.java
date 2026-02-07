@@ -45,7 +45,6 @@ public class CreateAdminDto {
     )
     private String password;
 
-    @NotBlank(message = "Debes colocar un rol")
     private User.RoleType role;
 
 }

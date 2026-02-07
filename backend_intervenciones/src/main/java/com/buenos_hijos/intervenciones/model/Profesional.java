@@ -35,10 +35,11 @@ public class Profesional extends User{
 
     }
 
-    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<String> days, DaysType turno) {
+    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<String> days, DaysType turno, boolean active) {
         super(user_id, name, lastname, username ,email, password, role);
         this.hourly = hourly;
         this.days = days;
         this.turno = turno;
+        this.active = active;
     }
 }

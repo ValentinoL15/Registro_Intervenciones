@@ -39,20 +39,23 @@ public class JwtTokenValidator extends OncePerRequestFilter {
         }
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        System.out.println(authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwtToken = authHeader.substring(7);
 
             try {
                 DecodedJWT decodedJWT = jwtUtils.validateToken(jwtToken);
+                System.out.println("DECODE" + decodedJWT);
                 String username = jwtUtils.extractUsername(decodedJWT);
+                System.out.println("Mi userrnamee" + username);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                     // 2. Obtener la entidad USER (Para cumplir con tu método isTokenValid)
                     User user = userRepository.findByUsername(username)
                             .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-
+                    System.out.println("Mi userr" + user.getUsername());
                     // 3. Validar el token usando la entidad User
                     if (jwtUtils.isTokenValid(jwtToken, user)) {
 
@@ -75,7 +78,18 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 }
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
-                // Opcional: response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+
+                // Creamos un cuerpo de respuesta informativo
+                String jsonResponse = String.format(
+                        "{\"error\": \"No autorizado\", \"message\": \"%s\", \"path\": \"%s\"}",
+                        e.getMessage(), // Aquí dirá "The Token has expired on..."
+                        request.getRequestURI()
+                );
+
+                response.getWriter().write(jsonResponse);
+                return;
             }
         }
 

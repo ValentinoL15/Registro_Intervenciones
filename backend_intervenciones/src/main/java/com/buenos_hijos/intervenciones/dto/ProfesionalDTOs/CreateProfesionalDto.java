@@ -2,9 +2,7 @@ package com.buenos_hijos.intervenciones.dto.ProfesionalDTOs;
 
 import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.model.User;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,22 +37,11 @@ public class CreateProfesionalDto {
     @Pattern(regexp = EMAIL_REGEX, message = "El formato del email no es válido (ej. usuario@dominio.com)")
     private String email;
 
-    @NotBlank(message = "La contraseña no puede estar vacía")
-    @Size(min = 8, max = 20, message = "La contraseña debe contener entre 8 y 20 caracteres")
-    @Pattern(
-            regexp = PASSWORD_REGEX,
-            message = "La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 minúscula, y 1 carácter especial"
-    )
-    private String password;
-    @NotBlank(message = "El rol no puede estar vacío")
-    private User.RoleType role;
     @NotBlank(message = "Debes colocar la carga horaria del profesional")
     private String hourly;
-    @NotBlank(message = "Debes colocar el / los días que el profesional acude a la escuela")
+    @NotEmpty(message = "Debes colocar el / los días que el profesional acude a la escuela")
     private List<String> days;
-    @NotBlank(message = "Debes colocar el turno en el que el profesional trabaja en la escuela")
+    @NotNull(message = "Debes colocar el turno en el que el profesional trabaja en la escuela")
     private Profesional.DaysType turno;
-    @NotBlank(message = "Debes colocar si el usuario esta activo o no")
-    private boolean active;
 
 }
