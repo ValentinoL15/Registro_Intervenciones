@@ -34,6 +34,7 @@ public class AdminService implements IAdminService {
     private final IUserRepository userRepository;
     private final IAdminRepository adminRepository;
     private final IProfesionalRepository profesionalRepository;
+    private final EmailVerificationService emailVerificationService;
 
     public String generateRandomPassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -130,6 +131,7 @@ public class AdminService implements IAdminService {
         profesional.setTurno(profesionalDto.getTurno());
 
         profesionalRepository.save(profesional);
+        emailVerificationService.sendEmailWithCredentials(profesional.getEmail(),profesional.getPassword());
 
         return new GeneralResponse(
                 new Date(),

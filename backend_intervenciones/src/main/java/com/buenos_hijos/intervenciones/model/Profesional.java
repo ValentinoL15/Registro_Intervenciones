@@ -23,7 +23,7 @@ public class Profesional extends User{
     @ElementCollection
     @CollectionTable(
         name = "dias_profesionales",
-        joinColumns = @JoinColumn(name = "user_id")
+        joinColumns = @JoinColumn(name = "userId")
     )
     @Column(name = "dia")
     private List<String> days = new ArrayList<>();

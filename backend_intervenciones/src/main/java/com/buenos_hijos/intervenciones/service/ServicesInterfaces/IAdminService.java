@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface IAdminService {
 
-    public AdminDto getAdmin(Long user_id);
+    public AdminDto getAdmin(Long userId);
 
     public Page<AdminDto> getAllAdmins(Pageable pageable);
 

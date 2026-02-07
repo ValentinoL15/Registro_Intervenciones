@@ -2,6 +2,21 @@ spring:
   application:
     name: intervenciones
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: pichilongo1@gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+    main:
+      allow-bean-definition-overriding: true
+
   datasource:
     url: ${DB_URL_APP}
     username: ${DB_USER}
@@ -30,3 +45,4 @@ logging:
 
 server:
   port: 8080
+
