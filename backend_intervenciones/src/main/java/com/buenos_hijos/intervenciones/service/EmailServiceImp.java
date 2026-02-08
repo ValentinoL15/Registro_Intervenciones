@@ -60,18 +60,6 @@ public class EmailServiceImp implements IEmailService {
 
         User user = userRepository.findByEmail(recipient)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el email: " + recipient));
-        /*List<Email_Verification> activeEmails = emailRepository.findActiveVerificationByUser(
-                user,
-                Pageable.ofSize(1) // Se elimina el casteo incorrecto
-        );
-
-        if (activeEmails.isEmpty()) {
-            throw new RuntimeException("No hay un código de verificación activo para enviar.");
-        }
-
-        Email_Verification verification = activeEmails.get(0);
-
-        String email = verification.getUser().getEmail();*/
 
         Context context = new Context();
         context.setVariable("username", user.getUsername());

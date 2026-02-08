@@ -61,6 +61,7 @@ public class EmailVerificationService implements IEmailVerificationService{
     }
 
     @Override
+    @Transactional
     public void sendEmailWithCredentials(String email, String rawPassword) {
 
         User user = userRepository.findByEmail(email)

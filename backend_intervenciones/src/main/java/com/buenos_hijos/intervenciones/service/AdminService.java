@@ -126,6 +126,7 @@ public class AdminService implements IAdminService {
         Profesional profesional = new Profesional();
         profesional.setName(profesionalDto.getName());
         profesional.setLastname(profesionalDto.getLastname());
+        profesional.setUsername(profesionalDto.getUsername());
         profesional.setEmail(profesionalDto.getEmail());
         String rawPassword = generateRandomPassword();
         profesional.setPassword(encryptPassword(rawPassword));
@@ -136,7 +137,7 @@ public class AdminService implements IAdminService {
         profesional.setActive(true);
 
         profesionalRepository.save(profesional);
-        emailVerificationService.sendEmailWithCredentials(profesional.getEmail(),profesional.getPassword());
+        emailVerificationService.sendEmailWithCredentials(profesional.getEmail(),rawPassword);
 
         return new GeneralResponse(
                 new Date(),

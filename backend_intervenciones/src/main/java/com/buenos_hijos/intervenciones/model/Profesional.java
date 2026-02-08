@@ -13,7 +13,15 @@ import java.util.List;
 @Table(name = "profesionales")
 public class Profesional extends User{
 
-    public enum DaysType {
+    public enum DaysType{
+        LUNES,
+        MARTES,
+        MIÉRCOLES,
+        JUEVES,
+        VIERNES
+    }
+
+    public enum Turnstype {
         MAÑANA,
         TARDE,
         NOCHE
@@ -26,16 +34,16 @@ public class Profesional extends User{
         joinColumns = @JoinColumn(name = "userId")
     )
     @Column(name = "dia")
-    private List<String> days = new ArrayList<>();
+    private List<DaysType> days = new ArrayList<>();
     @Enumerated(EnumType.STRING)
-    private DaysType turno;
+    private Turnstype turno;
     private boolean active;
 
     public Profesional(){
 
     }
 
-    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<String> days, DaysType turno, boolean active) {
+    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<DaysType> days, Turnstype turno, boolean active) {
         super(user_id, name, lastname, username ,email, password, role);
         this.hourly = hourly;
         this.days = days;

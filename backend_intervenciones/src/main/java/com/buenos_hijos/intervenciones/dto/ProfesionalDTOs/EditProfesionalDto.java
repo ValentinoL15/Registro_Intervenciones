@@ -31,8 +31,8 @@ public class EditProfesionalDto {
     @NotBlank(message = "Debes colocar la carga horaria del profesional")
     private String hourly;
     @NotBlank(message = "Debes colocar el / los días que el profesional acude a la escuela")
-    private List<String> days;
+    private List<Profesional.DaysType> days;
     @NotBlank(message = "Debes colocar el turno en el que el profesional trabaja en la escuela")
-    private Profesional.DaysType turno;
+    private Profesional.Turnstype turno;
 
 }

@@ -22,7 +22,7 @@ public class ProfesionalDto {
     private String email;
     private User.RoleType role;
     private String hourly;
-    private List<String> days;
-    private Profesional.DaysType turno;
+    private List<Profesional.DaysType> days;
+    private Profesional.Turnstype turno;
 
 }
