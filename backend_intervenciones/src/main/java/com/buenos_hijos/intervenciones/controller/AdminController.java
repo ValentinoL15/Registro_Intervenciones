@@ -23,51 +23,60 @@ public class AdminController {
 
     private final IAdminService adminService;
 
+    //VERIFICADO
     @GetMapping("/{userId}")
     public ResponseEntity<AdminDto> getAdmin(@PathVariable Long userId){
         return ResponseEntity.ok(adminService.getAdmin(userId));
     }
 
+    //VERIFICADO
     @GetMapping()
     public ResponseEntity<Page<AdminDto>> getAdmins(@PageableDefault Pageable pageable){
         return ResponseEntity.ok(adminService.getAllAdmins(pageable));
     }
 
+    //VERIFICADO
     @PostMapping("/create")
     public ResponseEntity<GeneralResponse> createAdmin(@Valid @RequestBody CreateAdminDto adminDto){
         return ResponseEntity.ok(adminService.saveAdmin(adminDto));
     }
 
+    //VERIFICADO
     @PostMapping("/create-profesional")
     public ResponseEntity<GeneralResponse> createProfesional(@Valid @RequestBody CreateProfesionalDto profesionalDto,
                                                              Principal principal){
         return ResponseEntity.ok(adminService.saveProfesional(profesionalDto,principal.getName()));
     }
 
+    //VERIFICADO
     @PutMapping("/edit-admin")
     public ResponseEntity<GeneralResponse> editAdmin(@Valid @RequestBody EditAdminDto adminDto,
                                                      Principal principal){
         return ResponseEntity.ok(adminService.editAdmin(adminDto,principal.getName()));
     }
 
+    //VERIFICADO
     @DeleteMapping("/delete-account/{userId}")
     public ResponseEntity<GeneralResponse> deleteAdmin(Principal principal,
                                                        @PathVariable Long userId){
         return ResponseEntity.ok(adminService.deleteAdmin(principal.getName(), userId));
     }
 
+    //VERIFICADO
     @DeleteMapping("/delete-profesional/{profesionalId}")
     public ResponseEntity<GeneralResponse> deleteProfesional(Principal principal,
                                                              @PathVariable Long profesionalId){
         return ResponseEntity.ok(adminService.deleteProfesional(principal.getName(), profesionalId));
     }
 
+    //VERIFICADO
     @PutMapping("/baja/{profesionalId}")
     public ResponseEntity<GeneralResponse> bajaProfesional(Principal principal,
                                                            @PathVariable Long profesionalId){
         return ResponseEntity.ok(adminService.bajaProfesional(principal.getName(), profesionalId));
     }
 
+    //VERIFICADO
     @PutMapping("/alta/{profesionalId}")
     public ResponseEntity<GeneralResponse> altaProfesional(Principal principal,
                                                            @PathVariable Long profesionalId){

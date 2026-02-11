@@ -15,15 +15,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class EditAdminDto {
 
-    @NotBlank(message = "El nombre no puede estar vacío")
     @Size(min = 3, max = 20, message = "El nombre debe contener entre 3 y 20 caracteres")
     private String name;
 
-    @NotBlank(message = "El apellido no puede estar vacío")
     @Size(min = 3, max = 20, message = "El apellido debe contener entre 3 y 20 caracteres")
     private String lastname;
 
-    @NotBlank(message = "El username no puede estar vacío")
     @Size(min = 5, max = 20, message = "El username debe contener entre 5 y 20 caracteres")
     private String username;
 

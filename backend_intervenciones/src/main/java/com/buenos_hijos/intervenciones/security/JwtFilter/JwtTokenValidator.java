@@ -39,7 +39,6 @@ public class JwtTokenValidator extends OncePerRequestFilter {
         }
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        System.out.println(authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwtToken = authHeader.substring(7);
@@ -48,14 +47,14 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 DecodedJWT decodedJWT = jwtUtils.validateToken(jwtToken);
                 System.out.println("DECODE" + decodedJWT);
                 String username = jwtUtils.extractUsername(decodedJWT);
-                System.out.println("Mi userrnamee" + username);
+                System.out.println(username);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    // 2. Obtener la entidad USER (Para cumplir con tu método isTokenValid)
+                    // 2. Obtener la entidad USER
                     User user = userRepository.findByUsername(username)
                             .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-                    System.out.println("Mi userr" + user.getUsername());
+
                     // 3. Validar el token usando la entidad User
                     if (jwtUtils.isTokenValid(jwtToken, user)) {
 

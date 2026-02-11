@@ -22,16 +22,19 @@ public class ProfesionalController {
 
     private final IProfesionalService profesionalService;
 
+    //VERIFICADO
     @GetMapping()
     public ResponseEntity<Page<ProfesionalDto>> getProfesionals(@PageableDefault Pageable pageable){
         return ResponseEntity.ok(profesionalService.getAllProfesionals(pageable));
     }
 
+    //VERIFICADO
     @GetMapping("/{profesionalId}")
     public ResponseEntity<ProfesionalDto> getProfesional(@PathVariable Long profesionalId){
         return ResponseEntity.ok(profesionalService.getProfesional(profesionalId));
     }
 
+    //VERIFICADO
     @PutMapping("/edit-profesional")
     public ResponseEntity<GeneralResponse> editProfesional(@Valid @RequestBody EditProfesionalDto profesionalDto,
                                                            Principal principal){

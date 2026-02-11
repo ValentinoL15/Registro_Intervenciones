@@ -9,6 +9,7 @@ import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.repository.IProfesionalRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IProfesionalService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,6 +67,7 @@ public class ProfesionalService implements IProfesionalService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse editProfesional(EditProfesionalDto profesionalDto, String currentUser) {
 
         Profesional profesional = profesionalRepository.findByUsername(currentUser)
@@ -96,6 +98,7 @@ public class ProfesionalService implements IProfesionalService {
         if(profesionalDto.getTurno() != null) {
             profesional.setTurno(profesionalDto.getTurno());
         }
+        profesionalRepository.save(profesional);
         return new GeneralResponse(
                 new Date(),
                 "Profesional editado con éxito",

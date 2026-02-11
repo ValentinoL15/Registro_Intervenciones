@@ -147,6 +147,7 @@ public class AdminService implements IAdminService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse editAdmin(EditAdminDto adminDto, String currentUser) {
 
         Admin admin = adminRepository.findByUsername(currentUser)
@@ -156,11 +157,17 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        if(admin.getName() != null){
+        if(adminDto.getName() != null){
             admin.setName(adminDto.getName());
         }
-        if(admin.getLastname() != null){
+        if(adminDto.getLastname() != null){
             admin.setLastname(adminDto.getLastname());
+        }
+        if(adminDto.getUsername() != null) {
+            if(userRepository.existsByUsername(adminDto.getUsername())){
+                throw new RuntimeException("El username ya existe por favor utiliza otro");
+            }
+            admin.setUsername(adminDto.getUsername());
         }
         adminRepository.save(admin);
         return new GeneralResponse(
@@ -195,6 +202,7 @@ public class AdminService implements IAdminService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse deleteProfesional(String currentUser, Long profesionalId) {
 
         User admin = userRepository.findByUsername(currentUser)
@@ -229,6 +237,10 @@ public class AdminService implements IAdminService {
         Profesional profesional = profesionalRepository.findById(profesionalId)
                 .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
 
+        if(profesional.isActive()){
+            throw new RuntimeException("El profesional ya está dado de alta");
+        }
+
         profesional.setActive(true);
         profesionalRepository.save(profesional);
         return new GeneralResponse(
@@ -239,6 +251,7 @@ public class AdminService implements IAdminService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse bajaProfesional(String currentUser, Long profesionalId) {
         User admin = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
@@ -249,6 +262,10 @@ public class AdminService implements IAdminService {
 
         Profesional profesional = profesionalRepository.findById(profesionalId)
                 .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+
+        if(!profesional.isActive()){
+            throw new RuntimeException("El profesional ya está dado de baja");
+        }
 
         profesional.setActive(false);
         profesionalRepository.save(profesional);

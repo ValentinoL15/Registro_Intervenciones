@@ -3,12 +3,14 @@ package com.buenos_hijos.intervenciones.service;
 import com.buenos_hijos.intervenciones.dto.AuthReponsesDTOs.AuthResponse;
 import com.buenos_hijos.intervenciones.dto.AuthReponsesDTOs.LoginDTO;
 import com.buenos_hijos.intervenciones.dto.UserDTOs.UserDto;
+import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,6 +38,12 @@ public class UserServiceImp implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("No se encuentra el username"));
+
+        if(user instanceof Profesional profesional){
+            if(!profesional.isActive()){
+                throw new DisabledException("El profesional no está dado de alta o fue dado de baja, por favor comuníquese con un adminstrador");
+            }
+        }
 
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
 

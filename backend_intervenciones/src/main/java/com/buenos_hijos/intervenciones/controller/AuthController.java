@@ -18,6 +18,7 @@ public class AuthController {
 
     private final UserServiceImp userServiceImp;
 
+    //VERIFICADO
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginDTO loginDTO){
         return ResponseEntity.ok(userServiceImp.login(loginDTO));
