@@ -1,5 +1,6 @@
 package com.buenos_hijos.intervenciones.service;
 
+import com.buenos_hijos.intervenciones.model.Email_Verification;
 import com.buenos_hijos.intervenciones.model.Mail;
 import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
@@ -7,6 +8,7 @@ import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IEmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -79,9 +81,30 @@ public class EmailServiceImp implements IEmailService {
         javaMailSender.send(message);
     }
 
+    @SneakyThrows
     @Override
     public void sendEmailToChangePassword(Mail mail, String token) {
+        String recipient = mail.getTo();
 
+        User user = userRepository.findByEmail(recipient)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el email: " + recipient));
+
+        Context context = new Context();
+        context.setVariable("username", user.getUsername());
+        String recoveryUrl = "http://localhost:3000/resetear-password?token=" + token;
+        context.setVariable("url", recoveryUrl);
+
+        String process = templateEngine.process("ForgotPassword", context);
+
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setSubject(mail.getSubject());
+        helper.setFrom("Pichilongo1@gmail.com");
+        helper.setText(process, true); // ✅ true = HTML
+        helper.setTo(recipient);
+
+        javaMailSender.send(message);
     }
 
     @Override
