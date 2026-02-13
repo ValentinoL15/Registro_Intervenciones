@@ -31,15 +31,18 @@ public class Intervencion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long intervencionId;
 
-    private String familia;
+    @ManyToOne
+    @JoinColumn(name = "creador_id")
+    private Profesional creador;
     private DestinyType tipo;
+    private String nombre;
     private LocalDateTime fecha;
     private String hora;
     private String motivo;
     private IntervencionType intervencion;
     private String observaciones;
 
-    @ManyToMany
+    @ManyToMany()
     @JoinTable(
             name = "intervencion_profesional",
             joinColumns = @JoinColumn(name = "intervencion_id"),
