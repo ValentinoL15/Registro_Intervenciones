@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 import { dataStore } from "@/lib/store";
 import type { User, Intervencion, DiaSemana, Turno } from "@/lib/types";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -14,21 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Users, ClipboardList, Plus } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [profesionales, setProfesionales] = useState<User[]>([]);
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const loadData = useCallback(() => {
-    setProfesionales(dataStore.getProfesionales());
-    setIntervenciones(dataStore.getIntervenciones());
-  }, []);
-
-  useEffect(() => {
-    loadData();
-    const unsubscribe = dataStore.subscribe(loadData);
-    return unsubscribe;
-  }, [loadData]);
+  const router = useRouter();
 
   const handleAddProfesional = (data: {
     nombre: string;
@@ -51,12 +42,12 @@ export default function AdminDashboard() {
 
   const getProfesionalName = (profesionalId: string) => {
     const prof = profesionales.find((p) => p.id === profesionalId);
-    return prof ? `${prof.nombre} ${prof.apellido}` : "Desconocido";
+    return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader userName={`${user?.nombre} ${user?.apellido}`} />
+      <AdminHeader userName={`${user?.name} ${user?.lastname}`} />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">

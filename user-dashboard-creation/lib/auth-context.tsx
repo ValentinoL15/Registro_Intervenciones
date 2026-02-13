@@ -8,14 +8,14 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import type { User } from "./types";
-import { dataStore } from "./store";
+import type { User, UserRole } from "./types";
+import { authAPI } from "@/service/api"
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<void>; // Cambiar a Promise<void>
   logout: () => void;
 }
 
@@ -26,38 +26,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay sesión guardada
-    const savedUser = sessionStorage.getItem("currentUser");
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-      } catch {
-        sessionStorage.removeItem("currentUser");
+    const checkAuth = async () => {
+      if (typeof window === "undefined") {
+        setIsLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
-  }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    // Simular delay de red
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      const token = localStorage.getItem("authToken");
+      const userId = localStorage.getItem("userId");
 
-    const foundUser = dataStore.login(email, password);
-    if (foundUser) {
-      setUser(foundUser);
-      sessionStorage.setItem("currentUser", JSON.stringify(foundUser));
+      if (token && userId) {
+        try {
+          const userData = await authAPI.getUser(Number(userId));
+          setUser(userData);
+        } catch (err) {
+          console.error("Error validando sesión:", err);
+          localStorage.clear();
+        }
+      }
       setIsLoading(false);
-      return true;
     }
-    setIsLoading(false);
-    return false;
+
+    checkAuth();
+  }, []); // Dependencias vacías - solo se ejecuta una vez al montar
+
+  const login = useCallback(async (username: string, password: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await authAPI.login(username, password);
+      console.log("Login exitoso:", { username, userId: response.userId });
+      
+      if (response.access_token) {
+        localStorage.setItem("authToken", response.access_token);
+        if (response.userId) {
+          localStorage.setItem("userId", response.userId.toString());
+        }
+        if (response.username) {
+          localStorage.setItem("username", response.username);
+        }
+        if (response.userRole) {
+          localStorage.setItem("userRole", response.userRole);
+        }
+        
+        setUser({
+          userId: response.userId || 0,
+          username: response.username,
+          email: response.email || "",
+          role: response.userRole as UserRole,
+          name: response.name,
+          lastname: response.lastname
+        });
+        
+      }
+    } catch (err: any) {
+      const errorMessage = err.userMessage || (err instanceof Error ? err.message : "Error al iniciar sesión");
+      console.error("Login fallido:", { error: errorMessage, details: err });
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    sessionStorage.removeItem("currentUser");
+    localStorage.clear(); // Cambiado de sessionStorage a localStorage
   }, []);
 
   return (

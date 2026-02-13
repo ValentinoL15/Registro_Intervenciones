@@ -1,36 +1,64 @@
-export type UserRole = "admin" | "profesional";
+export type UserRole = "ADMIN" | "PROFESIONAL";
 
-export type Turno = "mañana" | "tarde";
+export type Turno = "MAÑANA" | "TARDE";
 
-export type DiaSemana = "lunes" | "martes" | "miércoles" | "jueves" | "viernes";
+export type DiaSemana = "LUNES" | "MARTES" | "MIÉRCOLES" | "JUEVES" | "VIERNES";
 
-export type TipoDestinatario = "familia" | "institución";
+export type DestinyType = "FAMILIA" | "INSTITUCIÓN";
 
-export type TipoIntervencion = "individual" | "equipo";
+export type IntervencionType = "INDIVIDUAL" | "EQUIPO";
 
 export interface User {
-  id: string;
-  email: string;
-  nombre: string;
-  apellido: string;
+  userId: number;
+  name?: string;
+  lastname?: string;
+  username: string;
+  email?: string;
   role: UserRole;
-  cargaHoraria?: number;
-  dias?: DiaSemana[];
+  hourly?: number;
+  days?: DiaSemana[];
   turno?: Turno;
-  createdAt: Date;
+  active?: boolean;
+  createdAt?: Date;
+}
+
+export interface AuthResponse {
+  message: string
+  access_token: string
+  userId?: number
+  username: string
+  email?: string
+  userRole: string
+  name: string,
+  lastname: string
 }
 
 export interface Intervencion {
-  id: string;
-  profesionalUserId: string;
+  intervencionId: string;
+  creador: User;
   fecha: string;
   hora: string;
-  destinatario: TipoDestinatario;
+  nombre: string;
+  intervencion: IntervencionType;
   nombreDestinatario: string;
   motivo: string;
-  tipoIntervencion: TipoIntervencion;
+  tipoIntervencion: DestinyType;
   observaciones?: string;
   createdAt: Date;
+}
+
+export interface GeneralResponse {
+  timestamp: string
+  message: string
+  status: number
+}
+
+export interface EmailDto {
+  email: string,
+  token:string,
+  expiryDate: string,
+  revoked: boolean,
+  expired: boolean
 }
 
 export interface AuthState {

@@ -18,7 +18,7 @@ import {
 import { AlertCircle, Loader2, Heart } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,29 +27,25 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+  e.preventDefault();
+  setError("");
+  setIsSubmitting(true);
 
-    const success = await login(email, password);
-
-    if (success) {
-      // Redirigir según el rol del usuario
-      const savedUser = sessionStorage.getItem("currentUser");
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        if (user.role === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/profesional");
-        }
-      }
-    } else {
-      setError("Email no encontrado. Verifica tus credenciales.");
-    }
-
+  try {
+    await login(username, password);
+    
+    // Obtener el rol directamente del localStorage después del login
+    const role = localStorage.getItem("userRole");
+    console.log(role)
+    router.push("/admin")
+    
+    
+  } catch (err: any) {
+    setError(err.userMessage || "Credenciales incorrectas");
+  } finally {
     setIsSubmitting(false);
-  };
+  }
+};
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -78,13 +74,13 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email">Username</Label>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={isSubmitting}
                 />

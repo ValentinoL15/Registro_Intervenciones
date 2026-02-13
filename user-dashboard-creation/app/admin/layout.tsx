@@ -7,19 +7,15 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode; }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/");
-    } else if (!isLoading && user?.role !== "admin") {
-      router.push("/profesional");
+    } else if (!isLoading && user?.role !== "ADMIN") {
+      router.push("/");
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -31,7 +27,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || user?.role !== "ADMIN") {
     return null;
   }
 
