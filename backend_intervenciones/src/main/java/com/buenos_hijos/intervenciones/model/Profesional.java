@@ -39,15 +39,19 @@ public class Profesional extends User{
     private Turnstype turno;
     private boolean active;
 
+    @ManyToMany(mappedBy = "profesionales")
+    private List<Intervencion> intervenciones = new ArrayList<>();
+
     public Profesional(){
 
     }
 
-    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<DaysType> days, Turnstype turno, boolean active) {
+    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<DaysType> days, Turnstype turno, boolean active, List<Intervencion> intervenciones) {
         super(user_id, name, lastname, username ,email, password, role);
         this.hourly = hourly;
         this.days = days;
         this.turno = turno;
         this.active = active;
+        this.intervenciones = (intervenciones != null) ? intervenciones : new ArrayList<>();
     }
 }
