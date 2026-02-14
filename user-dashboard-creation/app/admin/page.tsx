@@ -18,14 +18,18 @@ import { AdminApi, profesionalApi } from "@/service/api";
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const [profesionales, setProfesionales] = useState<User[]>([]);
+  const [activeProfs, setActiveProfs] = useState<User[]>([])
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
-    const loadProfesionales = async () => {
+  const loadProfesionales = async () => {
   try {
     const data = await profesionalApi.getProfesionales();
     setProfesionales([...data.content]); 
+    const activos = data.content.filter((prof: User) => prof.active === true);
+    
+    setActiveProfs(activos);
   } catch(err) {
     console.error(err);
   }
@@ -86,6 +90,8 @@ export default function AdminDashboard() {
     return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
   };
 
+  
+
   return (
     <div className="min-h-screen bg-background">
       <AdminHeader userName={`${user?.name} ${user?.lastname}`} />
@@ -107,7 +113,7 @@ export default function AdminDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-2xl">{profesionales.length}</CardTitle>
+                <CardTitle className="text-2xl">{activeProfs.length}</CardTitle>
                 <p className="text-sm text-muted-foreground">Profesionales activos</p>
               </div>
             </CardHeader>

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle } from "lucide-react";
+import { useLoader } from "@/lib/spinnerService";
 
 interface AddProfesionalDialogProps {
   open: boolean;
@@ -54,6 +55,7 @@ export function AddProfesionalDialog({
   const [turno, setTurno] = useState<Turno>("MAÑANA");
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false); // Nuevo estado
+  const { showLoader, hideLoader } = useLoader()
 
   const handleDiaToggle = (dia: DiaSemana) => {
     setDays((prev) =>
@@ -67,14 +69,14 @@ export function AddProfesionalDialog({
   setIsSubmitting(true);
 
   try {
+    showLoader()
     // 1. Esperamos a que la función del padre termine
     await onSubmit({ name, lastname, email, username, hourly, days, turno, role });
     
-    // 2. Si llegó aquí, fue exitoso. Limpiamos:
     setName("");
     setLastname("");
     setEmail("");
-    setUsername(""); // Faltaba limpiar este
+    setUsername(""); 
     setHourly("40");
     setDays([]);
     setTurno("MAÑANA");
@@ -86,6 +88,7 @@ export function AddProfesionalDialog({
     setError(err.message || "Error al cargar los datos");
   } finally {
     setIsSubmitting(false); 
+    hideLoader()
   }
 }
 

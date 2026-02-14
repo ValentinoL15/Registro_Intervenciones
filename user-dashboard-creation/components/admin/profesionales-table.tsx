@@ -43,21 +43,21 @@ export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTab
     fetchProfs()
   }, []) */}
 
-const onDeleteHandler = async (userId: string) => {
-  try {
-    // 1. Llamada a la API
-    await AdminApi.deleteProfesional(userId);
-    
-    // 2. Actualización optimista del estado
-    // Esto hace que el usuario desaparezca de la vista al instante
-    onDelete(userId);
-    
-    // 3. Opcional: Notificación de éxito
-    console.log("Profesional eliminado correctamente");
-  } catch (error) {
-    console.error("No se pudo eliminar al profesional:", error);
-  }
-};
+  const onDeleteHandler = async (userId: string) => {
+    try {
+      // 1. Llamada a la API
+      await AdminApi.deleteProfesional(userId);
+
+      // 2. Actualización optimista del estado
+      // Esto hace que el usuario desaparezca de la vista al instante
+      onDelete(userId);
+
+      // 3. Opcional: Notificación de éxito
+      console.log("Profesional eliminado correctamente");
+    } catch (error) {
+      console.error("No se pudo eliminar al profesional:", error);
+    }
+  };
 
   const diasAbreviados: Record<string, string> = {
     LUNES: "Lun",
@@ -87,6 +87,7 @@ const onDeleteHandler = async (userId: string) => {
             <TableHead className="text-center">Carga Horaria</TableHead>
             <TableHead>Días</TableHead>
             <TableHead className="text-center">Turno</TableHead>
+            <TableHead className="text-center">Condición</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -122,6 +123,18 @@ const onDeleteHandler = async (userId: string) => {
                     <Moon className="w-3 h-3" />
                   )}
                   {prof.turno === "MAÑANA" ? "MAÑANA" : "TARDE"}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-center">
+                <Badge
+                  className={prof.active
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+                  }
+                  variant="outline"
+                >
+                  <span className={`mr-1.5 size-2 rounded-full ${prof.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                  {prof.active ? "Activo" : "Inactivo"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
