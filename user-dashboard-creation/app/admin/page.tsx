@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ClipboardList, Plus } from "lucide-react";
 import { AdminApi, profesionalApi } from "@/service/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const loadProfesionales = async () => {
   try {
@@ -68,9 +70,18 @@ export default function AdminDashboard() {
     
     // 3. Cerramos el modal
     setIsDialogOpen(false);
+
+    toast({
+        title: "¡Profesional agregado!",
+        description: `${data.name} ${data.lastname} fue creado correctamente.`,
+      });
     
   } catch (err: any) {
-    console.log(err)
+    toast({
+        variant: "destructive",
+        title: "Error al crear",
+        description: err.message || "No se pudo procesar la solicitud.",
+      });
     throw err;
   }
 };
@@ -80,8 +91,17 @@ export default function AdminDashboard() {
     await AdminApi.deleteProfesional(id);
     // Actualiza el estado local después de eliminar
     setProfesionales(prev => prev.filter(p => p.userId !== id));
-  } catch (error) {
+    toast({
+        title: "Eliminado",
+        description: "El registro ha sido borrado del sistema.",
+      });
+  } catch (error:any) {
     console.error("Error al eliminar:", error);
+    toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
   }
 };
 

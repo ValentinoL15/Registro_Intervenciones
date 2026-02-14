@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { GlobalLoader } from "@/components/ui/global-loader";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function AdminLayout({ children }: { children: React.ReactNode; }) {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -35,5 +36,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode; }
   return <>
   {children}
   <GlobalLoader />
+  <Toaster />
   </>;
 }
