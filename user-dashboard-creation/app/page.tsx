@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, Loader2, Heart } from "lucide-react";
+import { log } from "console";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -36,12 +37,11 @@ export default function LoginPage() {
     
     // Obtener el rol directamente del localStorage después del login
     const role = localStorage.getItem("userRole");
-    console.log(role)
-    router.push("/admin")
-    
-    
+    const targetPath = role === "ADMIN" ? "/admin" : "/profesional";
+  
+    router.push(targetPath);
   } catch (err: any) {
-    setError(err.userMessage || "Credenciales incorrectas");
+    setError(err.message || "Credenciales incorrectas");
   } finally {
     setIsSubmitting(false);
   }
@@ -78,7 +78,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="text"
-                  placeholder="username"
+                  placeholder="Tu Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required

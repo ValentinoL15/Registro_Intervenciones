@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState } from "react";
-import type { DiaSemana, Turno } from "@/lib/types";
+import { UserRole, type createProfesionalDTO, type DiaSemana, type Turno } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,26 +23,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle } from "lucide-react";
 
 interface AddProfesionalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    cargaHoraria: number;
-    dias: DiaSemana[];
-    turno: Turno;
-  }) => void;
+  onSubmit: (data: createProfesionalDTO) => void;
 }
 
 const DIAS_OPTIONS: { value: DiaSemana; label: string }[] = [
-  { value: "lunes", label: "Lunes" },
-  { value: "martes", label: "Martes" },
-  { value: "miércoles", label: "Miércoles" },
-  { value: "jueves", label: "Jueves" },
-  { value: "viernes", label: "Viernes" },
+  { value: "LUNES", label: "Lunes" },
+  { value: "MARTES", label: "Martes" },
+  { value: "MIÉRCOLES", label: "Miércoles" },
+  { value: "JUEVES", label: "Jueves" },
+  { value: "VIERNES", label: "Viernes" },
 ];
 
 export function AddProfesionalDialog({
@@ -50,40 +44,53 @@ export function AddProfesionalDialog({
   onOpenChange,
   onSubmit,
 }: AddProfesionalDialogProps) {
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
+  const [name, setName] = useState("");
+  const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
-  const [cargaHoraria, setCargaHoraria] = useState("40");
-  const [dias, setDias] = useState<DiaSemana[]>([]);
-  const [turno, setTurno] = useState<Turno>("mañana");
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState<UserRole>("PROFESIONAL");
+  const [hourly, setHourly] = useState("40");
+  const [days, setDays] = useState<DiaSemana[]>([]);
+  const [turno, setTurno] = useState<Turno>("MAÑANA");
+  const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false); // Nuevo estado
 
   const handleDiaToggle = (dia: DiaSemana) => {
-    setDias((prev) =>
+    setDays((prev) =>
       prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      nombre,
-      apellido,
-      email,
-      cargaHoraria: Number.parseInt(cargaHoraria),
-      dias,
-      turno,
-    });
-    // Reset form
-    setNombre("");
-    setApellido("");
+  const handleSubmit = async (e: React.FormEvent) => { // Agregamos async
+  e.preventDefault();
+  setError("");
+  setIsSubmitting(true);
+
+  try {
+    // 1. Esperamos a que la función del padre termine
+    await onSubmit({ name, lastname, email, username, hourly, days, turno, role });
+    
+    // 2. Si llegó aquí, fue exitoso. Limpiamos:
+    setName("");
+    setLastname("");
     setEmail("");
-    setCargaHoraria("40");
-    setDias([]);
-    setTurno("mañana");
-  };
+    setUsername(""); // Faltaba limpiar este
+    setHourly("40");
+    setDays([]);
+    setTurno("MAÑANA");
+    setRole("PROFESIONAL");
+
+  } catch (err: any) {
+    // 3. Ahora sí capturará el error de validación de Spring Boot
+    console.error("Error capturado en el Dialog:", err);
+    setError(err.message || "Error al cargar los datos");
+  } finally {
+    setIsSubmitting(false); 
+  }
+}
 
   const isValid =
-    nombre && apellido && email && cargaHoraria && dias.length > 0 && turno;
+    name && lastname && email && hourly && days.length > 0 && turno;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,25 +104,40 @@ export function AddProfesionalDialog({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="nombre">Nombre</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input
-                id="nombre"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="Juan"
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apellido">Apellido</Label>
+              <Label htmlFor="lastname">Apellido</Label>
               <Input
-                id="apellido"
-                value={apellido}
-                onChange={(e) => setApellido(e.target.value)}
+                id="lastname"
+                value={lastname}
+                onChange={(e) => setLastname(e.target.value)}
                 placeholder="Pérez"
                 required
+                disabled={isSubmitting}
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Juan05"
+              required
+              disabled={isSubmitting}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -127,20 +149,22 @@ export function AddProfesionalDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="juan.perez@institucion.com"
               required
+              disabled={isSubmitting}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="cargaHoraria">Carga Horaria (hs/semana)</Label>
+              <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
               <Input
-                id="cargaHoraria"
+                id="hourly"
                 type="number"
                 min="1"
                 max="48"
-                value={cargaHoraria}
-                onChange={(e) => setCargaHoraria(e.target.value)}
+                value={hourly}
+                onChange={(e) => setHourly(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -150,8 +174,8 @@ export function AddProfesionalDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mañana">Mañana</SelectItem>
-                  <SelectItem value="tarde">Tarde</SelectItem>
+                  <SelectItem value="MAÑANA">Mañana</SelectItem>
+                  <SelectItem value="TARDE">Tarde</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -164,7 +188,7 @@ export function AddProfesionalDialog({
                 <div key={dia.value} className="flex items-center gap-2">
                   <Checkbox
                     id={dia.value}
-                    checked={dias.includes(dia.value)}
+                    checked={days.includes(dia.value)}
                     onCheckedChange={() => handleDiaToggle(dia.value)}
                   />
                   <Label
@@ -178,15 +202,23 @@ export function AddProfesionalDialog({
             </div>
           </div>
 
+            {error && (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
           <DialogFooter className="mt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!isValid}>
+            <Button  type="submit" disabled={isSubmitting}>
               Agregar Profesional
             </Button>
           </DialogFooter>

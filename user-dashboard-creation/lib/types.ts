@@ -9,7 +9,7 @@ export type DestinyType = "FAMILIA" | "INSTITUCIÓN";
 export type IntervencionType = "INDIVIDUAL" | "EQUIPO";
 
 export interface User {
-  userId: number;
+  userId: string;
   name?: string;
   lastname?: string;
   username: string;
@@ -66,3 +66,16 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface createProfesionalDTO {
+  name: string,
+  lastname: string,
+  username: string,
+  email: string,
+  hourly: string,
+  turno: Turno,
+  days: DiaSemana[]
+  role: UserRole
+
+}
+

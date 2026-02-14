@@ -15,7 +15,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>; // Cambiar a Promise<void>
+  login: (username: string, password: string) => Promise<void>; // Cambiar a Promise<void>
   logout: () => void;
 }
 
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         setUser({
-          userId: response.userId || 0,
+          userId: response.userId,
           username: response.username,
           email: response.email || "",
           role: response.userRole as UserRole,
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
       }
     } catch (err: any) {
-      const errorMessage = err.userMessage || (err instanceof Error ? err.message : "Error al iniciar sesión");
+      const errorMessage = err.message || (err instanceof Error ? err.message : "Error al iniciar sesión");
       console.error("Login fallido:", { error: errorMessage, details: err });
       throw err;
     } finally {

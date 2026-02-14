@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, EmailDto, GeneralResponse, User } from '@/lib/types';
+import { AuthResponse, createProfesionalDTO, EmailDto, GeneralResponse, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -146,9 +146,48 @@ export const authAPI = {
 }
 
 
-// Client endpoints
-export const clientAPI = {
-  
+export const profesionalApi = {
+  getProfesionales: async(): Promise<User[]> => {
+    return apiCall<User[]>(`/profesional`, {
+      method: "GET",
+    })
+  },
+
+  getProfesional: async(userId: string): Promise<User> => {
+    return apiCall<User>(`/profesional/${userId}`, {
+      method: "GET"
+    })
+  },
+
+
+}
+
+export const AdminApi = {
+  getAdmin: async(userId: string): Promise<User> => {
+    return apiCall<User>(`/admin/${userId}`, {
+      method: "GET"
+    })
+  },
+
+  getAdmins: async(): Promise<User[]> => {
+    return apiCall<User[]>(`/admin`, {
+      method: "GET"
+    })
+  },
+
+  createProfesional: async(profesionalData: createProfesionalDTO): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/admin/create-profesional`, {
+      method: "POST",
+      body: JSON.stringify(profesionalData)
+    })
+  },
+
+  deleteProfesional: async(userId: string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/admin/delete-profesional/${userId}`, {
+      method: "DELETE",
+    })
+  }
+
 }
 
 export default apiCall

@@ -23,22 +23,48 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Sun, Moon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AdminApi, profesionalApi } from "@/service/api"
 
-interface ProfesionalesTableProps {
-  profesionales: User[];
-  onDelete: (id: string) => void;
-}
+export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTableProps) {
 
-export function ProfesionalesTable({
-  profesionales,
-  onDelete,
-}: ProfesionalesTableProps) {
+  { /*const [profesionales, setProfesionales] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchProfs = async () => {
+      try {
+        const data = await profesionalApi.getProfesionales()
+        setProfesionales(data.content)
+        console.log("Mi datita ", data.content)
+      } catch (err) {
+        console.error("Error cargando profesionales:", err)
+      }
+    };
+    fetchProfs()
+  }, []) */}
+
+const onDeleteHandler = async (userId: string) => {
+  try {
+    // 1. Llamada a la API
+    await AdminApi.deleteProfesional(userId);
+    
+    // 2. Actualización optimista del estado
+    // Esto hace que el usuario desaparezca de la vista al instante
+    onDelete(userId);
+    
+    // 3. Opcional: Notificación de éxito
+    console.log("Profesional eliminado correctamente");
+  } catch (error) {
+    console.error("No se pudo eliminar al profesional:", error);
+  }
+};
+
   const diasAbreviados: Record<string, string> = {
-    lunes: "Lun",
-    martes: "Mar",
-    miércoles: "Mié",
-    jueves: "Jue",
-    viernes: "Vie",
+    LUNES: "Lun",
+    MARTES: "Mar",
+    MIÉRCOLES: "Mie",
+    JUEVES: "Jue",
+    VIERNES: "Vie",
   };
 
   if (profesionales.length === 0) {
@@ -66,19 +92,19 @@ export function ProfesionalesTable({
         </TableHeader>
         <TableBody>
           {profesionales.map((prof) => (
-            <TableRow key={prof.id}>
+            <TableRow key={prof.userId}>
               <TableCell className="font-medium">
-                {prof.nombre} {prof.apellido}
+                {prof.name} {prof.lastname}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {prof.email}
               </TableCell>
               <TableCell className="text-center">
-                {prof.cargaHoraria}hs
+                {prof.hourly}hs
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {prof.dias?.map((dia) => (
+                  {prof.days?.map((dia) => (
                     <Badge key={dia} variant="secondary" className="text-xs">
                       {diasAbreviados[dia]}
                     </Badge>
@@ -87,15 +113,15 @@ export function ProfesionalesTable({
               </TableCell>
               <TableCell className="text-center">
                 <Badge
-                  variant={prof.turno === "mañana" ? "default" : "outline"}
+                  variant={prof.turno === "MAÑANA" ? "default" : "outline"}
                   className="gap-1"
                 >
-                  {prof.turno === "mañana" ? (
+                  {prof.turno === "MAÑANA" ? (
                     <Sun className="w-3 h-3" />
                   ) : (
                     <Moon className="w-3 h-3" />
                   )}
-                  {prof.turno === "mañana" ? "Mañana" : "Tarde"}
+                  {prof.turno === "MAÑANA" ? "MAÑANA" : "TARDE"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
@@ -114,14 +140,14 @@ export function ProfesionalesTable({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Eliminar profesional</AlertDialogTitle>
                       <AlertDialogDescription>
-                        ¿Estás seguro de que deseas eliminar a {prof.nombre}{" "}
-                        {prof.apellido}? Esta acción no se puede deshacer.
+                        ¿Estás seguro de que deseas eliminar a {prof.name}{" "}
+                        {prof.lastname}? Esta acción no se puede deshacer.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onDelete(prof.id)}
+                        onClick={() => onDelete(prof.userId)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Eliminar

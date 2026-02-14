@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { dataStore } from "@/lib/store";
-import type { User, Intervencion, DiaSemana, Turno } from "@/lib/types";
+import type { User, Intervencion, DiaSemana, Turno, createProfesionalDTO } from "@/lib/types";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { ProfesionalesTable } from "@/components/admin/profesionales-table";
 import { IntervencionesTable } from "@/components/admin/intervenciones-table";
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ClipboardList, Plus } from "lucide-react";
+import { AdminApi, profesionalApi } from "@/service/api";
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
@@ -21,27 +22,67 @@ export default function AdminDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
-  const handleAddProfesional = (data: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    cargaHoraria: number;
-    dias: DiaSemana[];
-    turno: Turno;
-  }) => {
-    dataStore.addUser({
-      ...data,
-      role: "profesional",
-    });
-    setIsDialogOpen(false);
-  };
+    const loadProfesionales = async () => {
+  try {
+    const data = await profesionalApi.getProfesionales();
+    setProfesionales([...data.content]); 
+  } catch(err) {
+    console.error(err);
+  }
+};
 
-  const handleDeleteProfesional = (id: string) => {
-    dataStore.deleteUser(id);
-  };
+  useEffect(() => {
+  if (!isLoading) {
+    if (!user) {
+      router.replace("/");
+    } else if (user.role !== "ADMIN") {
+      router.replace("/"); 
+    } else {
+      // Cargar profesionales cuando el usuario es admin
+      loadProfesionales();
+    }
+  }
+}, [user, isLoading, router]); // Removemos loadProfesionales de las dependencias
+
+
+  const handleAddProfesional = async (data: createProfesionalDTO) => {
+  try {
+    // 1. Enviamos a la base de datos a través de la API
+    await AdminApi.createProfesional({
+      name: data.name,
+      lastname: data.lastname,
+      username: data.username,
+      email: data.email,
+      hourly: data.hourly,
+      days: data.days,
+      turno: data.turno,
+      role: "PROFESIONAL"
+    });
+
+    // 2. Refrescamos la lista local para que aparezca el nuevo
+    await loadProfesionales()
+    
+    // 3. Cerramos el modal
+    setIsDialogOpen(false);
+    
+  } catch (err: any) {
+    console.log(err)
+    throw err;
+  }
+};
+
+ const handleDeleteProfesional = async (id: string) => {
+  try {
+    await AdminApi.deleteProfesional(id);
+    // Actualiza el estado local después de eliminar
+    setProfesionales(prev => prev.filter(p => p.userId !== id));
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+  }
+};
 
   const getProfesionalName = (profesionalId: string) => {
-    const prof = profesionales.find((p) => p.id === profesionalId);
+    const prof = profesionales.find((p) => p.userId === profesionalId);
     return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
   };
 
