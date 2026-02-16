@@ -3,18 +3,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { dataStore } from "@/lib/store";
-import type { Intervencion, TipoDestinatario, TipoIntervencion } from "@/lib/types";
+import { User, type Intervencion, type TipoDestinatario, type TipoIntervencion } from "@/lib/types";
 import { ProfesionalHeader } from "@/components/profesional/profesional-header";
 import { IntervencionForm } from "@/components/profesional/intervencion-form";
 import { MisIntervenciones } from "@/components/profesional/mis-intervenciones";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, History, ClipboardCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { profesionalApi } from "@/service/api"
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfesionalDashboard() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
   const [activeTab, setActiveTab] = useState("nueva");
+  const [error, setError] = useState("")
+  const router = useRouter();
+  const { toast } = useToast();
 
   const loadData = useCallback(() => {
     if (user) {
@@ -22,11 +28,15 @@ export default function ProfesionalDashboard() {
     }
   }, [user]);
 
-  useEffect(() => {
-    loadData();
-    const unsubscribe = dataStore.subscribe(loadData);
-    return unsubscribe;
-  }, [loadData]);
+  const loadProfesional = useCallback(() => {
+    if(user){
+      profesionalApi.getProfesional(user.userId) 
+    }
+}, [user]) 
+
+  useEffect(() => {    
+  
+}, []);
 
   const handleSubmitIntervencion = (data: {
     fecha: string;
@@ -57,7 +67,7 @@ export default function ProfesionalDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProfesionalHeader userName={`${user?.nombre} ${user?.apellido}`} />
+      <ProfesionalHeader userName={`${user?.name} ${user?.lastname}`} />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import type { User } from "@/lib/types";
+import type { DiaSemana, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,26 +22,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Sun, Moon } from "lucide-react";
+import { Trash2, Sun, Moon, UserPlus, UserMinus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminApi, profesionalApi } from "@/service/api"
 
-export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTableProps) {
-
-  { /*const [profesionales, setProfesionales] = useState<User[]>([]);
-
-  useEffect(() => {
-    const fetchProfs = async () => {
-      try {
-        const data = await profesionalApi.getProfesionales()
-        setProfesionales(data.content)
-        console.log("Mi datita ", data.content)
-      } catch (err) {
-        console.error("Error cargando profesionales:", err)
-      }
-    };
-    fetchProfs()
-  }, []) */}
+export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: ProfesionalesTableProps) {
 
   const onDeleteHandler = async (userId: string) => {
     try {
@@ -67,6 +52,10 @@ export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTab
     VIERNES: "Vie",
   };
 
+  const onToggleStatus = (userId: string) => {
+    
+  }
+
   if (profesionales.length === 0) {
     return (
       <div className="text-center py-12">
@@ -78,66 +67,91 @@ export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTab
   }
 
   return (
-    <div className="rounded-md border border-border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead>Nombre</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead className="text-center">Carga Horaria</TableHead>
-            <TableHead>Días</TableHead>
-            <TableHead className="text-center">Turno</TableHead>
-            <TableHead className="text-center">Condición</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {profesionales.map((prof) => (
-            <TableRow key={prof.userId}>
-              <TableCell className="font-medium">
-                {prof.name} {prof.lastname}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {prof.email}
-              </TableCell>
-              <TableCell className="text-center">
-                {prof.hourly}hs
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {prof.days?.map((dia) => (
-                    <Badge key={dia} variant="secondary" className="text-xs">
-                      {diasAbreviados[dia]}
-                    </Badge>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge
-                  variant={prof.turno === "MAÑANA" ? "default" : "outline"}
-                  className="gap-1"
-                >
-                  {prof.turno === "MAÑANA" ? (
-                    <Sun className="w-3 h-3" />
-                  ) : (
-                    <Moon className="w-3 h-3" />
-                  )}
-                  {prof.turno === "MAÑANA" ? "MAÑANA" : "TARDE"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge
-                  className={prof.active
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-red-50 text-red-700 border-red-200"
+  <div className="rounded-md border border-border overflow-hidden">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-muted/50">
+          <TableHead>Nombre</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead className="text-center">Carga Horaria</TableHead>
+          <TableHead>Días</TableHead>
+          <TableHead className="text-center">Turno</TableHead>
+          <TableHead className="text-center">Condición</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {profesionales.map((prof: User) => (
+          <TableRow key={prof.userId}>
+            <TableCell className="font-medium">
+              {prof.name} {prof.lastname}
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {prof.email}
+            </TableCell>
+            <TableCell className="text-center">
+              {prof.hourly}hs
+            </TableCell>
+            <TableCell>
+              <div className="flex flex-wrap gap-1">
+                {prof.days?.map((dia: DiaSemana) => (
+                  <Badge key={dia} variant="secondary" className="text-xs">
+                    {diasAbreviados[dia]}
+                  </Badge>
+                ))}
+              </div>
+            </TableCell>
+            <TableCell className="text-center">
+              <Badge
+                variant={prof.turno === "MAÑANA" ? "default" : "outline"}
+                className="gap-1"
+              >
+                {prof.turno === "MAÑANA" ? (
+                  <Sun className="w-3 h-3" />
+                ) : (
+                  <Moon className="w-3 h-3" />
+                )}
+                {prof.turno === "MAÑANA" ? "MAÑANA" : "TARDE"}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-center">
+              <Badge
+                className={prof.active
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-red-50 text-red-700 border-red-200"
+                }
+                variant="outline"
+              >
+                <span className={`mr-1.5 size-2 rounded-full ${prof.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {prof.active ? "Activo" : "Inactivo"}
+              </Badge>
+            </TableCell>
+            
+            {/* --- SECCIÓN DE ACCIONES MODIFICADA --- */}
+            <TableCell className="text-right">
+              <div className="flex justify-end gap-1">
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => altaBaja(prof.userId)}
+                  className={prof.active 
+                    ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" 
+                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                   }
-                  variant="outline"
+                  title={prof.active ? "Dar de baja" : "Dar de alta"}
                 >
-                  <span className={`mr-1.5 size-2 rounded-full ${prof.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                  {prof.active ? "Activo" : "Inactivo"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
+                  {prof.active ? (
+                    <UserMinus className="w-4 h-4" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )}
+                  <span className="sr-only">
+                    {prof.active ? "Dar de baja" : "Dar de alta"}
+                  </span>
+                </Button>
+
+                {/* Diálogo de Eliminación */}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
@@ -168,11 +182,14 @@ export function ProfesionalesTable({ profesionales, onDelete }: ProfesionalesTab
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
+              </div>
+            </TableCell>
+            {/* --- FIN SECCIÓN DE ACCIONES --- */}
+            
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
 }

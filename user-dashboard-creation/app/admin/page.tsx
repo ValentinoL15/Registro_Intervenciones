@@ -77,11 +77,7 @@ export default function AdminDashboard() {
       });
     
   } catch (err: any) {
-    toast({
-        variant: "destructive",
-        title: "Error al crear",
-        description: err.message || "No se pudo procesar la solicitud.",
-      });
+    
     throw err;
   }
 };
@@ -91,6 +87,7 @@ export default function AdminDashboard() {
     await AdminApi.deleteProfesional(id);
     // Actualiza el estado local después de eliminar
     setProfesionales(prev => prev.filter(p => p.userId !== id));
+    await loadProfesionales()
     toast({
         title: "Eliminado",
         description: "El registro ha sido borrado del sistema.",
@@ -109,6 +106,24 @@ export default function AdminDashboard() {
     const prof = profesionales.find((p) => p.userId === profesionalId);
     return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
   };
+
+  const onToggleStatus = async(userId: string) => {
+    try {
+      await AdminApi.altaBajaProfesional(userId)
+      await loadProfesionales()
+      toast({
+        title: "Exitoso",
+        description: "El usuario ha sido modificado con éxito",
+      })
+    } catch(err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+      })
+      console.log(err)
+      throw err
+    }
+  }
 
   
 
@@ -181,6 +196,7 @@ export default function AdminDashboard() {
                 <ProfesionalesTable
                   profesionales={profesionales}
                   onDelete={handleDeleteProfesional}
+                  altaBaja={onToggleStatus}
                 />
               </CardContent>
             </Card>

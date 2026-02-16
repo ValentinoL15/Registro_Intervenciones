@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const token = localStorage.getItem("authToken");
       const userId = localStorage.getItem("userId");
-
+      
       if (token && userId) {
         try {
           const userData = await authAPI.getUser(Number(userId));
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.clear(); // Cambiado de sessionStorage a localStorage
+    localStorage.clear();
   }, []);
 
   return (

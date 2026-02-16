@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
+import { GlobalLoader } from "@/components/ui/global-loader";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function ProfesionalLayout({
   children,
@@ -18,22 +20,36 @@ export default function ProfesionalLayout({
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/");
-    } else if (!isLoading && user?.role !== "profesional") {
-      router.push("/admin");
     }
+    console.log("USER:", user);
   }, [isLoading, isAuthenticated, user, router]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
 
-  if (!isAuthenticated || user?.role !== "profesional") {
-    return null;
-  }
+// 🔥 Solo redirigir si terminó de cargar Y no hay usuario
+if (!isAuthenticated) {
+  router.push("/");
+  return null;
+}
 
-  return <>{children}</>;
+// 🔥 Validar rol aparte
+if (user?.role !== "PROFESIONAL") {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      No autorizado
+    </div>
+  );
+}
+
+  return <>
+  {children}
+  <GlobalLoader />
+  <Toaster />
+  </>;
 }

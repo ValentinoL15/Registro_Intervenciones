@@ -186,6 +186,12 @@ export const AdminApi = {
     return apiCall<GeneralResponse>(`/admin/delete-profesional/${userId}`, {
       method: "DELETE",
     })
+  },
+
+  altaBajaProfesional: async(userId: string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/admin/altaBaja/${userId}`, {
+      method: "PUT"
+    })
   }
 
 }
