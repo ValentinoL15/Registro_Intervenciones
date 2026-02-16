@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, createProfesionalDTO, EmailDto, GeneralResponse, User } from '@/lib/types';
+import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EmailDto, GeneralResponse, IntervencionDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -159,6 +159,39 @@ export const profesionalApi = {
     })
   },
 
+  /////////////////INTERVENCIONES/////////////////////
+
+  createIntervencion: async(intervencion:CreateIntervencionDto): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/intervenciones/create`, {
+      method: "POST",
+      body: JSON.stringify(intervencion)
+    })
+  },
+
+  getIntervenciones: async(): Promise<IntervencionDto[]> => {
+    return apiCall<IntervencionDto[]>(`/intervenciones`, {
+      method: "GET"
+    })
+  },
+
+  getIntervencion: async(intervencionId: string): Promise<IntervencionDto> => {
+    return apiCall<IntervencionDto>(`/intervenciones/${intervencionId}`, {
+      method: "GET"
+    })
+  },
+
+  editIntervencion: async(intervencionId: string, intervencion: EditIntervencionDto): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/intervenciones/${intervencionId}`, {
+      method: "PUT",
+      body: JSON.stringify({ intervencion })
+    })
+  },
+
+  delteIntervencion: async(intervencionId: string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/intervenciones/${intervencionId}`, {
+      method: "DELETE"
+    })
+  }
 
 }
 

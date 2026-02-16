@@ -4,7 +4,7 @@ export type Turno = "MAÑANA" | "TARDE";
 
 export type DiaSemana = "LUNES" | "MARTES" | "MIÉRCOLES" | "JUEVES" | "VIERNES";
 
-export type DestinyType = "FAMILIA" | "INSTITUCIÓN";
+export type DestinyType = "FAMILIA" | "INSTITUCION";
 
 export type IntervencionType = "INDIVIDUAL" | "EQUIPO";
 
@@ -76,6 +76,40 @@ export interface createProfesionalDTO {
   turno: Turno,
   days: DiaSemana[]
   role: UserRole
+}
 
+export interface IntervencionDto {
+  intervencionId: string,
+  creadorId: string,
+  tipo: DestinyType,
+  nombre: string
+  fecha: Date,
+  hora: string,
+  motivo: string,
+  intervencion: IntervencionType
+  observaciones: string,
+  profesionalesIds: string[]
+}
+
+export interface CreateIntervencionDto {
+  tipo: DestinyType,
+  nombre: string
+  fecha: string,
+  hora: string,
+  motivo: string,
+  intervencion: IntervencionType
+  observaciones: string,
+  profesionalesIds: string[]
+} 
+
+export interface EditIntervencionDto {
+  tipo: DestinyType,
+  nombre: string
+  fecha: string,
+  hora: string,
+  motivo: string,
+  intervencion: IntervencionType
+  observaciones: string,
+  profesionalesIds: string[]
 }
 

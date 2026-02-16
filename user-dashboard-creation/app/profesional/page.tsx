@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { dataStore } from "@/lib/store";
-import { User, type Intervencion, type TipoDestinatario, type TipoIntervencion } from "@/lib/types";
+import { DestinyType, IntervencionType, User, type Intervencion, type TipoDestinatario, type TipoIntervencion } from "@/lib/types";
 import { ProfesionalHeader } from "@/components/profesional/profesional-header";
 import { IntervencionForm } from "@/components/profesional/intervencion-form";
 import { MisIntervenciones } from "@/components/profesional/mis-intervenciones";
@@ -22,37 +22,33 @@ export default function ProfesionalDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const loadData = useCallback(() => {
-    if (user) {
-      setIntervenciones(dataStore.getIntervencionesByProfesional(user.id));
+  const loadIntervenciones = async () => {
+    try {
+      const data = await profesionalApi.getIntervenciones()
+      setIntervenciones([...data.content])
+    } catch(err:any) {
+      console.error(err)
     }
-  }, [user]);
-
-  const loadProfesional = useCallback(() => {
-    if(user){
-      profesionalApi.getProfesional(user.userId) 
-    }
-}, [user]) 
+  };
 
   useEffect(() => {    
-  
-}, []);
+    loadIntervenciones()
+  }, []);
 
-  const handleSubmitIntervencion = (data: {
-    fecha: string;
-    hora: string;
-    destinatario: TipoDestinatario;
-    nombreDestinatario: string;
-    motivo: string;
-    tipoIntervencion: TipoIntervencion;
-    observaciones?: string;
-  }) => {
-    if (user) {
-      dataStore.addIntervencion({
-        ...data,
-        profesionalUserId: user.id,
-      });
+  const handleSubmitIntervencion = async(data: {tipo: DestinyType,nombre: string,fecha: string,hora: string,motivo: string,
+    intervencion: IntervencionType,observaciones: string,profesionalesIds: string[]}) => {
+    try {
+      if (user) {
+      await profesionalApi.createIntervencion(data)
       setActiveTab("historial");
+      toast({
+        title: "Exitoso",
+        description: "Registro creado con éxito"
+      })
+    }
+    } catch(err: any) {
+      console.error(err)
+      throw err
     }
   };
 

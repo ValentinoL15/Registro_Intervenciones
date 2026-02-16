@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState } from "react";
-import type { TipoDestinatario, TipoIntervencion } from "@/lib/types";
+import type { DestinyType, IntervencionType, TipoDestinatario, TipoIntervencion } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,58 +17,73 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Home, Building, User, Users } from "lucide-react";
+import { useLoader } from "@/lib/spinnerService";
 
-interface IntervencionFormProps {
+interface createProfesionalDTO {
   onSubmit: (data: {
-    fecha: string;
-    hora: string;
-    destinatario: TipoDestinatario;
-    nombreDestinatario: string;
-    motivo: string;
-    tipoIntervencion: TipoIntervencion;
-    observaciones?: string;
+    tipo: DestinyType,
+      nombre: string
+      fecha: string,
+      hora: string,
+      motivo: string,
+      intervencion: IntervencionType
+      observaciones: string,
+      profesionalesIds: string[]
   }) => void;
 }
 
-export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
+export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
-  const [destinatario, setDestinatario] = useState<TipoDestinatario>("familia");
-  const [nombreDestinatario, setNombreDestinatario] = useState("");
+  const [tipo, setTipo] = useState<DestinyType>("FAMILIA");
+  const [nombre, setNombre] = useState("");
   const [motivo, setMotivo] = useState("");
-  const [tipoIntervencion, setTipoIntervencion] = useState<TipoIntervencion>("individual");
+  const [intervencion, setTipoIntervencion] = useState<IntervencionType>("INDIVIDUAL");
   const [observaciones, setObservaciones] = useState("");
+  const [profesionalesIds, setProfesionalesIds]= useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showLoader, hideLoader } = useLoader();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    try {
 
-    // Simular delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+      showLoader()
 
-    onSubmit({
+      await onSubmit({
       fecha,
       hora,
-      destinatario,
-      nombreDestinatario,
+      tipo,
+      nombre,
       motivo,
-      tipoIntervencion,
-      observaciones: observaciones || undefined,
+      intervencion,
+      observaciones,
+      profesionalesIds
     });
 
     // Reset form
     setFecha("");
     setHora("");
-    setDestinatario("familia");
-    setNombreDestinatario("");
+    setTipo("FAMILIA");
+    setNombre("");
     setMotivo("");
-    setTipoIntervencion("individual");
+    setTipoIntervencion("INDIVIDUAL");
     setObservaciones("");
+    setProfesionalesIds([])
     setIsSubmitting(false);
+
+    } catch (err: any) {
+      console.error(err.message)
+      setIsSubmitting(false)
+    } finally {
+      hideLoader()
+    }
+
   };
 
-  const isValid = fecha && hora && nombreDestinatario && motivo;
+  const isValid = fecha && hora && nombre && motivo && tipo && intervencion;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -100,13 +115,13 @@ export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
       <div className="flex flex-col gap-3">
         <Label>Tipo de destinatario</Label>
         <RadioGroup
-          value={destinatario}
-          onValueChange={(v) => setDestinatario(v as TipoDestinatario)}
+          value={tipo}
+          onValueChange={(v) => setTipo(v as DestinyType)}
           className="flex gap-4"
           disabled={isSubmitting}
         >
           <div className="flex items-center gap-2">
-            <RadioGroupItem value="familia" id="familia" />
+            <RadioGroupItem value="FAMILIA" id="familia" />
             <Label
               htmlFor="familia"
               className="flex items-center gap-2 font-normal cursor-pointer"
@@ -116,7 +131,7 @@ export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
             </Label>
           </div>
           <div className="flex items-center gap-2">
-            <RadioGroupItem value="institución" id="institucion" />
+            <RadioGroupItem value="INSTITUCION" id="institucion" />
             <Label
               htmlFor="institucion"
               className="flex items-center gap-2 font-normal cursor-pointer"
@@ -129,15 +144,15 @@ export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="nombreDestinatario">
-          Nombre de la {destinatario === "familia" ? "familia" : "institución"}
+        <Label htmlFor="nombre">
+          Nombre de la {tipo === "FAMILIA" ? "familia" : "institución"}
         </Label>
         <Input
-          id="nombreDestinatario"
-          value={nombreDestinatario}
-          onChange={(e) => setNombreDestinatario(e.target.value)}
+          id="nombre"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
           placeholder={
-            destinatario === "familia"
+            tipo === "FAMILIA"
               ? "Ej: Familia García"
               : "Ej: Escuela San Martín"
           }
@@ -162,13 +177,13 @@ export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
       <div className="flex flex-col gap-3">
         <Label>Tipo de intervención</Label>
         <RadioGroup
-          value={tipoIntervencion}
-          onValueChange={(v) => setTipoIntervencion(v as TipoIntervencion)}
+          value={intervencion}
+          onValueChange={(v) => setTipoIntervencion(v as IntervencionType)}
           className="flex gap-4"
           disabled={isSubmitting}
         >
           <div className="flex items-center gap-2">
-            <RadioGroupItem value="individual" id="individual" />
+            <RadioGroupItem value="INDIVIDUAL" id="individual" />
             <Label
               htmlFor="individual"
               className="flex items-center gap-2 font-normal cursor-pointer"
@@ -178,7 +193,7 @@ export function IntervencionForm({ onSubmit }: IntervencionFormProps) {
             </Label>
           </div>
           <div className="flex items-center gap-2">
-            <RadioGroupItem value="equipo" id="equipo" />
+            <RadioGroupItem value="EQUIPO" id="equipo" />
             <Label
               htmlFor="equipo"
               className="flex items-center gap-2 font-normal cursor-pointer"
