@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Heart, LogOut, User } from "lucide-react";
+import Link from "next/link";
 
 interface ProfesionalHeaderProps {
   userName: string;
@@ -50,7 +51,14 @@ export function ProfesionalHeader({ userName }: ProfesionalHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+               <DropdownMenuItem asChild
+                className="cursor-pointer"
+              >
+                <Link href="/profesional/profile">
+                <User className="w-4 h-4 mr-2" />
+                Mi cuenta
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
