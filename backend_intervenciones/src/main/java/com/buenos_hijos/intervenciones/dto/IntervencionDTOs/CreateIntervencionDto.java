@@ -30,11 +30,11 @@ public class CreateIntervencionDto {
     @NotBlank(message = "Debes colocar un horario")
     private String hora;
     @NotBlank(message = "Debes colocar el motivo de la visita")
-    @Size(min = 5, message = "El motivo debe contener un minimo de 5 caracteres")
+    @Size(min = 5, max = 60, message = "El motivo debe contener entre {min} y {max} caracteres")
     private String motivo;
     @NotNull(message = "Debes colocar si la intervención fue realizada en equipo o individualemente")
     private Intervencion.IntervencionType intervencion;
-    @Size(min = 3,max = 150, message = "La observación debe tener entre {min} y {max} caracteres")
+    @Size(min = 3,max = 200, message = "La observación debe tener entre {min} y {max} caracteres")
     private String observaciones;
 
     private List<Long> profesionalesIds;

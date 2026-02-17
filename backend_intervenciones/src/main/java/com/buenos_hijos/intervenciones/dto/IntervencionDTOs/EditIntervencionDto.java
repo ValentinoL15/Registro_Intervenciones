@@ -17,18 +17,18 @@ public class EditIntervencionDto {
 
     private Intervencion.DestinyType tipo;
 
-    @Size(min = 3, max = 15, message = "El nombre debe tener entre {min} y {max} caracteres")
+    @Size(min = 3, max = 30, message = "El nombre debe tener entre {min} y {max} caracteres")
     private String nombre;
 
     private LocalDateTime fecha;
 
     private String hora;
 
-    @Size(min = 5, message = "El motivo debe contener un minimo de 5 caracteres")
+    @Size(min = 5, max = 60, message = "El motivo debe contener entre {min}  y {max} caracteres")
     private String motivo;
 
     private Intervencion.IntervencionType intervencion;
-    @Size(min = 3,max = 80, message = "La observación debe tener entre {min} y {max} caracteres")
+    @Size(min = 3,max = 200, message = "La observación debe tener entre {min} y {max} caracteres")
     private String observaciones;
 
 }
