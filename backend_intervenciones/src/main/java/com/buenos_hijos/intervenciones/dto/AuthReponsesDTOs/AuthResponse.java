@@ -9,15 +9,19 @@ public class AuthResponse {
     private String username;
     private Long userId;
     private String userRole;
+    private String name;
+    private String lastname;
 
     public AuthResponse() {}
 
-    public AuthResponse(String message, String access_token, String username, Long userId, String userRole) {
+    public AuthResponse(String message, String access_token, String username, Long userId, String userRole, String name, String lastname) {
         this.message = message;
         this.access_token = access_token;
         this.username = username;
         this.userId = userId;
         this.userRole = userRole;
+        this.name = name;
+        this.lastname = lastname;
     }
 
     public String getMessage() {
@@ -54,6 +58,22 @@ public class AuthResponse {
 
     public String getUserRole() {
         return userRole;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
     }
 
     public void setUserRole(String userRole) {

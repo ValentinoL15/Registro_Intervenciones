@@ -69,6 +69,12 @@ public class AdminController {
         return ResponseEntity.ok(adminService.deleteProfesional(principal.getName(), profesionalId));
     }
 
+    @PutMapping("/altaBaja/{profesionalId}")
+    public ResponseEntity<GeneralResponse> altaBajaProfesional(@PathVariable Long profesionalId,
+                                                               Principal principal){
+        return ResponseEntity.ok(adminService.altaBajaProfesional(profesionalId, principal.getName()));
+    }
+
     //VERIFICADO
     @PutMapping("/baja/{profesionalId}")
     public ResponseEntity<GeneralResponse> bajaProfesional(Principal principal,

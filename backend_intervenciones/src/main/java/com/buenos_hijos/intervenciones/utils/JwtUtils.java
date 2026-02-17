@@ -41,6 +41,8 @@ public class JwtUtils {
                 .withClaim("authorities", authorities)
                 .withClaim("email", user.getEmail())
                 .withClaim("role", user.getRole().name())
+                .withClaim("name", user.getName())
+                .withClaim("lastname", user.getLastname())
                 .withClaim("userId", user.getUserId())
                 .withIssuedAt(new Date(System.currentTimeMillis()))
                 .withExpiresAt(new Date(expiryDate))

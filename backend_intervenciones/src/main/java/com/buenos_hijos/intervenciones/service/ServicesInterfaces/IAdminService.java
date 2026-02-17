@@ -26,6 +26,8 @@ public interface IAdminService {
 
     public GeneralResponse deleteProfesional(String currentUser, Long profesionalId);
 
+    public GeneralResponse altaBajaProfesional(Long profesionalId, String currentUser);
+
     public GeneralResponse altaProfesional(String currentUser, Long profesionalId);
 
     public GeneralResponse bajaProfesional(String currentUser, Long profesionalId);

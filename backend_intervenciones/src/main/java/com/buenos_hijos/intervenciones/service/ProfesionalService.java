@@ -40,7 +40,8 @@ public class ProfesionalService implements IProfesionalService {
                         prof.getRole(),
                         prof.getHourly(),
                         prof.getDays(),
-                        prof.getTurno()
+                        prof.getTurno(),
+                        prof.isActive()
                 )
         );
         return profesionalDtos;
@@ -61,7 +62,8 @@ public class ProfesionalService implements IProfesionalService {
                 profesional.getRole(),
                 profesional.getHourly(),
                 profesional.getDays(),
-                profesional.getTurno()
+                profesional.getTurno(),
+                profesional.isActive()
         );
         return profesionalDto;
     }

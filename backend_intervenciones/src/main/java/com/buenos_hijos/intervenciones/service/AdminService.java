@@ -123,6 +123,14 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
+        if(userRepository.existsByUsername(profesionalDto.getUsername())){
+            throw new RuntimeException("El username ya existe por favor utiliza otro");
+        }
+
+        if(userRepository.existsByEmail(profesionalDto.getEmail())){
+            throw new RuntimeException("El email ya existe por favor utiliza otro");
+        }
+
         Profesional profesional = new Profesional();
         profesional.setName(profesionalDto.getName());
         profesional.setLastname(profesionalDto.getLastname());
@@ -157,6 +165,10 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
+        if(userRepository.existsByUsername(adminDto.getUsername())){
+            throw new RuntimeException("El username ya existe por favor utiliza otro");
+        }
+
         if(adminDto.getName() != null){
             admin.setName(adminDto.getName());
         }
@@ -164,9 +176,6 @@ public class AdminService implements IAdminService {
             admin.setLastname(adminDto.getLastname());
         }
         if(adminDto.getUsername() != null) {
-            if(userRepository.existsByUsername(adminDto.getUsername())){
-                throw new RuntimeException("El username ya existe por favor utiliza otro");
-            }
             admin.setUsername(adminDto.getUsername());
         }
         adminRepository.save(admin);
@@ -222,6 +231,29 @@ public class AdminService implements IAdminService {
                 "Profesional eliminado con éxito",
                 HttpStatus.OK.value()
         );
+
+    }
+
+    @Override
+    public GeneralResponse altaBajaProfesional(Long profesionalId, String currentUser) {
+
+        User admin = userRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
+
+        if(admin.getRole() != User.RoleType.ADMIN){
+            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
+        }
+
+        Profesional profesional = profesionalRepository.findById(profesionalId)
+                .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+
+        if(profesional.isActive()){
+            profesional.setActive(false);
+        }else {
+            profesional.setActive(true);
+        }
+        profesionalRepository.save(profesional);
+        return new GeneralResponse(new Date(), "Profesional actualizado con éxito", HttpStatus.OK.value());
 
     }
 

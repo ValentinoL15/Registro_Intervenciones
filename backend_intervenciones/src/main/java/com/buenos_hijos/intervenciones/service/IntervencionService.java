@@ -99,6 +99,8 @@ public class IntervencionService implements InIntervencionService {
         intervencion.setHora(intervencionDto.getHora());
         intervencion.setFecha(intervencionDto.getFecha());
         intervencion.setMotivo(intervencionDto.getMotivo());
+        intervencion.setIntervencion(intervencionDto.getIntervencion());
+        intervencion.setObservaciones(intervencionDto.getObservaciones());
         intervencion.setProfesionales(participantes);
         intervencionRepository.save(intervencion);
         return new GeneralResponse(

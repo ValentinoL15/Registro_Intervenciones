@@ -64,7 +64,7 @@ public class UserServiceImp implements UserDetailsService {
             throw new BadCredentialsException("Invalid username o password");
         }
         if(!passwordEncoder.matches(password, userDetails.getPassword())) {
-            throw new BadCredentialsException("Invalid password");
+            throw new BadCredentialsException("Contraseña inválida");
         }
 
         return new UsernamePasswordAuthenticationToken(username, userDetails.getPassword(), userDetails.getAuthorities());
@@ -85,9 +85,11 @@ public class UserServiceImp implements UserDetailsService {
         String access_token = jwtUtils.generateToken(user);
         Long userId = user.getUserId();
         String userRole = user.getRole().name();
+        String name = user.getName();
+        String lastname = user.getLastname();
 
 
-        AuthResponse authResponse = new AuthResponse("Logueado correctamente",access_token,username,userId,userRole);
+        AuthResponse authResponse = new AuthResponse("Logueado correctamente",access_token,username,userId,userRole,name,lastname);
         return authResponse;
     }
 
@@ -97,7 +99,10 @@ public class UserServiceImp implements UserDetailsService {
         UserDto userDto = new UserDto(
                 user.getUserId(),
                 user.getEmail(),
-                user.getUsername()
+                user.getUsername(),
+                user.getRole(),
+                user.getName(),
+                user.getLastname()
         );
         return userDto;
     }

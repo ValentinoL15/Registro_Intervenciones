@@ -24,5 +24,6 @@ public class ProfesionalDto {
     private String hourly;
     private List<Profesional.DaysType> days;
     private Profesional.Turnstype turno;
+    private boolean active;
 
 }
