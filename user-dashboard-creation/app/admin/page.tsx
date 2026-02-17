@@ -50,7 +50,6 @@ export default function AdminDashboard() {
   }
 }, [user, isLoading, router]); // Removemos loadProfesionales de las dependencias
 
-
   const handleAddProfesional = async (data: createProfesionalDTO) => {
   try {
     // 1. Enviamos a la base de datos a través de la API

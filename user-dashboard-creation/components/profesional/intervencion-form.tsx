@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Home, Building, User, Users } from "lucide-react";
+import { Loader2, Home, Building, User, Users, AlertCircle } from "lucide-react";
 import { useLoader } from "@/lib/spinnerService";
 
 interface createProfesionalDTO {
@@ -42,6 +42,8 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
   const [observaciones, setObservaciones] = useState("");
   const [profesionalesIds, setProfesionalesIds]= useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [error, setError] = useState("");
   const { showLoader, hideLoader } = useLoader();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,8 +54,10 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
 
       showLoader()
 
+      const fechaCompleta = `${fecha}T${hora}${hora.length === 5 ? ":00" : ""}`;
+
       await onSubmit({
-      fecha,
+      fecha: fechaCompleta,
       hora,
       tipo,
       nombre,
@@ -76,6 +80,7 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
 
     } catch (err: any) {
       console.error(err.message)
+      setError(err.message || "No se pudo realizar el registro")
       setIsSubmitting(false)
     } finally {
       hideLoader()
@@ -216,6 +221,13 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
           disabled={isSubmitting}
         />
       </div>
+
+        {error && (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
       <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
         {isSubmitting ? (

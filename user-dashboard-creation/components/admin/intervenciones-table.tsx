@@ -85,18 +85,18 @@ export function IntervencionesTable({
               <TableCell className="text-center">
                 <Badge
                   variant={
-                    intervencion.tipoIntervencion === "equipo"
+                    intervencion.tipoIntervencion === "EQUIPO"
                       ? "default"
                       : "secondary"
                   }
                   className="gap-1"
                 >
-                  {intervencion.tipoIntervencion === "equipo" ? (
+                  {intervencion.tipoIntervencion === "EQUIPO" ? (
                     <Users className="w-3 h-3" />
                   ) : (
                     <User className="w-3 h-3" />
                   )}
-                  {intervencion.tipoIntervencion === "equipo"
+                  {intervencion.tipoIntervencion === "EQUIPO"
                     ? "Equipo"
                     : "Individual"}
                 </Badge>

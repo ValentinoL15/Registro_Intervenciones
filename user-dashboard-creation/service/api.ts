@@ -181,9 +181,9 @@ export const profesionalApi = {
   },
 
   editIntervencion: async(intervencionId: string, intervencion: EditIntervencionDto): Promise<GeneralResponse> => {
-    return apiCall<GeneralResponse>(`/intervenciones/${intervencionId}`, {
+    return apiCall<GeneralResponse>(`/intervenciones/edit/${intervencionId}`, {
       method: "PUT",
-      body: JSON.stringify({ intervencion })
+      body: JSON.stringify(intervencion)
     })
   },
 

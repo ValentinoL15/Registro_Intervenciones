@@ -40,6 +40,7 @@ export default function ProfesionalDashboard() {
     try {
       if (user) {
       await profesionalApi.createIntervencion(data)
+      await loadIntervenciones()
       setActiveTab("historial");
       toast({
         title: "Exitoso",
@@ -135,7 +136,7 @@ export default function ProfesionalDashboard() {
                 </p>
               </CardHeader>
               <CardContent>
-                <MisIntervenciones intervenciones={intervenciones} />
+                <MisIntervenciones intervenciones={intervenciones} onRefresh={loadIntervenciones} />
               </CardContent>
             </Card>
           </TabsContent>
