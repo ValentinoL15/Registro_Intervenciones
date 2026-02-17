@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { profesionalApi } from "@/service/api";
 import { useToast } from "@/hooks/use-toast";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 
 
@@ -28,6 +29,20 @@ interface MisIntervencionesProps {
 }
 
 export function MisIntervenciones({ intervenciones, onRefresh }: MisIntervencionesProps) {
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Cantidad de cards por página
+  
+  const totalPages = Math.ceil(intervenciones.length / itemsPerPage);
+  
+  // Obtener las intervenciones de la página actual
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentIntervenciones = intervenciones.slice(startIndex, startIndex + itemsPerPage);
+
+  // Funciones para navegar
+  const goToNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const goToPreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  // -----------------------------
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedIntervencion, setSelectedIntervencion] = useState<IntervencionDto | null>(null);
@@ -76,7 +91,7 @@ export function MisIntervenciones({ intervenciones, onRefresh }: MisIntervencion
 
   return (
     <div className="flex flex-col gap-4">
-      {intervenciones.map((intervencion) => (
+      {currentIntervenciones.map((intervencion) => (
         <div
           key={intervencion.intervencionId}
           className="p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
@@ -176,6 +191,50 @@ export function MisIntervenciones({ intervenciones, onRefresh }: MisIntervencion
           </div>
         </div>
       ))}
+
+    {totalPages > 1 && (
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); goToPreviousPage(); }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {/* Generar números de página */}
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === pageNumber}
+                      onClick={(e) => { e.preventDefault(); setCurrentPage(pageNumber); }}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); goToNextPage(); }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Página {currentPage} de {totalPages} ({intervenciones.length} registros)
+          </p>
+        </div>
+      )}
+
     </div>
   );
 }

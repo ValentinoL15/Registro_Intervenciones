@@ -22,13 +22,13 @@ import { useLoader } from "@/lib/spinnerService";
 interface createProfesionalDTO {
   onSubmit: (data: {
     tipo: DestinyType,
-      nombre: string
-      fecha: string,
-      hora: string,
-      motivo: string,
-      intervencion: IntervencionType
-      observaciones: string,
-      profesionalesIds: string[]
+    nombre: string
+    fecha: string,
+    hora: string,
+    motivo: string,
+    intervencion: IntervencionType
+    observaciones: string,
+    profesionalesIds: string[]
   }) => void;
 }
 
@@ -40,7 +40,7 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
   const [motivo, setMotivo] = useState("");
   const [intervencion, setTipoIntervencion] = useState<IntervencionType>("INDIVIDUAL");
   const [observaciones, setObservaciones] = useState("");
-  const [profesionalesIds, setProfesionalesIds]= useState<string[]>([])
+  const [profesionalesIds, setProfesionalesIds] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +49,7 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
 
       showLoader()
@@ -57,26 +57,26 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
       const fechaCompleta = `${fecha}T${hora}${hora.length === 5 ? ":00" : ""}`;
 
       await onSubmit({
-      fecha: fechaCompleta,
-      hora,
-      tipo,
-      nombre,
-      motivo,
-      intervencion,
-      observaciones,
-      profesionalesIds
-    });
+        fecha: fechaCompleta,
+        hora,
+        tipo,
+        nombre,
+        motivo,
+        intervencion,
+        observaciones,
+        profesionalesIds
+      });
 
-    // Reset form
-    setFecha("");
-    setHora("");
-    setTipo("FAMILIA");
-    setNombre("");
-    setMotivo("");
-    setTipoIntervencion("INDIVIDUAL");
-    setObservaciones("");
-    setProfesionalesIds([])
-    setIsSubmitting(false);
+      // Reset form
+      setFecha("");
+      setHora("");
+      setTipo("FAMILIA");
+      setNombre("");
+      setMotivo("");
+      setTipoIntervencion("INDIVIDUAL");
+      setObservaciones("");
+      setProfesionalesIds([])
+      setIsSubmitting(false);
 
     } catch (err: any) {
       console.error(err.message)
@@ -148,10 +148,11 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
         </RadioGroup>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="nombre">
           Nombre de la {tipo === "FAMILIA" ? "familia" : "institución"}
         </Label>
+
         <Input
           id="nombre"
           value={nombre}
@@ -163,20 +164,47 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
           }
           required
           disabled={isSubmitting}
+          maxLength={30} // Límite de caracteres
+          className={nombre.length >= 30 ? "border-destructive focus-visible:ring-destructive" : ""}
         />
+
+        <div className="flex justify-end px-1">
+          <span
+            className={`text-[10px] font-medium transition-colors ${nombre.length >= 30
+                ? "text-destructive"
+                : "text-muted-foreground/60"
+              }`}
+          >
+            {nombre.length} / 30
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="motivo">Motivo de la intervención</Label>
-        <Textarea
-          id="motivo"
-          value={motivo}
-          onChange={(e) => setMotivo(e.target.value)}
-          placeholder="Describe el motivo o propósito de la intervención..."
-          rows={3}
-          required
-          disabled={isSubmitting}
-        />
+
+        <div className="relative">
+          <Textarea
+            id="motivo"
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Describe el motivo o propósito de la intervención..."
+            rows={4}
+            required
+            disabled={isSubmitting}
+            maxLength={60}
+            className="resize-none pb-8" // Añadimos padding abajo para que el texto no pise el contador
+          />
+
+          <div className="absolute bottom-2 right-3">
+            <span
+              className={`text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm ${motivo.length >= 60 ? 'text-destructive' : 'text-muted-foreground'
+                }`}
+            >
+              {motivo.length} / 60
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -212,22 +240,38 @@ export function IntervencionForm({ onSubmit }: createProfesionalDTO) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="observaciones">Observaciones (opcional)</Label>
-        <Textarea
-          id="observaciones"
-          value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
-          placeholder="Notas adicionales sobre la intervención..."
-          rows={2}
-          disabled={isSubmitting}
-        />
+
+        <div className="relative">
+          <Textarea
+            id="observaciones"
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            placeholder="Notas adicionales sobre la intervención..."
+            rows={3}
+            disabled={isSubmitting}
+            maxLength={200}
+            className="resize-none pb-7" // Espacio inferior para que el texto no se solape con el contador
+          />
+
+          <div className="absolute bottom-2 right-3 pointer-events-none">
+            <span
+              className={`text-[10px] font-mono font-medium px-1 rounded ${observaciones.length >= 200
+                ? 'text-destructive'
+                : 'text-muted-foreground/70'
+                }`}
+            >
+              {observaciones.length}/200
+            </span>
+          </div>
+        </div>
       </div>
 
-        {error && (
-                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
         {isSubmitting ? (

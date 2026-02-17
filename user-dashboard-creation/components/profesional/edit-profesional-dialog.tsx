@@ -37,7 +37,7 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
   const [tipoInter, setTipoIntervencion] = useState<IntervencionType>("INDIVIDUAL");
   const [observaciones, setObservaciones] = useState("");
   const [profesionalesIds, setProfesionalesIds] = useState<string[]>([])
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -60,27 +60,27 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
     setError("");
 
     try {
-      
-      if(intervencion) {
-      const fechaISO = `${fecha}T${hora.length === 5 ? hora + ":00" : hora}`;
-      
-      const updatedData = {
-        ...intervencion,
-        fecha: fechaISO,
-        hora,
-        tipo,
-        nombre,
-        motivo,
-        intervencion: tipoInter,
-        observaciones,
-        profesionalesIds
-      };
 
-      await profesionalApi.editIntervencion(intervencion.intervencionId, updatedData);
-      onSuccess();
-      onOpenChange(false); 
+      if (intervencion) {
+        const fechaISO = `${fecha}T${hora.length === 5 ? hora + ":00" : hora}`;
+
+        const updatedData = {
+          ...intervencion,
+          fecha: fechaISO,
+          hora,
+          tipo,
+          nombre,
+          motivo,
+          intervencion: tipoInter,
+          observaciones,
+          profesionalesIds
+        };
+
+        await profesionalApi.editIntervencion(intervencion.intervencionId, updatedData);
+        onSuccess();
+        onOpenChange(false);
       }
-      
+
     } catch (err: any) {
       setError(err.message || "Error al actualizar la intervención");
       console.error(err.message)
@@ -155,24 +155,40 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
             <Label htmlFor="nombre">
               Nombre de la {tipo === "FAMILIA" ? "familia" : "institución"}
             </Label>
-            <Input
-              id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+                maxLength={30}
+                className={nombre.length >= 30 ? "border-destructive focus-visible:ring-destructive pr-12" : "pr-12"}
+              />
+              <span className={`absolute right-3 bottom-2.5 text-[10px] font-medium ${nombre.length >= 30 ? 'text-destructive' : 'text-muted-foreground/60'}`}>
+                {nombre.length}/30
+              </span>
+            </div>
           </div>
 
           {/* MOTIVO */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="edit-motivo">Motivo de la intervención</Label>
-            <Textarea
-              id="edit-motivo"
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              rows={3}
-              required
-            />
+            <div className="relative">
+              <Textarea
+                id="edit-motivo"
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                rows={3}
+                required
+                maxLength={500}
+                className="resize-none pb-8"
+              />
+              <div className="absolute bottom-2 right-3 pointer-events-none">
+                <span className={`text-[10px] font-medium px-1 rounded bg-background/80 backdrop-blur-sm ${motivo.length >= 500 ? 'text-destructive' : 'text-muted-foreground/60'}`}>
+                  {motivo.length}/500
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* TIPO INTERVENCION */}
@@ -201,12 +217,21 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
           {/* OBSERVACIONES */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="edit-obs">Observaciones (opcional)</Label>
-            <Textarea
-              id="edit-obs"
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-              rows={2}
-            />
+            <div className="relative">
+              <Textarea
+                id="edit-obs"
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+                rows={2}
+                maxLength={200}
+                className="resize-none pb-8"
+              />
+              <div className="absolute bottom-2 right-3 pointer-events-none">
+                <span className={`text-[10px] font-medium px-1 rounded bg-background/80 backdrop-blur-sm ${observaciones.length >= 200 ? 'text-destructive' : 'text-muted-foreground/60'}`}>
+                  {observaciones.length}/200
+                </span>
+              </div>
+            </div>
           </div>
 
           {error && (

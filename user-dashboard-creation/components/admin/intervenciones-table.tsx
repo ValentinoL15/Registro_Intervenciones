@@ -1,6 +1,6 @@
 "use client";
 
-import type { Intervencion } from "@/lib/types";
+import type { Intervencion, IntervencionDto } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -10,10 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, User, Home, Building } from "lucide-react";
+import { Users, User, Home, Building, Eye } from "lucide-react";
+import { profesionalApi } from "@/service/api";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import { ViewObs } from "./view-obs";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
 
 interface IntervencionesTableProps {
-  intervenciones: Intervencion[];
+  intervenciones: IntervencionDto[];
   getProfesionalName: (id: string) => string;
 }
 
@@ -21,6 +26,24 @@ export function IntervencionesTable({
   intervenciones,
   getProfesionalName,
 }: IntervencionesTableProps) {
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+const totalPages = Math.ceil(intervenciones.length / itemsPerPage);
+
+const startIndex = (currentPage - 1) * itemsPerPage;
+const currentIntervenciones = intervenciones.slice(
+  startIndex,
+  startIndex + itemsPerPage
+);
+
+const goToNextPage = () =>
+  setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+const goToPreviousPage = () =>
+  setCurrentPage((prev) => Math.max(prev - 1, 1));
+
   const formatDate = (fecha: string) => {
     return new Date(fecha).toLocaleDateString("es-AR", {
       day: "2-digit",
@@ -28,6 +51,12 @@ export function IntervencionesTable({
       year: "numeric",
     });
   };
+
+  useEffect(() => {
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages || 1);
+  }
+}, [intervenciones.length]);
 
   if (intervenciones.length === 0) {
     return (
@@ -49,12 +78,13 @@ export function IntervencionesTable({
             <TableHead>Profesional</TableHead>
             <TableHead>Destinatario</TableHead>
             <TableHead>Motivo</TableHead>
+            <TableHead className="text-center">Observaciones</TableHead>
             <TableHead className="text-center">Tipo</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {intervenciones.map((intervencion) => (
-            <TableRow key={intervencion.id}>
+          {currentIntervenciones.map((intervencion) => (
+            <TableRow key={intervencion.intervencionId}>
               <TableCell className="font-medium">
                 {formatDate(intervencion.fecha)}
               </TableCell>
@@ -62,20 +92,17 @@ export function IntervencionesTable({
                 {intervencion.hora}
               </TableCell>
               <TableCell>
-                {getProfesionalName(intervencion.profesionalUserId)}
+                {getProfesionalName(intervencion.creadorId)}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  {intervencion.destinatario === "familia" ? (
+                  {intervencion.tipo === "FAMILIA" ? (
                     <Home className="w-4 h-4 text-muted-foreground" />
                   ) : (
                     <Building className="w-4 h-4 text-muted-foreground" />
                   )}
                   <div>
-                    <p className="text-sm">{intervencion.nombreDestinatario}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {intervencion.destinatario}
-                    </p>
+                    <p className="text-sm">{intervencion.nombre}</p>
                   </div>
                 </div>
               </TableCell>
@@ -83,20 +110,29 @@ export function IntervencionesTable({
                 <p className="text-sm line-clamp-2">{intervencion.motivo}</p>
               </TableCell>
               <TableCell className="text-center">
+                {intervencion.observaciones?.trim() ? (
+                  <ViewObs intervencion={intervencion} />
+                ) : (
+                  <div className="flex items-center justify-center gap-1.5 text-muted-foreground/50 italic text-[13px]">
+                    <span>Sin observaciones</span>
+                  </div>
+                )}
+              </TableCell>
+              <TableCell className="text-center">
                 <Badge
                   variant={
-                    intervencion.tipoIntervencion === "EQUIPO"
+                    intervencion.intervencion === "EQUIPO"
                       ? "default"
                       : "secondary"
                   }
                   className="gap-1"
                 >
-                  {intervencion.tipoIntervencion === "EQUIPO" ? (
+                  {intervencion.intervencion === "EQUIPO" ? (
                     <Users className="w-3 h-3" />
                   ) : (
                     <User className="w-3 h-3" />
                   )}
-                  {intervencion.tipoIntervencion === "EQUIPO"
+                  {intervencion.intervencion === "EQUIPO"
                     ? "Equipo"
                     : "Individual"}
                 </Badge>
@@ -105,6 +141,70 @@ export function IntervencionesTable({
           ))}
         </TableBody>
       </Table>
+
+      {totalPages > 1 && (
+  <div className="mt-4">
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              goToPreviousPage();
+            }}
+            className={
+              currentPage === 1
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
+          />
+        </PaginationItem>
+
+        {[...Array(totalPages)].map((_, index) => {
+          const pageNumber = index + 1;
+          return (
+            <PaginationItem key={pageNumber}>
+              <PaginationLink
+                href="#"
+                isActive={currentPage === pageNumber}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(pageNumber);
+                }}
+              >
+                {pageNumber}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        })}
+
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              goToNextPage();
+            }}
+            className={
+              currentPage === totalPages
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+
+    <p className="text-center text-xs text-muted-foreground mt-2">
+      Página {currentPage} de {totalPages} ({intervenciones.length} registros)
+    </p>
+  </div>
+)}
+
     </div>
+
+
+
   );
 }

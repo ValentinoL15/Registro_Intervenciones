@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { dataStore } from "@/lib/store";
-import type { User, Intervencion, DiaSemana, Turno, createProfesionalDTO } from "@/lib/types";
+import type { User, DiaSemana, Turno, createProfesionalDTO, IntervencionDto } from "@/lib/types";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { ProfesionalesTable } from "@/components/admin/profesionales-table";
 import { IntervencionesTable } from "@/components/admin/intervenciones-table";
@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const [profesionales, setProfesionales] = useState<User[]>([]);
   const [activeProfs, setActiveProfs] = useState<User[]>([])
-  const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
+  const [intervenciones, setIntervenciones] = useState<IntervencionDto[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -37,6 +37,15 @@ export default function AdminDashboard() {
   }
 };
 
+const loadIntervenciones = async() => {
+  try {
+    const data = await profesionalApi.getIntervenciones();
+    setIntervenciones([...data.content])
+  } catch(err: any) {
+    console.error(err)
+  }
+}
+
   useEffect(() => {
   if (!isLoading) {
     if (!user) {
@@ -46,6 +55,7 @@ export default function AdminDashboard() {
     } else {
       // Cargar profesionales cuando el usuario es admin
       loadProfesionales();
+      loadIntervenciones();
     }
   }
 }, [user, isLoading, router]); // Removemos loadProfesionales de las dependencias
