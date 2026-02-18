@@ -26,9 +26,10 @@ public class ChangePasswordController {
 
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam("token") String token,
+    @PostMapping("/reset-password/{token}") // 1. Agregamos el marcador en la ruta
+    public ResponseEntity<?> resetPassword(@PathVariable("token") String token, // 2. Cambiamos a @PathVariable
                                            @Valid @RequestBody PasswordRequest password){
+
         ChangePassword changePassword = changePasswordRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("El token expiró o no se encuentra disponible"));
 
@@ -39,7 +40,8 @@ public class ChangePasswordController {
             }
             return ResponseEntity.status(HttpStatus.GONE).body("El enlace ya no es válido o ha expirado");
         }
-        return ResponseEntity.ok(changePasswordService.changePassword(token,password.password()));
+
+        return ResponseEntity.ok(changePasswordService.changePassword(token, password.password()));
     }
 
 }

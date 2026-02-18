@@ -91,7 +91,7 @@ public class EmailServiceImp implements IEmailService {
 
         Context context = new Context();
         context.setVariable("username", user.getUsername());
-        String recoveryUrl = "http://localhost:3000/resetear-password?token=" + token;
+        String recoveryUrl = "http://localhost:3000/reset-password/" + token;
         context.setVariable("url", recoveryUrl);
 
         String process = templateEngine.process("ForgotPassword", context);
