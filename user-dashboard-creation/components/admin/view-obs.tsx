@@ -32,7 +32,7 @@ export function ViewObs({ intervencion }: { intervencion: any }) {
             Detalle registrado por el profesional para esta intervención.
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4 p-4 rounded-lg bg-muted/50 border text-sm leading-relaxed whitespace-pre-wrap">
+        <div className="mt-4 p-4 rounded-lg bg-muted/50 border text-sm leading-relaxed whitespace-pre-wrap break-all">
           {intervencion.observaciones}
         </div>
       </DialogContent>

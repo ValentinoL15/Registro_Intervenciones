@@ -174,7 +174,7 @@ export function MisIntervenciones({ intervenciones, onRefresh }: MisIntervencion
           </p>
 
           {intervencion.observaciones && (
-            <p className="text-sm text-muted-foreground italic mb-3 p-2 rounded bg-muted/50">
+            <p className="text-sm text-muted-foreground italic mb-3 p-2 rounded bg-muted/50 break-all">
               {intervencion.observaciones}
             </p>
           )}

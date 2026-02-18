@@ -102,7 +102,7 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-4 w-full overflow-hidden">
           {/* FECHA Y HORA */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -215,16 +215,18 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
           </div>
 
           {/* OBSERVACIONES */}
-          <div className="flex flex-col gap-2">
+          {/* OBSERVACIONES */}
+          <div className="flex flex-col gap-2 w-full"> {/* Aseguramos w-full aquí */}
             <Label htmlFor="edit-obs">Observaciones (opcional)</Label>
-            <div className="relative">
+            <div className="relative w-full">
               <Textarea
                 id="edit-obs"
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
                 rows={2}
                 maxLength={200}
-                className="resize-none pb-8"
+                // Añadimos break-words para que las palabras largas no rompan el layout
+                className="resize-none pb-8 break-words w-full"
               />
               <div className="absolute bottom-2 right-3 pointer-events-none">
                 <span className={`text-[10px] font-medium px-1 rounded bg-background/80 backdrop-blur-sm ${observaciones.length >= 200 ? 'text-destructive' : 'text-muted-foreground/60'}`}>
