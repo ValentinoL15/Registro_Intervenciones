@@ -89,10 +89,13 @@ public class ProfesionalService implements IProfesionalService {
             profesional.setDays(profesionalDto.getDays());
         }
         if(profesionalDto.getUsername() != null) {
-            if(userRepository.existsByUsername(profesionalDto.getUsername())){
-                throw new RuntimeException("EL username ya está en uso, por favor elige otro");
+            // Solo validar si el username que llega es distinto al que ya tiene el profesional
+            if (!profesionalDto.getUsername().equals(profesional.getUsername())) {
+                if(userRepository.existsByUsername(profesionalDto.getUsername())){
+                    throw new RuntimeException("El username ya está en uso, por favor elige otro");
+                }
+                profesional.setUsername(profesionalDto.getUsername());
             }
-            profesional.setUsername(profesionalDto.getUsername());
         }
         if(profesionalDto.getHourly() != null) {
             profesional.setHourly(profesionalDto.getHourly());

@@ -37,7 +37,7 @@ security:
       key: ${PRIVATE_KEY}
     user:
       generator: ${USER_GENERATOR}
-    expiration: 6000000000
+    expiration: 2592000000
 
 logging:
   level:

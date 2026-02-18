@@ -59,6 +59,38 @@ public class IntervencionService implements InIntervencionService {
     }
 
     @Override
+    public Page<IntervencionDto> getMyIntervenciones(Pageable pageable, String currentUser) {
+
+        User user = userRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("No se encuentra el usuario"));
+
+        if (!user.getUsername().equals(currentUser)) {
+            throw new RuntimeException("Accesso denegado: No tienes los permisos suficientes para ver las intervenciones");
+        }
+
+        Page<Intervencion> intervenciones = intervencionRepository.findByCreadorUserId(pageable, user.getUserId());
+
+        return intervenciones.map(intervencion -> {
+            List<Long> idsProfesionales = intervencion.getProfesionales().stream()
+                    .map(Profesional::getUserId)
+                    .collect(Collectors.toList());
+
+            return new IntervencionDto(
+                    intervencion.getIntervencionId(),
+                    intervencion.getCreador().getUserId(),
+                    intervencion.getTipo(),
+                    intervencion.getNombre(),
+                    intervencion.getFecha(),
+                    intervencion.getHora(),
+                    intervencion.getMotivo(),
+                    intervencion.getIntervencion(),
+                    intervencion.getObservaciones(),
+                    idsProfesionales
+            );
+        });
+    }
+
+    @Override
     @Transactional
     public IntervencionDto getIntervencion(Long intervencion_id) {
         Intervencion intervencion = intervencionRepository.findById(intervencion_id)

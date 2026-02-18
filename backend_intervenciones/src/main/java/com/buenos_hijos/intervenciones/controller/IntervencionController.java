@@ -27,10 +27,16 @@ public class IntervencionController {
         return ResponseEntity.ok(intervencionService.getAllIntervenciones(pageable));
     }
 
+    @GetMapping("/mis-intervenciones")
+    public ResponseEntity<Page<IntervencionDto>> getMyIntervenciones(@PageableDefault Pageable pageable,Principal principal){
+        return ResponseEntity.ok(intervencionService.getMyIntervenciones(pageable, principal.getName()));
+    }
+
     @GetMapping("/{intervencion_id}")
     public ResponseEntity<IntervencionDto> getIntervencion(@PathVariable Long intervencion_id){
         return ResponseEntity.ok(intervencionService.getIntervencion(intervencion_id));
     }
+
 
     @PostMapping("/create")
     public ResponseEntity<GeneralResponse> saveIntervencion(@Valid @RequestBody CreateIntervencionDto intervencionDto,

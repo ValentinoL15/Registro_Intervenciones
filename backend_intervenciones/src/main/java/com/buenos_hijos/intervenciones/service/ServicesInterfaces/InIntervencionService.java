@@ -13,6 +13,8 @@ public interface InIntervencionService {
 
     public Page<IntervencionDto> getAllIntervenciones(Pageable pageable);
 
+    public Page<IntervencionDto> getMyIntervenciones(Pageable pageable, String currentUser);
+
     public IntervencionDto getIntervencion(Long intervencion_id);
 
     public GeneralResponse saveIntervencion(CreateIntervencionDto intervencionDto, String currentUser);
