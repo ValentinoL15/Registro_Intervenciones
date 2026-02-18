@@ -78,6 +78,15 @@ export interface createProfesionalDTO {
   role: UserRole
 }
 
+export interface EditProfesionalDTO {
+  name: string,
+  lastname: string,
+  username: string,
+  hourly: string,
+  turno: Turno,
+  days: DiaSemana[]
+}
+
 export interface IntervencionDto {
   intervencionId: string,
   creadorId: string,

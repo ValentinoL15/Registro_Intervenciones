@@ -6,6 +6,8 @@ const api = axios.create({
   baseURL: API_BASE_URL
 });
 
+
+
 // Interceptor de Petición: Envía el token si existe
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
@@ -23,16 +25,12 @@ api.interceptors.response.use(
   async (error) => {
     // Si el error es 401 (No autorizado), significa que el token no sirve
     if (error.response?.status === 401) {
-      console.warn("Sesión expirada o token inválido. Redirigiendo al login...");
-      
-      // Limpiamos los datos del usuario
-      localStorage.removeItem("authToken");
-      // Si usas el AuthContext, aquí también deberías resetearlo, pero
-      // esta redirección forzada limpiará el estado de la app:
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    localStorage.clear();
+    if (typeof window !== "undefined") {
+        // Añadimos un parámetro a la URL
+        window.location.href = "/?error=session_expired";
     }
+}
 
     return Promise.reject(error);
   }

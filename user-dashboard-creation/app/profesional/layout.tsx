@@ -18,7 +18,7 @@ export default function ProfesionalLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !user?.active) {
       router.push("/");
     }
     console.log("USER:", user);

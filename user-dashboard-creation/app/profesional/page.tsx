@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { dataStore } from "@/lib/store";
-import { DestinyType, IntervencionType, User, type Intervencion, type TipoDestinatario, type TipoIntervencion } from "@/lib/types";
+import { DestinyType, IntervencionDto, IntervencionType, User, type Intervencion } from "@/lib/types";
 import { ProfesionalHeader } from "@/components/profesional/profesional-header";
 import { IntervencionForm } from "@/components/profesional/intervencion-form";
 import { MisIntervenciones } from "@/components/profesional/mis-intervenciones";
@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ProfesionalDashboard() {
   const { user, isLoading } = useAuth();
-  const [intervenciones, setIntervenciones] = useState<Intervencion[]>([]);
+  const [intervenciones, setIntervenciones] = useState<IntervencionDto[]>([]);
   const [activeTab, setActiveTab] = useState("nueva");
   const [error, setError] = useState("")
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function ProfesionalDashboard() {
 
   const loadIntervenciones = async () => {
     try {
-      const data = await profesionalApi.getIntervenciones()
+      const data = await profesionalApi.getMyIntervenciones()
       setIntervenciones([...data.content])
     } catch(err:any) {
       console.error(err)

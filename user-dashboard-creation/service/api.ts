@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EmailDto, GeneralResponse, IntervencionDto, User } from '@/lib/types';
+import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditProfesionalDTO, EmailDto, GeneralResponse, IntervencionDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -159,6 +159,13 @@ export const profesionalApi = {
     })
   },
 
+  editProfesional: async(data: EditProfesionalDTO): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/profesional/edit-profesional`, {
+      method: "PUT",
+      body: JSON.stringify(data)
+    })
+  },
+
   /////////////////INTERVENCIONES/////////////////////
 
   createIntervencion: async(intervencion:CreateIntervencionDto): Promise<GeneralResponse> => {
@@ -176,6 +183,12 @@ export const profesionalApi = {
 
   getIntervencion: async(intervencionId: string): Promise<IntervencionDto> => {
     return apiCall<IntervencionDto>(`/intervenciones/${intervencionId}`, {
+      method: "GET"
+    })
+  },
+
+  getMyIntervenciones: async(): Promise<IntervencionDto[]> => {
+    return apiCall<IntervencionDto[]>(`/intervenciones/mis-intervenciones`, {
       method: "GET"
     })
   },

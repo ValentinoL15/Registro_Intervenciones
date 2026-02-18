@@ -25,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
 
 interface ProfileInterface {
   user: User
@@ -33,6 +35,8 @@ interface ProfileInterface {
 export function Profile({
   user
 }: ProfileInterface) {
+
+  const { checkAuth } = useAuth();
 
   const router = useRouter();
   const [profesional, setProfesional] = useState<User | null>(null);
@@ -65,6 +69,41 @@ export function Profile({
   !days.every(d => profesional?.days?.includes(d));
 
   const isButtonDisabled = !hasChanges || isSubmitting;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isButtonDisabled) return;
+
+    setIsSubmitting(true);
+    
+    // Construimos el objeto con los datos actualizados
+    const updatedData = {
+      name,
+      lastname,
+      username,
+      hourly,
+      turno,
+      days
+    };
+
+    try {
+      const updatedProf = await profesionalApi.editProfesional(updatedData);
+      
+      setProfesional(updatedProf);
+
+      await checkAuth();
+
+      toast({
+        title: "Éxitoso",
+        description: "Perfil actualizado correctamente"
+      })
+    } catch (err: any) {
+      console.error("Error al actualizar:", err);
+      // Opcional: Mostrar error al usuario
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -140,7 +179,7 @@ export function Profile({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* NOMBRE */}
@@ -252,9 +291,7 @@ export function Profile({
               )}
             </div>
           </div>
-        </form>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-3 border-t pt-6">
+           <CardFooter className="flex flex-col gap-3 border-t pt-6">
         <Button
           type="submit"
           className="w-full"
@@ -276,6 +313,8 @@ export function Profile({
           </p>
         )}
       </CardFooter>
+        </form>
+      </CardContent>
     </Card>
   )
 }

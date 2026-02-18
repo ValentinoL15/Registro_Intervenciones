@@ -14,6 +14,9 @@ import { authAPI } from "@/service/api"
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  setUser: (user: User | null) => void;
+  reloadUser: () => Promise<void>;
+  checkAuth:() => Promise<void>;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>; // Cambiar a Promise<void>
   logout: () => void;
@@ -25,30 +28,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (typeof window === "undefined") {
-        setIsLoading(false);
-        return;
-      }
+  const checkAuth = useCallback(async () => {
+    if (typeof window === "undefined") return;
 
-      const token = localStorage.getItem("authToken");
-      const userId = localStorage.getItem("userId");
-      
-      if (token && userId) {
-        try {
-          const userData = await authAPI.getUser(Number(userId));
-          setUser(userData);
-        } catch (err) {
-          console.error("Error validando sesión:", err);
-          localStorage.clear();
-        }
+    const token = localStorage.getItem("authToken");
+    const userId = localStorage.getItem("userId");
+    
+    if (token && userId) {
+      try {
+        const userData = await authAPI.getUser(Number(userId));
+        setUser(userData);
+      } catch (err) {
+        console.error("Error validando sesión:", err);
+        localStorage.clear();
+        setUser(null);
       }
-      setIsLoading(false);
     }
+  }, []);
 
-    checkAuth();
-  }, []); // Dependencias vacías - solo se ejecuta una vez al montar
+  useEffect(() => {
+    const init = async () => {
+      await checkAuth();
+      setIsLoading(false);
+    };
+    init();
+  }, [checkAuth]); 
 
   const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
@@ -97,8 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         isAuthenticated: !!user,
         isLoading,
+        checkAuth,
         login,
         logout,
       }}

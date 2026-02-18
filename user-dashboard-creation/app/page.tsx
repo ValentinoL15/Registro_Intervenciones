@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react"
+import React, { useEffect } from "react"
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, Loader2, Heart } from "lucide-react";
 import { log } from "console";
+import { toast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,6 +28,20 @@ export default function LoginPage() {
 
   const { login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    const errorType = searchParams.get("error");
+    
+    if (errorType === "session_expired") {
+
+      // Opción B: Usar tu estado de error local
+      setError("Sesión expirada. Por favor identifícate de nuevo.");
+
+      // Limpiar la URL para que el mensaje no reaparezca al F5
+      const newUrl = window.location.pathname;
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
