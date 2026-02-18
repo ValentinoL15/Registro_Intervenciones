@@ -34,7 +34,6 @@ public class CreateIntervencionDto {
     private String motivo;
     @NotNull(message = "Debes colocar si la intervención fue realizada en equipo o individualemente")
     private Intervencion.IntervencionType intervencion;
-    @Size(min = 3,max = 200, message = "La observación debe tener entre {min} y {max} caracteres")
     private String observaciones;
 
     private List<Long> profesionalesIds;

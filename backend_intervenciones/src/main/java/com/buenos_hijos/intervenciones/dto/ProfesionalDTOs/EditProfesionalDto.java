@@ -31,4 +31,5 @@ public class EditProfesionalDto {
 
     private Profesional.Turnstype turno;
 
+
 }
