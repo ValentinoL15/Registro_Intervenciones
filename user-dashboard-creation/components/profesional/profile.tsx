@@ -27,6 +27,14 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ProfileInterface {
   user: User
@@ -36,7 +44,7 @@ export function Profile({
   user
 }: ProfileInterface) {
 
-  const { checkAuth } = useAuth();
+  const { checkAuth, logout } = useAuth();
 
   const router = useRouter();
   const [profesional, setProfesional] = useState<User | null>(null);
@@ -48,6 +56,7 @@ export function Profile({
   const [hourly, setHourly] = useState("")
   const [turno, setTurno] = useState<Turno>("MAÑANA");
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
 
   const DIAS_OPTIONS = [
@@ -60,13 +69,13 @@ export function Profile({
   ];
 
   const hasChanges =
-  name !== profesional?.name ||
-  lastname !== profesional?.lastname ||
-  username !== profesional?.username ||
-  hourly !== profesional?.hourly ||
-  turno !== profesional?.turno ||
-  days.length !== profesional?.days?.length ||
-  !days.every(d => profesional?.days?.includes(d));
+    name !== profesional?.name ||
+    lastname !== profesional?.lastname ||
+    username !== profesional?.username ||
+    hourly !== profesional?.hourly ||
+    turno !== profesional?.turno ||
+    days.length !== profesional?.days?.length ||
+    !days.every(d => profesional?.days?.includes(d));
 
   const isButtonDisabled = !hasChanges || isSubmitting;
 
@@ -75,7 +84,7 @@ export function Profile({
     if (isButtonDisabled) return;
 
     setIsSubmitting(true);
-    
+
     // Construimos el objeto con los datos actualizados
     const updatedData = {
       name,
@@ -88,7 +97,7 @@ export function Profile({
 
     try {
       const updatedProf = await profesionalApi.editProfesional(updatedData);
-      
+
       setProfesional(updatedProf);
 
       await checkAuth();
@@ -159,6 +168,32 @@ export function Profile({
     loadProfesional();
   }, [user, router]);
 
+  const handleRequestPasswordReset = async () => {
+  setIsSubmitting(true);
+  try {
+    await profesionalApi.requestEmail(profesional!.email);
+    
+    toast({
+      title: "Correo enviado",
+      description: `Se ha enviado un enlace a ${profesional!.email}. Tu sesión se cerrará por seguridad.`,
+    });
+
+    setTimeout(() => {
+      logout(); // Esto debería limpiar localStorage y redirigir a "/"
+    }, 3000);
+
+  } catch (err: any) {
+    toast({
+      title: "Error",
+      description: "No se pudo enviar el correo.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+    setIsPasswordModalOpen(false);
+  }
+};
+
   if (loading || !profesional) {
     return (
       <Card className="w-full max-w-lg flex items-center justify-center p-20">
@@ -168,153 +203,183 @@ export function Profile({
   }
 
   return (
-    <Card className="w-full max-w-lg ">
-      <CardHeader className="space-y-1">
-        <div className="flex items-center gap-2">
-          <UserIcon className="w-5 h-5 text-primary" />
-          <CardTitle className="text-2xl">Mi Perfil</CardTitle>
-        </div>
-        <CardDescription>
-          Gestiona tu información personal y preferencias de cuenta.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* NOMBRE */}
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name} // Usamos el estado 'name', no 'profesional.name'
-                  onChange={(e) => setName(e.target.value)} // Esto permite escribir
-                  placeholder="Tu nombre"
-                  required
-                />
-              </div>
-
-              {/* APELLIDO */}
-              <div className="grid gap-2">
-                <Label htmlFor="lastname">Apellido</Label>
-                <Input
-                  id="lastname"
-                  type="text"
-                  value={lastname} // Usamos el estado 'lastname'
-                  onChange={(e) => setLastname(e.target.value)} // Esto permite escribir
-                  placeholder="Tu apellido"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profesional.email}
-                disabled={true}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
-                  className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
-                  Cambiar contraseña
-                </a>
-              </div>
-              <Input id="password" type="password" value={"********"} disabled={true} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)} // Esto permite escribir
-                required
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* CARGA HORARIA */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
-                <Input
-                  id="hourly"
-                  type="number"
-                  value={hourly}
-                  onChange={(e) => setHourly(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* TURNO */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="turno">Turno</Label>
-                <Select value={turno} onValueChange={(v: any) => setTurno(v)}>
-                  <SelectTrigger id="turno">
-                    <SelectValue placeholder="Seleccionar turno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MAÑANA">Mañana</SelectItem>
-                    <SelectItem value="TARDE">Tarde</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-3">
-              <Label className="text-base">Días de trabajo</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-lg border bg-muted/20">
-                {DIAS_OPTIONS.map((dia) => (
-                  <div key={dia.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`edit-${dia.value}`}
-                      checked={days.includes(dia.value)}
-                      onCheckedChange={() => handleDiaToggle(dia.value)}
-                    />
-                    <Label
-                      htmlFor={`edit-${dia.value}`}
-                      className="text-sm font-normal cursor-pointer select-none"
-                    >
-                      {dia.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              {days.length === 0 && (
-                <p className="text-xs text-destructive">Selecciona al menos un día.</p>
-              )}
-            </div>
+    <>
+      <Card className="w-full max-w-lg ">
+        <CardHeader className="space-y-1">
+          <div className="flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-primary" />
+            <CardTitle className="text-2xl">Mi Perfil</CardTitle>
           </div>
-           <CardFooter className="flex flex-col gap-3 border-t pt-6">
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isButtonDisabled}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Guardando...
-            </>
-          ) : (
-            "Guardar Cambios"
-          )}
-        </Button>
+          <CardDescription>
+            Gestiona tu información personal y preferencias de cuenta.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* NOMBRE */}
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Nombre</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name} // Usamos el estado 'name', no 'profesional.name'
+                    onChange={(e) => setName(e.target.value)} // Esto permite escribir
+                    placeholder="Tu nombre"
+                    required
+                  />
+                </div>
 
-        {!hasChanges && !isSubmitting && (
-          <p className="text-[11px] text-muted-foreground text-center">
-            No se han detectado cambios para guardar.
-          </p>
-        )}
-      </CardFooter>
-        </form>
-      </CardContent>
-    </Card>
+                {/* APELLIDO */}
+                <div className="grid gap-2">
+                  <Label htmlFor="lastname">Apellido</Label>
+                  <Input
+                    id="lastname"
+                    type="text"
+                    value={lastname} // Usamos el estado 'lastname'
+                    onChange={(e) => setLastname(e.target.value)} // Esto permite escribir
+                    placeholder="Tu apellido"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profesional.email}
+                  disabled={true}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  {/* Cambiamos el <a> por un <button> para que no recargue la página */}
+                  <button
+                    type="button"
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    className="ml-auto inline-block text-sm font-medium text-primary underline-offset-4 hover:underline cursor-pointer"
+                  >
+                    Cambiar contraseña
+                  </button>
+                </div>
+                <Input id="password" type="password" value={"********"} disabled={true} required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)} // Esto permite escribir
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* CARGA HORARIA */}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
+                  <Input
+                    id="hourly"
+                    type="number"
+                    value={hourly}
+                    onChange={(e) => setHourly(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* TURNO */}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="turno">Turno</Label>
+                  <Select value={turno} onValueChange={(v: any) => setTurno(v)}>
+                    <SelectTrigger id="turno">
+                      <SelectValue placeholder="Seleccionar turno" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MAÑANA">Mañana</SelectItem>
+                      <SelectItem value="TARDE">Tarde</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-3">
+                <Label className="text-base">Días de trabajo</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-lg border bg-muted/20">
+                  {DIAS_OPTIONS.map((dia) => (
+                    <div key={dia.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-${dia.value}`}
+                        checked={days.includes(dia.value)}
+                        onCheckedChange={() => handleDiaToggle(dia.value)}
+                      />
+                      <Label
+                        htmlFor={`edit-${dia.value}`}
+                        className="text-sm font-normal cursor-pointer select-none"
+                      >
+                        {dia.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {days.length === 0 && (
+                  <p className="text-xs text-destructive">Selecciona al menos un día.</p>
+                )}
+              </div>
+            </div>
+            <CardFooter className="flex flex-col gap-3 border-t pt-6">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isButtonDisabled}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar Cambios"
+                )}
+              </Button>
+
+              {!hasChanges && !isSubmitting && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  No se han detectado cambios para guardar.
+                </p>
+              )}
+            </CardFooter>
+          </form>
+        </CardContent>
+      </Card>
+      <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Restablecer contraseña</DialogTitle>
+            <DialogDescription>
+              Se enviará un correo electrónico a <strong>{profesional?.email}</strong> con un enlace seguro para que puedas crear una nueva contraseña.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsPasswordModalOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRequestPasswordReset}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Enviar correo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

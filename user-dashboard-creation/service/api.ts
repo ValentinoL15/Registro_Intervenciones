@@ -166,6 +166,20 @@ export const profesionalApi = {
     })
   },
 
+requestEmail: async(email: string): Promise<GeneralResponse> => {
+  return apiCall(`/password/request-password-reset`, {
+    method: "POST",
+    // Enviamos como objeto para que el backend lo procese correctamente
+    body: JSON.stringify({ email }) 
+  })
+},
+
+changePasswordWithToken: async(token: string, password: string): Promise<GeneralResponse> => {
+  return apiCall(`/password/reset-password/${token}`, {
+    method: "POST",
+    body: JSON.stringify({ password }) 
+  })
+},
   /////////////////INTERVENCIONES/////////////////////
 
   createIntervencion: async(intervencion:CreateIntervencionDto): Promise<GeneralResponse> => {
