@@ -1,6 +1,6 @@
 package com.buenos_hijos.intervenciones.dto.ProfesionalDTOs;
 
-import com.buenos_hijos.intervenciones.model.Profesional;
+import com.buenos_hijos.intervenciones.dto.DisponibilidadDTOs.DisponibilidadDto;
 import com.buenos_hijos.intervenciones.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,8 +22,7 @@ public class ProfesionalDto {
     private String email;
     private User.RoleType role;
     private String hourly;
-    private List<Profesional.DaysType> days;
-    private Profesional.Turnstype turno;
+    private List<DisponibilidadDto> disponibilidades;
     private boolean active;
 
 }

@@ -5,8 +5,8 @@ import com.buenos_hijos.intervenciones.dto.AdminDTOs.CreateAdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.EditAdminDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
-import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
 import com.buenos_hijos.intervenciones.model.Admin;
+import com.buenos_hijos.intervenciones.model.Disponibilidad;
 import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.IAdminRepository;
@@ -25,7 +25,10 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Date;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -131,6 +134,29 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("El email ya existe por favor utiliza otro");
         }
 
+        if (profesionalDto.getDisponibilidad() == null || profesionalDto.getDisponibilidad().isEmpty()) {
+            throw new RuntimeException("La lista de disponibilidad no puede estar vacía");
+        }
+
+        Set<String> combinacionesVistas = new HashSet<>();
+
+        List<Disponibilidad> disponibilidadesEntidad = profesionalDto.getDisponibilidad().stream()
+                .map(dto -> {
+                    if (dto.getDia() == null || dto.getTurno() == null) {
+                        throw new RuntimeException("Cada disponibilidad debe tener un día y un turno asignado");
+                    }
+
+                    // Creamos una llave única, ej: "LUNES-MAÑANA"
+                    String llave = dto.getDia().toString() + "-" + dto.getTurno().toString();
+
+                    if (!combinacionesVistas.add(llave)) {
+                        throw new RuntimeException("No puedes repetir el mismo turno para el día " + dto.getDia());
+                    }
+
+                    return new Disponibilidad(dto.getDia(), dto.getTurno());
+                })
+                .collect(Collectors.toList());
+
         Profesional profesional = new Profesional();
         profesional.setName(profesionalDto.getName());
         profesional.setLastname(profesionalDto.getLastname());
@@ -139,9 +165,8 @@ public class AdminService implements IAdminService {
         String rawPassword = generateRandomPassword();
         profesional.setPassword(encryptPassword(rawPassword));
         profesional.setRole(User.RoleType.PROFESIONAL);
-        profesional.setDays(profesionalDto.getDays());
         profesional.setHourly(profesionalDto.getHourly());
-        profesional.setTurno(profesionalDto.getTurno());
+        profesional.setDisponibilidad(disponibilidadesEntidad);
         profesional.setActive(true);
 
         profesionalRepository.save(profesional);

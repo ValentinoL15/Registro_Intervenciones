@@ -1,7 +1,6 @@
 package com.buenos_hijos.intervenciones.dto.ProfesionalDTOs;
 
-import com.buenos_hijos.intervenciones.model.Profesional;
-import jakarta.validation.constraints.NotBlank;
+import com.buenos_hijos.intervenciones.dto.DisponibilidadDTOs.DisponibilidadDto;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,9 +26,7 @@ public class EditProfesionalDto {
 
     private String hourly;
 
-    private List<Profesional.DaysType> days;
-
-    private Profesional.Turnstype turno;
+    private List<DisponibilidadDto> disponibilidades;
 
 
 }

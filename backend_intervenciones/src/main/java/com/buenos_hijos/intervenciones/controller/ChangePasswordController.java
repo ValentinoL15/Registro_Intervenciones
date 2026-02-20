@@ -26,7 +26,7 @@ public class ChangePasswordController {
 
     }
 
-    @PostMapping("/reset-password/{token}") // 1. Agregamos el marcador en la ruta
+    @PostMapping("/reset-password/{token}")
     public ResponseEntity<?> resetPassword(@PathVariable("token") String token, // 2. Cambiamos a @PathVariable
                                            @Valid @RequestBody PasswordRequest password){
 
