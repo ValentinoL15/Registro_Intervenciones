@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.controller;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.AdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.CreateAdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.EditAdminDto;
+import com.buenos_hijos.intervenciones.dto.CocineroDTOs.SaveCocineroDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IAdminService;
@@ -48,6 +49,12 @@ public class AdminController {
         return ResponseEntity.ok(adminService.saveProfesional(profesionalDto,principal.getName()));
     }
 
+    @PostMapping("/create-cocinero")
+    public ResponseEntity<GeneralResponse> createProfesional(@Valid @RequestBody SaveCocineroDto cocineroDto,
+                                                             Principal principal){
+        return ResponseEntity.ok(adminService.saveCocinero(cocineroDto,principal.getName()));
+    }
+
     //VERIFICADO
     @PutMapping("/edit-admin")
     public ResponseEntity<GeneralResponse> editAdmin(@Valid @RequestBody EditAdminDto adminDto,
@@ -75,19 +82,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.altaBajaProfesional(profesionalId, principal.getName()));
     }
 
-    //VERIFICADO
-    @PutMapping("/baja/{profesionalId}")
-    public ResponseEntity<GeneralResponse> bajaProfesional(Principal principal,
-                                                           @PathVariable Long profesionalId){
-        return ResponseEntity.ok(adminService.bajaProfesional(principal.getName(), profesionalId));
+    @PutMapping("/altaBajaCocinero/{cocineroId}")
+    public ResponseEntity<GeneralResponse> altaBajaCocinero(@PathVariable Long cocineroId,
+                                                               Principal principal){
+        return ResponseEntity.ok(adminService.altaBajaCocinero(cocineroId, principal.getName()));
     }
 
-    //VERIFICADO
-    @PutMapping("/alta/{profesionalId}")
-    public ResponseEntity<GeneralResponse> altaProfesional(Principal principal,
-                                                           @PathVariable Long profesionalId){
-        return ResponseEntity.ok(adminService.altaProfesional(principal.getName(), profesionalId));
-    }
+
 
 
 

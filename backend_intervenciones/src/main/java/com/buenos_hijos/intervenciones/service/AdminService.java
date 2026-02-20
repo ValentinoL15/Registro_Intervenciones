@@ -3,13 +3,12 @@ package com.buenos_hijos.intervenciones.service;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.AdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.CreateAdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.EditAdminDto;
+import com.buenos_hijos.intervenciones.dto.CocineroDTOs.SaveCocineroDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
-import com.buenos_hijos.intervenciones.model.Admin;
-import com.buenos_hijos.intervenciones.model.Disponibilidad;
-import com.buenos_hijos.intervenciones.model.Profesional;
-import com.buenos_hijos.intervenciones.model.User;
+import com.buenos_hijos.intervenciones.model.*;
 import com.buenos_hijos.intervenciones.repository.IAdminRepository;
+import com.buenos_hijos.intervenciones.repository.ICocineroRepository;
 import com.buenos_hijos.intervenciones.repository.IProfesionalRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IAdminService;
@@ -38,6 +37,7 @@ public class AdminService implements IAdminService {
     private final IAdminRepository adminRepository;
     private final IProfesionalRepository profesionalRepository;
     private final EmailVerificationService emailVerificationService;
+    private final ICocineroRepository cocineroRepository;
 
     public String generateRandomPassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -181,6 +181,43 @@ public class AdminService implements IAdminService {
 
     @Override
     @Transactional
+    public GeneralResponse saveCocinero(SaveCocineroDto cocineroDto, String currentUser) {
+        Admin admin = adminRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("No se encuentra el username del administrador"));
+
+        if(admin.getRole() != User.RoleType.ADMIN){
+            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
+        }
+
+        if(userRepository.existsByUsername(cocineroDto.getUsername())){
+            throw new RuntimeException("El username ya existe por favor utiliza otro");
+        }
+
+        if(userRepository.existsByEmail(cocineroDto.getEmail())){
+            throw new RuntimeException("El email ya existe por favor utiliza otro");
+        }
+
+        Cocinero cocinero = new Cocinero();
+        cocinero.setName(cocineroDto.getName());
+        cocinero.setLastname(cocineroDto.getLastname());
+        cocinero.setRole(User.RoleType.COCINERO);
+        cocinero.setUsername(cocineroDto.getUsername());
+        String rawPassword = generateRandomPassword();
+        cocinero.setPassword(encryptPassword(rawPassword));
+        cocinero.setEmail(cocineroDto.getEmail());
+        cocinero.setActive(true);
+        cocineroRepository.save(cocinero);
+        emailVerificationService.sendEmailWithCredentials(cocinero.getEmail(),rawPassword);
+        return new GeneralResponse(
+                new Date(),
+                "Cocinero creado con éxito",
+                HttpStatus.CREATED.value()
+        );
+
+    }
+
+    @Override
+    @Transactional
     public GeneralResponse editAdmin(EditAdminDto adminDto, String currentUser) {
 
         Admin admin = adminRepository.findByUsername(currentUser)
@@ -260,6 +297,7 @@ public class AdminService implements IAdminService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse altaBajaProfesional(Long profesionalId, String currentUser) {
 
         User admin = userRepository.findByUsername(currentUser)
@@ -283,7 +321,9 @@ public class AdminService implements IAdminService {
     }
 
     @Override
-    public GeneralResponse altaProfesional(String currentUser, Long profesionalId) {
+    @Transactional
+    public GeneralResponse altaBajaCocinero(Long cocineroId, String currentUser) {
+
         User admin = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
 
@@ -291,44 +331,36 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        Profesional profesional = profesionalRepository.findById(profesionalId)
-                .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+        Cocinero cocinero = cocineroRepository.findById(cocineroId)
+                .orElseThrow(() -> new UsernameNotFoundException("El cocinero no se encuentra disponible"));
 
-        if(profesional.isActive()){
-            throw new RuntimeException("El profesional ya está dado de alta");
+        if(cocinero.isActive()){
+            cocinero.setActive(false);
+        }else {
+            cocinero.setActive(true);
         }
+        cocineroRepository.save(cocinero);
+        return new GeneralResponse(new Date(), "Cocinero actualizado con éxito", HttpStatus.OK.value());
 
-        profesional.setActive(true);
-        profesionalRepository.save(profesional);
-        return new GeneralResponse(
-                new Date(),
-                "Profesional dado de alta con éxito",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
-    @Transactional
-    public GeneralResponse bajaProfesional(String currentUser, Long profesionalId) {
+    public GeneralResponse deleteCocinero(Long cocineroId, String currentUser) {
         User admin = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
 
-        if (admin.getRole() != User.RoleType.ADMIN) {
+        if(admin.getRole() != User.RoleType.ADMIN){
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        Profesional profesional = profesionalRepository.findById(profesionalId)
-                .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+        Cocinero cocinero = cocineroRepository.findById(cocineroId)
+                .orElseThrow(() -> new UsernameNotFoundException("El cocinero no se encuentra disponible"));
 
-        if(!profesional.isActive()){
-            throw new RuntimeException("El profesional ya está dado de baja");
-        }
+        cocineroRepository.deleteById(cocinero.getUserId());
 
-        profesional.setActive(false);
-        profesionalRepository.save(profesional);
         return new GeneralResponse(
                 new Date(),
-                "Profesional dado de baja con éxito",
+                "Cocinero eliminado con éxito",
                 HttpStatus.OK.value()
         );
     }

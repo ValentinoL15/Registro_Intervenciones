@@ -12,7 +12,10 @@ public abstract class User {
 
     public enum RoleType {
         ADMIN,
-        PROFESIONAL
+        PROFESIONAL,
+        COCINERO,
+        NUTRICIONISTA,
+        MANTENIMIENTO
     }
 
     @Id
