@@ -69,8 +69,7 @@ const loadIntervenciones = async() => {
       username: data.username,
       email: data.email,
       hourly: data.hourly,
-      days: data.days,
-      turno: data.turno,
+      disponibilidad: data.disponibilidad,
       role: "PROFESIONAL"
     });
 
@@ -133,8 +132,6 @@ const loadIntervenciones = async() => {
       throw err
     }
   }
-
-  
 
   return (
     <div className="min-h-screen bg-background">

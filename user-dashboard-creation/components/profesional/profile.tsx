@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Turno, User } from "@/lib/types";
-import { Loader2, User as UserIcon } from "lucide-react";
+import { DisponibilidadDto, Turno, User } from "@/lib/types";
+import { AlertCircle, Loader2, Plus, Trash2, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { profesionalApi } from "@/service/api";
 import { useRouter } from "next/navigation";
@@ -49,14 +49,14 @@ export function Profile({
   const router = useRouter();
   const [profesional, setProfesional] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState<string[]>([]);
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [lastname, setLastname] = useState("");
   const [hourly, setHourly] = useState("")
-  const [turno, setTurno] = useState<Turno>("MAÑANA");
+  const [disponibilidades, setDisponibilidades] = useState<DisponibilidadDto[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [error, setError] = useState("");
 
 
   const DIAS_OPTIONS = [
@@ -73,48 +73,85 @@ export function Profile({
     lastname !== profesional?.lastname ||
     username !== profesional?.username ||
     hourly !== profesional?.hourly ||
-    turno !== profesional?.turno ||
-    days.length !== profesional?.days?.length ||
-    !days.every(d => profesional?.days?.includes(d));
+    JSON.stringify(disponibilidades) !== JSON.stringify(profesional?.disponibilidades);
 
-  const isButtonDisabled = !hasChanges || isSubmitting;
+  const isButtonDisabled = !hasChanges || isSubmitting || disponibilidades.length === 0;
+
+  useEffect(() => {
+    const loadProfesional = async () => {
+      try {
+        const prof = await profesionalApi.getProfesional(user.userId);
+        console.log("MI PROF: " + JSON.stringify(prof, null, 2));
+        setProfesional(prof);
+        setName(prof.name);
+        setLastname(prof.lastname);
+        setUsername(prof.username);
+        setHourly(prof.hourly);
+        // Mapeamos el array de objetos que viene del backend
+        setDisponibilidades(prof.disponibilidades || [{ dia: "LUNES", turno: "MAÑANA" }]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) loadProfesional();
+    else router.push("/")
+  }, [user]);
+
+  const addDisponibilidad = () => {
+    setDisponibilidades([...disponibilidades, { dia: "LUNES", turno: "MAÑANA" }]);
+  };
+
+  const updateDisponibilidad = (index: number, field: keyof DisponibilidadDto, value: string) => {
+    const nuevas = [...disponibilidades];
+    nuevas[index] = { ...nuevas[index], [field]: value as any };
+    setDisponibilidades(nuevas);
+  };
+
+  const removeDisponibilidad = (index: number) => {
+    setDisponibilidades(disponibilidades.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isButtonDisabled) return;
 
+    setError(""); // Limpiamos errores previos
     setIsSubmitting(true);
 
-    // Construimos el objeto con los datos actualizados
+    // VALIDACIÓN DE DUPLICADOS EN FRONTEND
+    const combos = disponibilidades.map(d => `${d.dia}-${d.turno}`);
+    const tieneDuplicados = combos.some((item, index) => combos.indexOf(item) !== index);
+
+    if (tieneDuplicados) {
+      setError("No puedes repetir el mismo turno para un mismo día.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const updatedData = {
       name,
       lastname,
       username,
       hourly,
-      turno,
-      days
+      disponibilidades
     };
 
     try {
       const updatedProf = await profesionalApi.editProfesional(updatedData);
-
       setProfesional(updatedProf);
-
       await checkAuth();
-
-      toast({
-        title: "Éxitoso",
-        description: "Perfil actualizado correctamente"
-      })
+      toast({ title: "Éxito", description: "Perfil actualizado correctamente" });
     } catch (err: any) {
-      console.error("Error al actualizar:", err);
-      // Opcional: Mostrar error al usuario
+      // Si el backend lanza la excepción que configuramos, la capturamos aquí
+      setError(err.message || "Error al actualizar el perfil");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (!user) {
       router.push("/");
       return;
@@ -139,60 +176,33 @@ export function Profile({
     };
 
     loadProfesional();
-  }, [user, router]);
-
-  const handleDiaToggle = (dia: string) => {
-    setDays((prev) =>
-      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
-    );
-  };
-
-  useEffect(() => {
-    // 1. Redirección si no hay usuario
-    if (!user) {
-      router.push("/");
-      return;
-    }
-
-    const loadProfesional = async () => {
-      try {
-        const prof = await profesionalApi.getProfesional(user.userId);
-        setProfesional(prof);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProfesional();
-  }, [user, router]);
+  }, [user, router]);*/
 
   const handleRequestPasswordReset = async () => {
-  setIsSubmitting(true);
-  try {
-    await profesionalApi.requestEmail(profesional!.email);
-    
-    toast({
-      title: "Correo enviado",
-      description: `Se ha enviado un enlace a ${profesional!.email}. Tu sesión se cerrará por seguridad.`,
-    });
+    setIsSubmitting(true);
+    try {
+      await profesionalApi.requestEmail(profesional!.email);
 
-    setTimeout(() => {
-      logout(); // Esto debería limpiar localStorage y redirigir a "/"
-    }, 3000);
+      toast({
+        title: "Correo enviado",
+        description: `Se ha enviado un enlace a ${profesional!.email}. Tu sesión se cerrará por seguridad.`,
+      });
 
-  } catch (err: any) {
-    toast({
-      title: "Error",
-      description: "No se pudo enviar el correo.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsSubmitting(false);
-    setIsPasswordModalOpen(false);
-  }
-};
+      setTimeout(() => {
+        logout(); // Esto debería limpiar localStorage y redirigir a "/"
+      }, 3000);
+
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el correo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsPasswordModalOpen(false);
+    }
+  };
 
   if (loading || !profesional) {
     return (
@@ -215,7 +225,7 @@ export function Profile({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* NOMBRE */}
@@ -257,7 +267,6 @@ export function Profile({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  {/* Cambiamos el <a> por un <button> para que no recargue la página */}
                   <button
                     type="button"
                     onClick={() => setIsPasswordModalOpen(true)}
@@ -278,57 +287,68 @@ export function Profile({
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* CARGA HORARIA */}
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
-                  <Input
-                    id="hourly"
-                    type="number"
-                    value={hourly}
-                    onChange={(e) => setHourly(e.target.value)}
-                    required
-                  />
-                </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
+              <Input id="hourly" type="number" value={hourly} onChange={(e) => setHourly(e.target.value)} />
+            </div>
 
-                {/* TURNO */}
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="turno">Turno</Label>
-                  <Select value={turno} onValueChange={(v: any) => setTurno(v)}>
-                    <SelectTrigger id="turno">
-                      <SelectValue placeholder="Seleccionar turno" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MAÑANA">Mañana</SelectItem>
-                      <SelectItem value="TARDE">Tarde</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* --- NUEVA SECCIÓN DE DISPONIBILIDAD DINÁMICA --- */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Mis Horarios</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addDisponibilidad}>
+                  <Plus className="w-4 h-4 mr-2" /> Añadir
+                </Button>
               </div>
-              <div className="grid gap-3">
-                <Label className="text-base">Días de trabajo</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-lg border bg-muted/20">
-                  {DIAS_OPTIONS.map((dia) => (
-                    <div key={dia.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`edit-${dia.value}`}
-                        checked={days.includes(dia.value)}
-                        onCheckedChange={() => handleDiaToggle(dia.value)}
-                      />
-                      <Label
-                        htmlFor={`edit-${dia.value}`}
-                        className="text-sm font-normal cursor-pointer select-none"
-                      >
-                        {dia.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                {days.length === 0 && (
-                  <p className="text-xs text-destructive">Selecciona al menos un día.</p>
-                )}
+
+              <div className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/20">
+                {disponibilidades.map((disp, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Select
+                      value={disp.dia}
+                      onValueChange={(v) => updateDisponibilidad(index, "dia", v)}
+                    >
+                      <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DIAS_OPTIONS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={disp.turno}
+                      onValueChange={(v) => updateDisponibilidad(index, "turno", v)}
+                    >
+                      <SelectTrigger className="bg-background w-[130px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MAÑANA">Mañana</SelectItem>
+                        <SelectItem value="TARDE">Tarde</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeDisponibilidad(index)}
+                      disabled={disponibilidades.length <= 1}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {error && (
+              <div className="flex items-center gap-2 p-3 mt-4 rounded-md bg-destructive/10 text-destructive text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+
             <CardFooter className="flex flex-col gap-3 border-t pt-6">
               <Button
                 type="submit"

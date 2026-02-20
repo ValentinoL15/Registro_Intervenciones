@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState } from "react";
-import { UserRole, type createProfesionalDTO, type DiaSemana, type Turno } from "@/lib/types";
+import { DisponibilidadDto, UserRole, type createProfesionalDTO, type DiaSemana, type Turno } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Badge, Plus, Trash2, X } from "lucide-react";
 import { useLoader } from "@/lib/spinnerService";
 
 interface AddProfesionalDialogProps {
@@ -51,53 +51,71 @@ export function AddProfesionalDialog({
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<UserRole>("PROFESIONAL");
   const [hourly, setHourly] = useState("40");
-  const [days, setDays] = useState<DiaSemana[]>([]);
-  const [turno, setTurno] = useState<Turno>("MAÑANA");
+  const [disponibilidad, setDisponibilidad] = useState<DisponibilidadDto[]>([
+    { dia: "LUNES", turno: "MAÑANA" }
+  ]);
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false); // Nuevo estado
   const { showLoader, hideLoader } = useLoader()
 
-  const handleDiaToggle = (dia: DiaSemana) => {
-    setDays((prev) =>
-      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
-    );
+  const addDisponibilidad = () => {
+    // Simplemente agregamos una fila nueva. 
+    setDisponibilidad([...disponibilidad, { dia: "LUNES", turno: "MAÑANA" }]);
+  };
+
+  const updateDisponibilidad = (index: number, field: keyof DisponibilidadDto, value: string) => {
+    const nuevas = [...disponibilidad];
+    nuevas[index] = { ...nuevas[index], [field]: value };
+    setDisponibilidad(nuevas);
+  };
+
+  const removeDisponibilidad = (index: number) => {
+    setDisponibilidad(disponibilidad.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => { // Agregamos async
-  e.preventDefault();
-  setError("");
-  setIsSubmitting(true);
+    e.preventDefault();
 
-  try {
-    showLoader()
-    // 1. Esperamos a que la función del padre termine
-    await onSubmit({ name, lastname, email, username, hourly, days, turno, role });
-    
-    setName("");
-    setLastname("");
-    setEmail("");
-    setUsername(""); 
-    setHourly("40");
-    setDays([]);
-    setTurno("MAÑANA");
-    setRole("PROFESIONAL");
+    const strings = disponibilidad.map(d => `${d.dia}-${d.turno}`);
+    const tieneDuplicados = strings.some((item, index) => strings.indexOf(item) !== index);
 
-  } catch (err: any) {
-    // 3. Ahora sí capturará el error de validación de Spring Boot
-    console.error("Error capturado en el Dialog:", err);
-    setError(err.message || "Error al cargar los datos");
-  } finally {
-    setIsSubmitting(false); 
-    hideLoader()
+    if (tieneDuplicados) {
+      setError("No puedes repetir el mismo turno para un mismo día.");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      showLoader()
+      // 1. Esperamos a que la función del padre termine
+      await onSubmit({ name, lastname, email, username, hourly, disponibilidad, role });
+
+      setName("");
+      setLastname("");
+      setEmail("");
+      setUsername("");
+      setHourly("40");
+      setDisponibilidad([])
+      setRole("PROFESIONAL");
+
+    } catch (err: any) {
+      // 3. Ahora sí capturará el error de validación de Spring Boot
+      console.error("Error capturado en el Dialog:", err);
+      setError(err.message || "Error al cargar los datos");
+    } finally {
+      setIsSubmitting(false);
+      hideLoader()
+    }
   }
-}
 
   const isValid =
-    name && lastname && email && hourly && days.length > 0 && turno;
+    name && lastname && email && hourly && disponibilidad.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Agregar Profesional</DialogTitle>
           <DialogDescription>
@@ -156,61 +174,95 @@ export function AddProfesionalDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
-              <Input
-                id="hourly"
-                type="number"
-                min="1"
-                max="48"
-                value={hourly}
-                onChange={(e) => setHourly(e.target.value)}
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="turno">Turno</Label>
-              <Select value={turno} onValueChange={(v) => setTurno(v as Turno)}>
-                <SelectTrigger id="turno">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MAÑANA">Mañana</SelectItem>
-                  <SelectItem value="TARDE">Tarde</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
+          {/* Carga Horaria (Campo Único) */}
           <div className="flex flex-col gap-2">
-            <Label>Días de trabajo</Label>
-            <div className="flex flex-wrap gap-4">
-              {DIAS_OPTIONS.map((dia) => (
-                <div key={dia.value} className="flex items-center gap-2">
-                  <Checkbox
-                    id={dia.value}
-                    checked={days.includes(dia.value)}
-                    onCheckedChange={() => handleDiaToggle(dia.value)}
-                  />
-                  <Label
-                    htmlFor={dia.value}
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {dia.label}
-                  </Label>
-                </div>
-              ))}
+            <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
+            <Input
+              id="hourly"
+              type="number"
+              value={hourly}
+              onChange={(e) => setHourly(e.target.value)}
+              placeholder="Ej: 40"
+              className="w-full"
+            />
+          </div>
+
+
+
+          {/* Selector de Disponibilidad (Día + Turno + Botón) */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <Label>Días y Turnos Asignados</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addDisponibilidad}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" /> Agregar Día
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-3 p-3 border rounded-md bg-slate-50/50 max-h-[200px] overflow-y-auto">
+              {disponibilidad.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  No has asignado días todavía.
+                </p>
+              ) : (
+                disponibilidad.map((disp, index) => (
+                  <div key={index} className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
+                    {/* Selector de Día */}
+                    <Select
+                      value={disp.dia}
+                      onValueChange={(v) => updateDisponibilidad(index, "dia", v)}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DIAS_OPTIONS.map((d) => (
+                          <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Selector de Turno */}
+                    <Select
+                      value={disp.turno}
+                      onValueChange={(v) => updateDisponibilidad(index, "turno", v)}
+                    >
+                      <SelectTrigger className="bg-white w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MAÑANA">Mañana</SelectItem>
+                        <SelectItem value="TARDE">Tarde</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Botón Eliminar Fila */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeDisponibilidad(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-            {error && (
-                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <DialogFooter className="mt-4">
             <Button
@@ -221,7 +273,7 @@ export function AddProfesionalDialog({
             >
               Cancelar
             </Button>
-            <Button  type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               Agregar Profesional
             </Button>
           </DialogFooter>

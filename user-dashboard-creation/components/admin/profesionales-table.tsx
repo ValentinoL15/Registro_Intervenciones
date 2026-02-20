@@ -74,8 +74,7 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: Profes
           <TableHead>Nombre</TableHead>
           <TableHead>Email</TableHead>
           <TableHead className="text-center">Carga Horaria</TableHead>
-          <TableHead>Días</TableHead>
-          <TableHead className="text-center">Turno</TableHead>
+          <TableHead className="min-w-[200px]">Disponibilidad</TableHead>
           <TableHead className="text-center">Condición</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
@@ -93,27 +92,34 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: Profes
               {prof.hourly}hs
             </TableCell>
             <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {prof.days?.map((dia: DiaSemana) => (
-                  <Badge key={dia} variant="secondary" className="text-xs">
-                    {diasAbreviados[dia]}
-                  </Badge>
-                ))}
-              </div>
-            </TableCell>
-            <TableCell className="text-center">
-              <Badge
-                variant={prof.turno === "MAÑANA" ? "default" : "outline"}
-                className="gap-1"
-              >
-                {prof.turno === "MAÑANA" ? (
-                  <Sun className="w-3 h-3" />
-                ) : (
-                  <Moon className="w-3 h-3" />
-                )}
-                {prof.turno === "MAÑANA" ? "MAÑANA" : "TARDE"}
-              </Badge>
-            </TableCell>
+                <div className="flex flex-wrap gap-1.5">
+                  {prof.disponibilidades?.length > 0 ? (
+                    prof.disponibilidades.map((disp: any, idx: number) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="flex items-center gap-1.5 bg-background border-slate-200 py-1"
+                      >
+                        <span className="font-bold text-slate-700">
+                          {diasAbreviados[disp.dia]}
+                        </span>
+                        <div className="w-px h-3 bg-slate-300" />
+                        {disp.turno === "MAÑANA" ? (
+                          <Sun className="w-3 h-3 text-amber-500" />
+                        ) : (
+                          <Moon className="w-3 h-3 text-indigo-500" />
+                        )}
+                        <span className="text-[10px] uppercase text-muted-foreground font-medium">
+                          {disp.turno}
+                        </span>
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Sin asignar</span>
+                  )}
+                </div>
+              </TableCell>
+           
             <TableCell className="text-center">
               <Badge
                 className={prof.active

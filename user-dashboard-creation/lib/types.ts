@@ -16,8 +16,7 @@ export interface User {
   email?: string;
   role: UserRole;
   hourly?: number;
-  days?: DiaSemana[];
-  turno?: Turno;
+  disponibilidades?: DisponibilidadDto[]
   active?: boolean;
   createdAt?: Date;
 }
@@ -73,8 +72,7 @@ export interface createProfesionalDTO {
   username: string,
   email: string,
   hourly: string,
-  turno: Turno,
-  days: DiaSemana[]
+  disponibilidad: DisponibilidadDto[]
   role: UserRole
 }
 
@@ -83,8 +81,12 @@ export interface EditProfesionalDTO {
   lastname: string,
   username: string,
   hourly: string,
-  turno: Turno,
-  days: DiaSemana[]
+  disponibilidad: DisponibilidadDto[]
+}
+
+export interface DisponibilidadDto {
+  dia: DiaSemana,
+  turno: Turno
 }
 
 export interface IntervencionDto {
