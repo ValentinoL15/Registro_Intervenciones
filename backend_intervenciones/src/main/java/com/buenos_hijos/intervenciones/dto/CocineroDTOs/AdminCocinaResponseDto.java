@@ -5,14 +5,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateCocinaBatchDto {
+public class AdminCocinaResponseDto {
 
-    private CocinaDto cocina;
+    private LocalDate fecha;
+
     private List<ComidaDto> platos;
+
 }

@@ -28,13 +28,6 @@ public class Cocina {
         NOCELIACO
     }
 
-    @ManyToOne
-    @JoinColumn(name = "cocinero_id")
-    private Cocinero cocinero;
-
-    @Enumerated(EnumType.STRING)
-    private DiaCocinero dia;
-
     @Enumerated(EnumType.STRING)
     private TipoComida tipoComida;
 

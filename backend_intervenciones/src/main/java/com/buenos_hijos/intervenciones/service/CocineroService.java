@@ -1,11 +1,8 @@
 package com.buenos_hijos.intervenciones.service;
 
-import com.buenos_hijos.intervenciones.dto.CocineroDTOs.CreateCocinaBatchDto;
+import com.buenos_hijos.intervenciones.dto.CocineroDTOs.*;
 import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
 import com.buenos_hijos.intervenciones.model.Cocina;
-import com.buenos_hijos.intervenciones.dto.CocineroDTOs.CocinaDto;
-import com.buenos_hijos.intervenciones.dto.CocineroDTOs.CocineroDto;
-import com.buenos_hijos.intervenciones.dto.CocineroDTOs.EditCocineroDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.model.Admin;
 import com.buenos_hijos.intervenciones.model.Cocinero;
@@ -22,10 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,7 +41,7 @@ public class CocineroService implements ICocineroService {
         cocineroDto.setUsername(cocinero.getUsername());
         cocineroDto.setEmail(cocinero.getEmail());
         cocineroDto.setActive(cocinero.isActive());
-        if (cocinero.getCocina() != null) {
+        /*if (cocinero.getCocina() != null) {
             List<CocinaDto> cocinaDtos = cocinero.getCocina().stream()
                     .map(c -> {
                         CocinaDto dto = new CocinaDto();
@@ -59,7 +53,7 @@ public class CocineroService implements ICocineroService {
                     .collect(Collectors.toList());
 
             cocineroDto.setCocina(cocinaDtos);
-        }
+        }*/
         return cocineroDto;
     }
 
@@ -74,13 +68,34 @@ public class CocineroService implements ICocineroService {
             dto.setEmail(cocinero.getEmail());
             dto.setActive(cocinero.isActive());
 
-            if (cocinero.getCocina() != null) {
+            /*if (cocinero.getCocina() != null) {
                 dto.setCocina(cocinero.getCocina().stream()
                         .map(c -> new CocinaDto(c.getDia(), c.getTipoComida(), c.getDescription(), c.getFecha()))
                         .collect(Collectors.toList()));
-            }
+            }*/
             return dto;
         });
+    }
+
+    @Override
+    public List<AdminCocinaResponseDto> getAllComidas() {
+        List<Cocina> todasLasComidas = cocineroRepository.findAllCocinasOrderByFechaDesc();
+
+        return todasLasComidas.stream()
+                .collect(Collectors.groupingBy(Cocina::getFecha))
+                .entrySet().stream()
+                .map(entry -> {
+                    AdminCocinaResponseDto dto = new AdminCocinaResponseDto();
+                    dto.setFecha(entry.getKey());
+
+                    dto.setPlatos(entry.getValue().stream()
+                            .map(c -> new ComidaDto(c.getTipoComida(), c.getDescription()))
+                            .collect(Collectors.toList()));
+
+                    return dto;
+                })
+                .sorted(Comparator.comparing(AdminCocinaResponseDto::getFecha).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -90,42 +105,31 @@ public class CocineroService implements ICocineroService {
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
 
-        if (batchDto.getCocina().isEmpty()) {
-            throw new RuntimeException("La lista de cocina no puede estar vacía");
+        LocalDate fechaReferencia = batchDto.getCocina().getFecha();
+        if (batchDto.getPlatos() == null || batchDto.getPlatos().isEmpty()) {
+            throw new RuntimeException("La lista de platos no puede estar vacía");
         }
-
-        LocalDate fechaReferencia = batchDto.getCocina().get(0).getFecha();
-        Cocina.DiaCocinero diaReferencia = batchDto.getCocina().get(0).getDia();
 
         boolean fechaYaExisteEnBd = cocinero.getCocina().stream()
                 .anyMatch(c -> c.getFecha() != null && c.getFecha().equals(fechaReferencia));
 
         if (fechaYaExisteEnBd) {
-            throw new RuntimeException("Error: La fecha " + fechaReferencia + " ya tiene registros. No se puede modificar.");
+            throw new RuntimeException("Error: La fecha " + fechaReferencia + " ya tiene registros.");
         }
+
 
         Set<Cocina.TipoComida> tiposEnEsteEnvio = new HashSet<>();
 
-        for (CocinaDto dto : batchDto.getCocina()) {
+        for (ComidaDto plato : batchDto.getPlatos()) {
 
-            if (!dto.getFecha().equals(fechaReferencia)) {
-                throw new RuntimeException("Error: No puedes mezclar fechas en el mismo envío.");
+            if (!tiposEnEsteEnvio.add(plato.getTipoComida())) {
+                throw new RuntimeException("Error: Has incluido el tipo " + plato.getTipoComida() + " duplicado.");
             }
-
-            if (!dto.getDia().equals(diaReferencia)) {
-                throw new RuntimeException("Error: Todos los registros deben ser del mismo día (" + diaReferencia + ")");
-            }
-
-            if (!tiposEnEsteEnvio.add(dto.getTipoComida())) {
-                throw new RuntimeException("Error: Has incluido el tipo " + dto.getTipoComida() + " dos veces en el mismo envío.");
-            }
-
 
             Cocina nuevaComida = new Cocina();
-            nuevaComida.setDia(dto.getDia());
-            nuevaComida.setTipoComida(dto.getTipoComida());
-            nuevaComida.setDescription(dto.getDescription());
-            nuevaComida.setFecha(dto.getFecha());
+            nuevaComida.setFecha(fechaReferencia);
+            nuevaComida.setTipoComida(plato.getTipoComida());
+            nuevaComida.setDescription(plato.getDescription());
 
             cocinero.getCocina().add(nuevaComida);
         }
@@ -134,8 +138,64 @@ public class CocineroService implements ICocineroService {
 
         return new GeneralResponse(
                 new Date(),
-                "Menú de " + diaReferencia + " registrado con éxito",
+                "Menú del día " + " registrado con éxito",
                 HttpStatus.CREATED.value()
+        );
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse editComida(CreateCocinaBatchDto batchDto, String currentUser, LocalDate fechaOriginal) {
+
+        Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
+
+        LocalDate fechaNueva = batchDto.getCocina().getFecha();
+
+        // 1. VALIDACIÓN: No permitir duplicados en el JSON (Ej: dos NOCELIACO)
+        Set<Cocina.TipoComida> tiposEnJson = new HashSet<>();
+        for (ComidaDto plato : batchDto.getPlatos()) {
+            if (!tiposEnJson.add(plato.getTipoComida())) {
+                throw new RuntimeException("Error: No puedes enviar el tipo " + plato.getTipoComida() + " dos veces en el mismo envío.");
+            }
+        }
+
+        // 2. VALIDACIÓN: Si la fecha cambia, verificar que la nueva no esté ocupada
+        if (!fechaOriginal.equals(fechaNueva)) {
+            boolean fechaOcupada = cocinero.getCocina().stream()
+                    .anyMatch(c -> c.getFecha().equals(fechaNueva));
+            if (fechaOcupada) {
+                throw new RuntimeException("Error: La fecha " + fechaNueva + " ya tiene un menú. No se puede mover.");
+            }
+        }
+
+        // 3. BUSCAR REGISTROS: Solo los que ya existen para la fecha original
+        List<Cocina> platosExistentes = cocinero.getCocina().stream()
+                .filter(c -> c.getFecha().equals(fechaOriginal))
+                .collect(Collectors.toList());
+
+        if (platosExistentes.isEmpty()) {
+            throw new RuntimeException("Error: No existen registros para la fecha " + fechaOriginal + ". No hay nada que editar.");
+        }
+
+        // 4. ACTUALIZACIÓN ESTRICTA: Solo editamos lo que encontramos
+        for (ComidaDto platoDto : batchDto.getPlatos()) {
+            Cocina entidad = platosExistentes.stream()
+                    .filter(p -> p.getTipoComida().equals(platoDto.getTipoComida()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Error: El tipo " + platoDto.getTipoComida() + " no existía originalmente en la fecha " + fechaOriginal + ". No se puede crear uno nuevo aquí."));
+
+            entidad.setDescription(platoDto.getDescription());
+            entidad.setFecha(fechaNueva);
+            // El campo dia lo quitamos o se calcula solo, ya no lo seteamos del DTO
+        }
+
+        cocineroRepository.save(cocinero);
+
+        return new GeneralResponse(
+                new Date(),
+                "Menú actualizado correctamente para el " + fechaNueva,
+                HttpStatus.OK.value()
         );
     }
 
@@ -150,37 +210,17 @@ public class CocineroService implements ICocineroService {
                 throw new RuntimeException("Acceso denegado: no tienes permisos para editar este usuario");
             }
 
+        if (cocineroDto.getUsername() != null && !cocineroDto.getUsername().equals(cocinero.getUsername())) {
+            if (userRepository.existsByUsername(cocineroDto.getUsername())) {
+                throw new RuntimeException("El username " + cocineroDto.getUsername() + " ya está en uso.");
+            }
+            cocinero.setUsername(cocineroDto.getUsername());
+        }
+
             cocinero.setName(cocineroDto.getName());
             cocinero.setLastname(cocineroDto.getLastname());
 
-            if (cocineroDto.getCocina() != null) {
 
-                cocinero.getCocina().clear();
-
-                Set<String> combinacionesVistas = new HashSet<>();
-
-                List<Cocina> nuevasEntradas = cocineroDto.getCocina().stream()
-                        .map(dto -> {
-                            if (dto.getDia() == null || dto.getTipoComida() == null) {
-                                throw new RuntimeException("Cada entrada de cocina debe tener día y tipo de comida");
-                            }
-
-                            // Validación de duplicados: No puede haber dos registros para "LUNES-CELIACO"
-                            String clave = dto.getDia().toString() + "-" + dto.getTipoComida().toString();
-                            if (!combinacionesVistas.add(clave)) {
-                                throw new RuntimeException("Ya existe una descripción para el día " + dto.getDia() + " como " + dto.getTipoComida());
-                            }
-
-                            Cocina cocina = new Cocina();
-                            cocina.setDia(dto.getDia());
-                            cocina.setTipoComida(dto.getTipoComida());
-                            cocina.setDescription(dto.getDescription());
-                            return cocina;
-                        })
-                        .collect(Collectors.toList());
-
-                cocinero.getCocina().addAll(nuevasEntradas);
-            }
             cocineroRepository.save(cocinero);
 
             return new GeneralResponse(
@@ -188,5 +228,31 @@ public class CocineroService implements ICocineroService {
                     "Cocinero actualizado con éxito",
                     HttpStatus.OK.value()
             );
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse deleteComida(LocalDate fechaOriginal, String currentUser) {
+
+        Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("No se encuentra el cocinero"));
+
+        int tamañoAntes = cocinero.getCocina().size();
+
+        cocinero.getCocina().removeIf(plato ->
+                plato.getFecha() != null && plato.getFecha().equals(fechaOriginal)
+        );
+
+        if (cocinero.getCocina().size() == tamañoAntes) {
+            throw new RuntimeException("No se encontraron platos para eliminar en la fecha: " + fechaOriginal);
+        }
+
+        cocineroRepository.save(cocinero);
+
+        return new GeneralResponse(
+                new Date(),
+                "Menú del día " + fechaOriginal + " eliminado con éxito",
+                HttpStatus.OK.value()
+        );
     }
 }
