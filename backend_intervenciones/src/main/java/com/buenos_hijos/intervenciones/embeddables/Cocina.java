@@ -1,4 +1,4 @@
-package com.buenos_hijos.intervenciones.model;
+package com.buenos_hijos.intervenciones.embeddables;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -5,7 +5,7 @@ import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.EditProfesionalDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.ProfesionalDto;
 import com.buenos_hijos.intervenciones.dto.DisponibilidadDTOs.DisponibilidadDto;
 import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
-import com.buenos_hijos.intervenciones.model.Disponibilidad;
+import com.buenos_hijos.intervenciones.embeddables.Disponibilidad;
 import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.repository.IProfesionalRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;

@@ -1,6 +1,6 @@
 package com.buenos_hijos.intervenciones.dto.CocineroDTOs;
 
-import com.buenos_hijos.intervenciones.model.Cocina;
+import com.buenos_hijos.intervenciones.embeddables.Cocina;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

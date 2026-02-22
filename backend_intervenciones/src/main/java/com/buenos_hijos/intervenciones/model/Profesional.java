@@ -1,5 +1,6 @@
 package com.buenos_hijos.intervenciones.model;
 
+import com.buenos_hijos.intervenciones.embeddables.Disponibilidad;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

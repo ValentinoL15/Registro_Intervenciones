@@ -1,12 +1,9 @@
 package com.buenos_hijos.intervenciones.service;
 
 import com.buenos_hijos.intervenciones.dto.CocineroDTOs.*;
-import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
-import com.buenos_hijos.intervenciones.model.Cocina;
+import com.buenos_hijos.intervenciones.embeddables.Cocina;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
-import com.buenos_hijos.intervenciones.model.Admin;
 import com.buenos_hijos.intervenciones.model.Cocinero;
-import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.IAdminRepository;
 import com.buenos_hijos.intervenciones.repository.ICocineroRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
