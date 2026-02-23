@@ -34,14 +34,26 @@ public class CocineroController {
         return ResponseEntity.ok(cocineroService.getCocinero(cocineroId));
     }
 
-    @GetMapping("/comidas")
-    public ResponseEntity<List<AdminCocinaResponseDto>> getComidas() {
-        return ResponseEntity.ok(cocineroService.getAllComidas());
+    @GetMapping("/menu/{menuId}")
+    public ResponseEntity<MenuDiaDto> getMenu(@PathVariable Long menuId) {
+        return ResponseEntity.ok(cocineroService.getMenu(menuId));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<GeneralResponse> saveCocina(@Valid @RequestBody CreateCocinaBatchDto batchDto, Principal principal) {
-        return ResponseEntity.ok(cocineroService.createComida(batchDto, principal.getName()));
+    @GetMapping("/menu")
+    public ResponseEntity<Page<MenuDiaDto>> getMenus(@PageableDefault Pageable pageable){
+        return ResponseEntity.ok(cocineroService.getMenus(pageable));
+    }
+
+    @PostMapping("/create-comida")
+    public ResponseEntity<GeneralResponse> saveCocina(@Valid @RequestBody CreateMenuCompletoDto menuDto, Principal principal) {
+        return ResponseEntity.ok(cocineroService.createComida(menuDto, principal.getName()));
+    }
+
+    @PutMapping("/edit-comida/{cocinaId}")
+    public ResponseEntity<GeneralResponse> editComida(@PathVariable Long cocinaId,
+                                                      @Valid @RequestBody EditComidaDto comidaDto,
+                                                      Principal principal) {
+        return ResponseEntity.ok(cocineroService.editComida(cocinaId,comidaDto, principal.getName()));
     }
 
     @PutMapping("/edit")
@@ -49,17 +61,11 @@ public class CocineroController {
         return ResponseEntity.ok(cocineroService.editCocinero(cocineroDto, principal.getName()));
     }
 
-    @PutMapping("/edit-comida/{fechaOriginal}")
-    public ResponseEntity<GeneralResponse> editComida(@PathVariable @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate fechaOriginal,
-                                                        @Valid @RequestBody CreateCocinaBatchDto batchDto,
-                                                      Principal principal) {
-        return ResponseEntity.ok(cocineroService.editComida(batchDto, principal.getName(), fechaOriginal));
-    }
 
-    @DeleteMapping("/delete-comida/{fechaOriginal}")
-    public ResponseEntity<GeneralResponse> deleteComida(@PathVariable @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate fechaOriginal,
+    @DeleteMapping("/delete-comida/{menuId}")
+    public ResponseEntity<GeneralResponse> deleteComida(@PathVariable Long menuId,
                                                        Principal principal) {
-        return ResponseEntity.ok(cocineroService.deleteComida(fechaOriginal, principal.getName()));
+        return ResponseEntity.ok(cocineroService.deleteMenu(menuId, principal.getName()));
     }
 
 

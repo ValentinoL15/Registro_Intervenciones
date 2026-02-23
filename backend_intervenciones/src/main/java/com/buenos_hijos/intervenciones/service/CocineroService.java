@@ -1,12 +1,11 @@
 package com.buenos_hijos.intervenciones.service;
 
 import com.buenos_hijos.intervenciones.dto.CocineroDTOs.*;
-import com.buenos_hijos.intervenciones.embeddables.Cocina;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
+import com.buenos_hijos.intervenciones.model.Cocina;
 import com.buenos_hijos.intervenciones.model.Cocinero;
-import com.buenos_hijos.intervenciones.repository.IAdminRepository;
-import com.buenos_hijos.intervenciones.repository.ICocineroRepository;
-import com.buenos_hijos.intervenciones.repository.IUserRepository;
+import com.buenos_hijos.intervenciones.model.MenuDia;
+import com.buenos_hijos.intervenciones.repository.*;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.ICocineroService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,8 @@ public class CocineroService implements ICocineroService {
     private final ICocineroRepository cocineroRepository;
     private final IAdminRepository adminRepository;
     private final IUserRepository userRepository;
+    private final IMenuDiaRepository menuDiaRepository;
+    private final ICocinaRepository cocinaRepository;
 
     @Override
     public CocineroDto getCocinero(Long userId) {
@@ -38,19 +41,6 @@ public class CocineroService implements ICocineroService {
         cocineroDto.setUsername(cocinero.getUsername());
         cocineroDto.setEmail(cocinero.getEmail());
         cocineroDto.setActive(cocinero.isActive());
-        /*if (cocinero.getCocina() != null) {
-            List<CocinaDto> cocinaDtos = cocinero.getCocina().stream()
-                    .map(c -> {
-                        CocinaDto dto = new CocinaDto();
-                        dto.setDia(c.getDia());
-                        dto.setTipoComida(c.getTipoComida());
-                        dto.setDescription(c.getDescription());
-                        return dto;
-                    })
-                    .collect(Collectors.toList());
-
-            cocineroDto.setCocina(cocinaDtos);
-        }*/
         return cocineroDto;
     }
 
@@ -64,134 +54,103 @@ public class CocineroService implements ICocineroService {
             dto.setUsername(cocinero.getUsername());
             dto.setEmail(cocinero.getEmail());
             dto.setActive(cocinero.isActive());
-
-            /*if (cocinero.getCocina() != null) {
-                dto.setCocina(cocinero.getCocina().stream()
-                        .map(c -> new CocinaDto(c.getDia(), c.getTipoComida(), c.getDescription(), c.getFecha()))
-                        .collect(Collectors.toList()));
-            }*/
             return dto;
         });
     }
 
     @Override
-    public List<AdminCocinaResponseDto> getAllComidas() {
-        List<Cocina> todasLasComidas = cocineroRepository.findAllCocinasOrderByFechaDesc();
+    public MenuDiaDto getMenu(Long menuId) {
+        MenuDia menuDia = menuDiaRepository.findById(menuId)
+                .orElseThrow(() -> new RuntimeException("No se encuentra el menú"));
+        MenuDiaDto menuDiaDto = new MenuDiaDto();
+        menuDiaDto.setMenuId(menuDia.getMenuId());
+        menuDiaDto.setCocineroId(menuDia.getCocinero().getUserId());
+        menuDiaDto.setFecha(menuDia.getFecha());
+        List<CocinaDto> cocinaDtos = menuDia.getPlatos().stream().map(plato -> {
+            CocinaDto cocinaDto = new CocinaDto();
+            cocinaDto.setId(plato.getId());
+            cocinaDto.setTipoComida(plato.getTipoComida());
+            cocinaDto.setDescription(plato.getDescription());
+            cocinaDto.setMenuId(menuDia.getMenuId());
+            return cocinaDto;
+        }).collect(Collectors.toList());
+        menuDiaDto.setCocina(cocinaDtos);
+        return menuDiaDto;
+    }
 
-        return todasLasComidas.stream()
-                .collect(Collectors.groupingBy(Cocina::getFecha))
-                .entrySet().stream()
-                .map(entry -> {
-                    AdminCocinaResponseDto dto = new AdminCocinaResponseDto();
-                    dto.setFecha(entry.getKey());
+    @Override
+    public Page<MenuDiaDto> getMenus(Pageable pageable) {
+        return menuDiaRepository.findAll(pageable).map(menu -> {
+            MenuDiaDto dto = new MenuDiaDto();
+            dto.setCocineroId(menu.getCocinero().getUserId());
+            dto.setMenuId(menu.getMenuId());
+            dto.setFecha(menu.getFecha());
+            List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
+                CocinaDto cocinaDto = new CocinaDto();
+                cocinaDto.setId(plato.getId());
+                cocinaDto.setTipoComida(plato.getTipoComida());
+                cocinaDto.setDescription(plato.getDescription());
+                cocinaDto.setMenuId(menu.getMenuId());
+                return cocinaDto;
+        }).collect(Collectors.toList());
+            dto.setCocina(platosDto);
+            return dto;
+        });
+    }
 
-                    dto.setPlatos(entry.getValue().stream()
-                            .map(c -> new ComidaDto(c.getTipoComida(), c.getDescription()))
-                            .collect(Collectors.toList()));
-
-                    return dto;
-                })
-                .sorted(Comparator.comparing(AdminCocinaResponseDto::getFecha).reversed())
-                .collect(Collectors.toList());
+    private Cocina crearPlato(MenuDia menu, Cocina.TipoComida tipo, String desc) {
+        Cocina c = new Cocina();
+        c.setTipoComida(tipo);
+        c.setDescription(desc);
+        c.setMenuDia(menu);
+        return c;
     }
 
     @Override
     @Transactional
-    public GeneralResponse createComida(CreateCocinaBatchDto batchDto, String currentUser) {
+    public GeneralResponse createComida(CreateMenuCompletoDto comidaDto, String currentUser) {
 
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
 
-        LocalDate fechaReferencia = batchDto.getCocina().getFecha();
-        if (batchDto.getPlatos() == null || batchDto.getPlatos().isEmpty()) {
-            throw new RuntimeException("La lista de platos no puede estar vacía");
+        if(menuDiaRepository.existsByFecha(comidaDto.getFecha())){
+            throw new RuntimeException("Ya hay un menú para esa fecha");
         }
 
-        boolean fechaYaExisteEnBd = cocinero.getCocina().stream()
-                .anyMatch(c -> c.getFecha() != null && c.getFecha().equals(fechaReferencia));
+        MenuDia menuDia = new MenuDia();
+        menuDia.setFecha(comidaDto.getFecha());
+        menuDia.setCocinero(cocinero);
 
-        if (fechaYaExisteEnBd) {
-            throw new RuntimeException("Error: La fecha " + fechaReferencia + " ya tiene registros.");
-        }
+        menuDia.getPlatos().add(crearPlato(menuDia, Cocina.TipoComida.CELIACO, comidaDto.getDescCeliaco()));
+        menuDia.getPlatos().add(crearPlato(menuDia, Cocina.TipoComida.NOCELIACO, comidaDto.getDescNoCeliaco()));
 
-
-        Set<Cocina.TipoComida> tiposEnEsteEnvio = new HashSet<>();
-
-        for (ComidaDto plato : batchDto.getPlatos()) {
-
-            if (!tiposEnEsteEnvio.add(plato.getTipoComida())) {
-                throw new RuntimeException("Error: Has incluido el tipo " + plato.getTipoComida() + " duplicado.");
-            }
-
-            Cocina nuevaComida = new Cocina();
-            nuevaComida.setFecha(fechaReferencia);
-            nuevaComida.setTipoComida(plato.getTipoComida());
-            nuevaComida.setDescription(plato.getDescription());
-
-            cocinero.getCocina().add(nuevaComida);
-        }
-
-        cocineroRepository.save(cocinero);
-
-        return new GeneralResponse(
-                new Date(),
-                "Menú del día " + " registrado con éxito",
-                HttpStatus.CREATED.value()
-        );
+        menuDiaRepository.save(menuDia);
+        return new GeneralResponse(new Date(), "Menú completo creado", 201);
     }
 
     @Override
     @Transactional
-    public GeneralResponse editComida(CreateCocinaBatchDto batchDto, String currentUser, LocalDate fechaOriginal) {
+    public GeneralResponse editComida(Long cocinaId, EditComidaDto editDto, String currentUser) {
 
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
 
-        LocalDate fechaNueva = batchDto.getCocina().getFecha();
+        Cocina cocina = cocinaRepository.findById(cocinaId)
+                .orElseThrow(() -> new RuntimeException("No se encuentra la comida"));
 
-        // 1. VALIDACIÓN: No permitir duplicados en el JSON (Ej: dos NOCELIACO)
-        Set<Cocina.TipoComida> tiposEnJson = new HashSet<>();
-        for (ComidaDto plato : batchDto.getPlatos()) {
-            if (!tiposEnJson.add(plato.getTipoComida())) {
-                throw new RuntimeException("Error: No puedes enviar el tipo " + plato.getTipoComida() + " dos veces en el mismo envío.");
-            }
+        if (!cocina.getMenuDia().getCocinero().getUserId().equals(cocinero.getUserId())) {
+            throw new RuntimeException("No tienes permiso para editar este plato");
         }
 
-        // 2. VALIDACIÓN: Si la fecha cambia, verificar que la nueva no esté ocupada
-        if (!fechaOriginal.equals(fechaNueva)) {
-            boolean fechaOcupada = cocinero.getCocina().stream()
-                    .anyMatch(c -> c.getFecha().equals(fechaNueva));
-            if (fechaOcupada) {
-                throw new RuntimeException("Error: La fecha " + fechaNueva + " ya tiene un menú. No se puede mover.");
-            }
+        if (editDto.getDescription() != null) {
+            cocina.setDescription(editDto.getDescription());
         }
 
-        // 3. BUSCAR REGISTROS: Solo los que ya existen para la fecha original
-        List<Cocina> platosExistentes = cocinero.getCocina().stream()
-                .filter(c -> c.getFecha().equals(fechaOriginal))
-                .collect(Collectors.toList());
-
-        if (platosExistentes.isEmpty()) {
-            throw new RuntimeException("Error: No existen registros para la fecha " + fechaOriginal + ". No hay nada que editar.");
-        }
-
-        // 4. ACTUALIZACIÓN ESTRICTA: Solo editamos lo que encontramos
-        for (ComidaDto platoDto : batchDto.getPlatos()) {
-            Cocina entidad = platosExistentes.stream()
-                    .filter(p -> p.getTipoComida().equals(platoDto.getTipoComida()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Error: El tipo " + platoDto.getTipoComida() + " no existía originalmente en la fecha " + fechaOriginal + ". No se puede crear uno nuevo aquí."));
-
-            entidad.setDescription(platoDto.getDescription());
-            entidad.setFecha(fechaNueva);
-            // El campo dia lo quitamos o se calcula solo, ya no lo seteamos del DTO
-        }
-
-        cocineroRepository.save(cocinero);
+        cocinaRepository.save(cocina);
 
         return new GeneralResponse(
                 new Date(),
-                "Menú actualizado correctamente para el " + fechaNueva,
+                "Plato " + cocina.getTipoComida() + " actualizado correctamente",
                 HttpStatus.OK.value()
         );
     }
@@ -229,26 +188,23 @@ public class CocineroService implements ICocineroService {
 
     @Override
     @Transactional
-    public GeneralResponse deleteComida(LocalDate fechaOriginal, String currentUser) {
+    public GeneralResponse deleteMenu(Long menuId, String currentUser) {
 
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("No se encuentra el cocinero"));
 
-        int tamañoAntes = cocinero.getCocina().size();
+        MenuDia menu = menuDiaRepository.findById(menuId)
+                .orElseThrow(() -> new RuntimeException("No se encuntra el menu"));
 
-        cocinero.getCocina().removeIf(plato ->
-                plato.getFecha() != null && plato.getFecha().equals(fechaOriginal)
-        );
-
-        if (cocinero.getCocina().size() == tamañoAntes) {
-            throw new RuntimeException("No se encontraron platos para eliminar en la fecha: " + fechaOriginal);
+        if(!menu.getCocinero().getUserId().equals(cocinero.getUserId())){
+            throw new RuntimeException("No tienes permisos para eliminar el menú");
         }
 
-        cocineroRepository.save(cocinero);
+        menuDiaRepository.deleteById(menuId);
 
         return new GeneralResponse(
                 new Date(),
-                "Menú del día " + fechaOriginal + " eliminado con éxito",
+                "Menú del día " + menu.getFecha() + " eliminado con éxito",
                 HttpStatus.OK.value()
         );
     }

@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,7 +16,6 @@ public class CocineroDto {
     private String lastname;
     private String username;
     private String email;
-    private List<CocinaDto> cocina;
     private boolean active;
 
 }

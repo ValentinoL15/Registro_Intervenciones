@@ -1,6 +1,10 @@
 package com.buenos_hijos.intervenciones.dto.CocineroDTOs;
 
+import com.buenos_hijos.intervenciones.model.Cocina;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,11 +14,15 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class CocinaDto {
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fecha;
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    private Cocina.TipoComida tipoComida;
+
+    private String description;
+
+    private Long menuId;
 
 }

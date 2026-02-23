@@ -1,4 +1,4 @@
-package com.buenos_hijos.intervenciones.embeddables;
+package com.buenos_hijos.intervenciones.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,20 +8,16 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Embeddable
+@Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Cocina {
 
-    public enum DiaCocinero {
-        LUNES,
-        MARTES,
-        MIÉRCOLES,
-        JUEVES,
-        VIERNES
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     public enum TipoComida {
         CELIACO,
@@ -29,12 +25,14 @@ public class Cocina {
     }
 
     @Enumerated(EnumType.STRING)
-    private TipoComida tipoComida;
+    private Cocina.TipoComida tipoComida;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private LocalDate fecha;
+    @ManyToOne
+    @JoinColumn(name = "menu_dia_id")
+    private MenuDia menuDia;
 
 
 }

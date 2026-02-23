@@ -1,6 +1,5 @@
 package com.buenos_hijos.intervenciones.model;
 
-import com.buenos_hijos.intervenciones.embeddables.Cocina;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,12 +18,9 @@ import java.util.List;
 public class Cocinero extends User{
 
     private String hourly;
-    @ElementCollection
-    @CollectionTable(
-            name = "dias_cocinero",
-            joinColumns = @JoinColumn(name = "userId")
-    )
-    private List<Cocina> cocina = new ArrayList<>();
+
+    @OneToMany(mappedBy = "cocinero", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MenuDia> menus = new ArrayList<>();
     private boolean active;
 
 }

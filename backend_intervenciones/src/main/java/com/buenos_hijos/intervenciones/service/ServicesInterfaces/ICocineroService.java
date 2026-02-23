@@ -14,15 +14,17 @@ public interface ICocineroService {
 
     public Page<CocineroDto> getCocineros(Pageable pageable);
 
-    public List<AdminCocinaResponseDto> getAllComidas();
+    public MenuDiaDto getMenu(Long menuId);
 
-    public GeneralResponse createComida(CreateCocinaBatchDto cocinaDto, String currentUser);
+    public Page<MenuDiaDto> getMenus(Pageable pageable);
 
-    public GeneralResponse editComida(CreateCocinaBatchDto batchDto, String currentUser, LocalDate fechaOriginal);
+    public GeneralResponse createComida(CreateMenuCompletoDto comidaDto, String currentUser);
+
+    public GeneralResponse editComida(Long cocinaId, EditComidaDto comidaDto, String currentUser);
 
     public GeneralResponse editCocinero(EditCocineroDto cocineroDto, String currentUser);
 
-    public GeneralResponse deleteComida(LocalDate fechaOriginal, String currentUser);
+    public GeneralResponse deleteMenu(Long menuId, String currentUser);
 
 
 
