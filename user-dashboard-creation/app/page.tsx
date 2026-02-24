@@ -41,21 +41,47 @@ export default function LoginPage() {
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+  e.preventDefault();
+  setError("");
+  setIsSubmitting(true);
 
-    try {
-      await login(username, password);
-      const role = localStorage.getItem("userRole");
-      const targetPath = role === "ADMIN" ? "/admin" : "/profesional";
-      router.push(targetPath);
-    } catch (err: any) {
-      setError(err.message || "Credenciales incorrectas");
-    } finally {
-      setIsSubmitting(false);
+  try {
+    // 1. Ejecutar el login
+    const userData = await login(username, password);
+    
+    // 2. Determinar la ruta según el rol
+    // Es mejor usar el rol que viene del backend/contexto
+    const role = userData?.role || localStorage.getItem("userRole");
+
+    let targetPath = "/";
+
+    switch (role) {
+      case "ADMIN":
+        targetPath = "/admin";
+        break;
+      case "PROFESIONAL":
+        targetPath = "/profesional";
+        break;
+      case "NUTRICIONISTA":
+        targetPath = "/nutricionista";
+        break;
+      case "COCINERO":
+        targetPath = "/cocinero";
+        break;
+      case "MANTENIMIENTO":
+        targetPath = "/mantenimiento";
+        break;
+      default:
+        targetPath = "/"; // O una página de "pendiente de activación"
     }
-  };
+
+    router.push(targetPath);
+  } catch (err: any) {
+    setError(err.message || "Credenciales incorrectas");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Nueva función para recuperar contraseña
   const handleRecoverPassword = async (e: React.FormEvent) => {

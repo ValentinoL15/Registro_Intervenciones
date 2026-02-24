@@ -124,3 +124,26 @@ export interface EditIntervencionDto {
   profesionalesIds: string[]
 }
 
+export interface SaveMantenimientoDto {
+  fecha: string,
+  description: string
+}
+
+export interface EditMantenimientoDto {
+  fecha: string,
+  description:string
+}
+
+export interface MantenimientoDto {
+  mantenimientoId: string,
+  fecha: string,
+  description: string,
+  empleadoId?: string
+}
+
+export interface EditUserDto {
+  name: string,
+  lastname:string,
+  username: string
+}
+

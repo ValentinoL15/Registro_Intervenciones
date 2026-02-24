@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditProfesionalDTO, EmailDto, GeneralResponse, IntervencionDto, User } from '@/lib/types';
+import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, SaveMantenimientoDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -254,6 +254,52 @@ export const AdminApi = {
     })
   }
 
+}
+
+export const EmpleadoApi = {
+
+  createMantenimiento: async(mantenimiento:SaveMantenimientoDto): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>("/empleado/crear-mantenimiento", {
+      method: "POST",
+      body: JSON.stringify(mantenimiento)
+    })
+  },
+
+  editMantenimiento: async(mantenimientoId:string,mantenimiento:EditMantenimientoDto): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/empleado/edit-mantenimiento/${mantenimientoId}`, {
+      method: "PUT",
+      body: JSON.stringify(mantenimiento)
+    })
+  },
+
+  deleteMantenimiento: async(mantenimientoId:string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/empleado/${mantenimientoId}`, {
+      method: "DELETE"
+    })
+  },
+
+  getMantenimiento: async(mantenimientoId: string): Promise<MantenimientoDto> => {
+    return apiCall<MantenimientoDto>(`/empleado/mantenimiento/${mantenimientoId}`, {
+      method: "GET"
+    })
+  },
+
+  getMantenimientos: async(): Promise<MantenimientoDto[]> => {
+    return apiCall<MantenimientoDto[]>(`/empleado/mantenimiento`, {
+      method: "GET"
+    })
+  }
+
+
+}
+
+export const UserApi = {
+  editUser: async(user: EditUserDto): Promise<Map<string,string>> => {
+    return apiCall<Map<string,string>>(`/user/edit`, {
+      method: "PUT",
+      body: JSON.stringify(user)
+    })
+}
 }
 
 export default apiCall
