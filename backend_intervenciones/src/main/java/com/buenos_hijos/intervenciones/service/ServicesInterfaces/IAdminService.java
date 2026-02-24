@@ -5,6 +5,7 @@ import com.buenos_hijos.intervenciones.dto.AdminDTOs.CreateAdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.EditAdminDto;
 import com.buenos_hijos.intervenciones.dto.CocineroDTOs.SaveCocineroDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
+import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveEmpleadoDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,8 @@ public interface IAdminService {
 
     public GeneralResponse saveNutricionista(SaveNutricionistaDto nutricionistaDto, String currentUser);
 
+    public GeneralResponse saveEmpleado(SaveEmpleadoDto empleadoDto, String currentUser);
+
     public GeneralResponse editAdmin(EditAdminDto adminDto, String currentUser);
 
     public GeneralResponse deleteAdmin(String currentUser, Long adminId);
@@ -39,6 +42,8 @@ public interface IAdminService {
     public GeneralResponse deleteCocinero(Long cocineroId, String currentUser);
 
     public GeneralResponse deleteNutricionista(Long nutricionistaId, String currentUser);
+
+    public GeneralResponse deleteEmpleado(Long empleadoId, String currentUser);
 
     public String encryptPassword(String password);
 

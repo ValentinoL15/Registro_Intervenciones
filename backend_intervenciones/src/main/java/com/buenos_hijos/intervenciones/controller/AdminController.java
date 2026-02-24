@@ -5,6 +5,8 @@ import com.buenos_hijos.intervenciones.dto.AdminDTOs.CreateAdminDto;
 import com.buenos_hijos.intervenciones.dto.AdminDTOs.EditAdminDto;
 import com.buenos_hijos.intervenciones.dto.CocineroDTOs.SaveCocineroDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
+import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveEmpleadoDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IAdminService;
 import jakarta.validation.Valid;
@@ -53,6 +55,16 @@ public class AdminController {
     public ResponseEntity<GeneralResponse> createProfesional(@Valid @RequestBody SaveCocineroDto cocineroDto,
                                                              Principal principal){
         return ResponseEntity.ok(adminService.saveCocinero(cocineroDto,principal.getName()));
+    }
+
+    @PostMapping("/create-nutricionista")
+    public ResponseEntity<GeneralResponse> createNutricionista(@Valid @RequestBody SaveNutricionistaDto nutricionistaDto, Principal principal){
+        return ResponseEntity.ok(adminService.saveNutricionista(nutricionistaDto, principal.getName()));
+    }
+
+    @PostMapping("/create-empleado")
+    public ResponseEntity<GeneralResponse> createEmpleado(@Valid @RequestBody SaveEmpleadoDto empleadoDto, Principal principal){
+        return ResponseEntity.ok(adminService.saveEmpleado(empleadoDto, principal.getName()));
     }
 
     //VERIFICADO

@@ -1,6 +1,10 @@
 spring:
   application:
     name: intervenciones
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 15MB
 
   mail:
     host: smtp.gmail.com
@@ -51,3 +55,7 @@ logging:
 server:
   port: 8080
 
+app:
+  admin:
+    default-username: ${ADMIN_USERNAME}
+    default-password: ${ADMIN_PASSWORD}

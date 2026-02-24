@@ -22,7 +22,7 @@ public class NutricionController {
 
     @PostMapping(value = "/subir-reporte", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GeneralResponse> subirReporte(
-            @ModelAttribute SaveNutricionSemanalDto dto, // Spring llena fechaInicio y fechaFinal aquí
+            @ModelAttribute SaveNutricionSemanalDto dto,
             @RequestParam("archivo") MultipartFile archivo,
             Principal principal) {
 
