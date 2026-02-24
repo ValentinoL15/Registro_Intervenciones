@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.controller;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EditMantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EmpleadoDto;
+import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.MantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveMantenimientoDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IEmpleadoService;
 import jakarta.validation.Valid;
@@ -31,6 +32,16 @@ public class EmpleadoController {
     @GetMapping("/{empleadoId}")
     public ResponseEntity<EmpleadoDto> getEmpleado(@PathVariable Long empleadoId){
         return ResponseEntity.ok(empleadoService.getEmpleado(empleadoId));
+    }
+
+    @GetMapping("/mantenimiento")
+    public ResponseEntity<Page<MantenimientoDto>> getMantenimientos(@PageableDefault Pageable pageable, Principal principal){
+        return ResponseEntity.ok(empleadoService.getMantenimientos(pageable, principal.getName()));
+    }
+
+    @GetMapping("/mantenimiento/{mantenimientoId}")
+    public ResponseEntity<MantenimientoDto> getMantenimiento(@PathVariable Long mantenimientoId){
+        return ResponseEntity.ok(empleadoService.getMantenimiento(mantenimientoId));
     }
 
     @PostMapping("/crear-mantenimiento")

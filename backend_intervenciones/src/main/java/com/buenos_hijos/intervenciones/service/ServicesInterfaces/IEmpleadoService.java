@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.service.ServicesInterfaces;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EditMantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EmpleadoDto;
+import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.MantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveMantenimientoDto;
 import com.buenos_hijos.intervenciones.model.Empleado;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,10 @@ public interface IEmpleadoService {
     public EmpleadoDto getEmpleado(Long empleadoId);
 
     public Page<EmpleadoDto> getEmpleados(Pageable pageable);
+
+    public MantenimientoDto getMantenimiento(Long mantenimientoId);
+
+    public Page<MantenimientoDto> getMantenimientos(Pageable pageable,  String currentUser);
 
     public GeneralResponse saveMantenimiento(SaveMantenimientoDto mantenimientoDto, String currentUser);
 

@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.service;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EditMantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.EmpleadoDto;
+import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.MantenimientoDto;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveMantenimientoDto;
 import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
 import com.buenos_hijos.intervenciones.model.Empleado;
@@ -59,6 +60,41 @@ public class EmpleadoService implements IEmpleadoService {
                         empleado.getRole()
                 )
         );
+    }
+
+    @Override
+    public MantenimientoDto getMantenimiento(Long mantenimientoId) {
+        return mantenimientoRepository.findById(mantenimientoId)
+                .map(mantenimiento -> {
+                    MantenimientoDto dto = new MantenimientoDto();
+                    dto.setMantenimientoId(mantenimiento.getMantenimientoId());
+                    dto.setFecha(mantenimiento.getFecha());
+                    dto.setDescription(mantenimiento.getDescription());
+                    if (mantenimiento.getEmpleado() != null) {
+                        dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
+                    }
+                    return dto;
+                })
+                .orElseThrow(() -> new RuntimeException("No se encontró el mantenimiento con ID: " + mantenimientoId));
+    }
+
+    @Override
+    public Page<MantenimientoDto> getMantenimientos(Pageable pageable, String currentUser) {
+
+        Empleado empleado = empleadoRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+
+        return mantenimientoRepository.findByEmpleado(empleado, pageable)
+                .map(mantenimiento -> {
+                    MantenimientoDto dto = new MantenimientoDto();
+                    dto.setMantenimientoId(mantenimiento.getMantenimientoId());
+                    dto.setFecha(mantenimiento.getFecha());
+                    dto.setDescription(mantenimiento.getDescription());
+                    if (mantenimiento.getEmpleado() != null) {
+                        dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
+                    }
+                    return dto;
+                });
     }
 
     @Override
