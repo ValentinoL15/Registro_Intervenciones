@@ -9,6 +9,7 @@ import java.time.LocalDate;
 @Setter
 public class EditNutricionSemanalDto {
 
+    private Long id;
     private LocalDate fechaInicio;
     private LocalDate fechaFinal;
     private String urlPdf;

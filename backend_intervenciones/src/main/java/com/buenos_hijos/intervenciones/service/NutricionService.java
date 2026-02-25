@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.service;
 import com.buenos_hijos.intervenciones.config.CloudinaryConfig;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemanalDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.model.Nutricion_Semanal;
@@ -15,6 +16,8 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,24 +53,63 @@ public class NutricionService implements INutricionService {
     }
 
     @Override
+    public NutricionSemanalDto getReporte(Long id) {
+        return nutricionSemanalRepository.findById(id)
+                .map(reporte -> {
+                    NutricionSemanalDto dto = new NutricionSemanalDto();
+                    dto.setFechaInicio(reporte.getFechaInicio());
+                    dto.setFechaFinal(reporte.getFechaFinal());
+                    dto.setArchivo(reporte.getUrlPdf()); // Usamos la URL generada de Cloudinary
+                    return dto;
+                })
+                .orElseThrow(() -> new RuntimeException("Reporte nutricional no encontrado"));
+    }
+
+    @Override
+    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable) {
+
+        Page<Nutricion_Semanal> nutricionSemanal = nutricionSemanalRepository.findAll(pageable);
+
+        return nutricionSemanal.map(reporte -> {
+            NutricionSemanalDto dto = new NutricionSemanalDto();
+            dto.setId(reporte.getId());
+            dto.setFechaInicio(reporte.getFechaInicio());
+            dto.setFechaFinal(reporte.getFechaFinal());
+            dto.setArchivo(reporte.getUrlPdf());
+            return dto;
+        });
+    }
+
+    @Override
     public GeneralResponse saveNutricionSemanal(SaveNutricionSemanalDto dto, MultipartFile archivo, String currentUser) {
         Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("Nutricionista no encontrado"));
 
         try {
-            Map uploadResult = cloudinary.uploader().upload(archivo.getBytes(),
-                    ObjectUtils.asMap("resource_type", "auto", "folder", "reportes_nutricion"));
+            String contentType = archivo.getContentType();
+
+            Map uploadResult = cloudinary.uploader().upload(
+                    archivo.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", "auto",
+                            "folder", "reportes_nutricion",
+                            "use_filename", true,
+                            "unique_filename", true,
+                            "overwrite", false
+                    )
+            );
 
             String urlGenerada = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
 
+            // Guardar también el resourceType para saber cómo mostrarlo luego
             Nutricion_Semanal reporte = new Nutricion_Semanal();
             reporte.setFechaInicio(dto.getFechaInicio());
             reporte.setFechaFinal(dto.getFechaFinal());
             reporte.setUrlPdf(urlGenerada);
             reporte.setPublicId(publicId);
             reporte.setNombreArchivo(archivo.getOriginalFilename());
-
+            reporte.setTipoArchivo(contentType);
             reporte.setNutricionista(nutricionista);
             nutricionista.getNutricion().add(reporte);
 
@@ -80,7 +122,7 @@ public class NutricionService implements INutricionService {
             );
 
         } catch (IOException e) {
-            throw new RuntimeException("Error al procesar el archivo PDF: " + e.getMessage());
+            throw new RuntimeException("Error al procesar el archivo: " + e.getMessage());
         }
     }
 

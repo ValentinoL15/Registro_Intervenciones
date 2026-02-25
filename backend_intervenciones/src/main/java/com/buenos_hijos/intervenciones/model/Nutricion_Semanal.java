@@ -24,6 +24,7 @@ public class Nutricion_Semanal {
 
     private String urlPdf;
     private String nombreArchivo;
+    private String tipoArchivo;
 
     @ManyToOne
     @JoinColumn(name = "nutricionistaId")
