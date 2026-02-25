@@ -54,27 +54,21 @@ export function ProfileContent() {
   setError("");
 
   try {
-    // 1. Enviamos la edición al backend
     const response = await UserApi.editUser({
       name,
       lastname,
       username,
     });
     
-    // 2. IMPORTANTE: Actualizar el token con la clave exacta "authToken"
-    // El backend ahora devuelve un Map con la llave "token"
     if (response.token) {
       localStorage.setItem("authToken", response.token); 
       console.log("Token actualizado con el nuevo username");
     }
 
-    // 3. Refrescar el contexto global. 
-    // Ahora checkAuth usará el nuevo token y el backend lo validará con éxito.
     await checkAuth(); 
     
     toast({ title: "Éxito", description: "Perfil actualizado correctamente" });
   } catch (err: any) {
-    // Si el backend lanza error de username duplicado, lo mostramos aquí
     setError(err.response?.data?.message || err.message || "Error al actualizar");
   } finally {
     setIsSubmitting(false);

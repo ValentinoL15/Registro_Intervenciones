@@ -147,3 +147,17 @@ export interface EditUserDto {
   username: string
 }
 
+export interface NutricionSemanalDto {
+  id:string,
+  fechaInicio: string,
+  fechaFinal: string,
+  archivo:string
+}
+
+export interface EditNutricionSemanalDto {
+  id:string,
+  fechaInicio: string,
+  fechaFinal: string,
+  urlPdf:string
+}
+

@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, SaveMantenimientoDto, User } from '@/lib/types';
+import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, NutricionSemanalDto, SaveMantenimientoDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -289,8 +289,6 @@ export const EmpleadoApi = {
       method: "GET"
     })
   }
-
-
 }
 
 export const UserApi = {
@@ -299,7 +297,37 @@ export const UserApi = {
       method: "PUT",
       body: JSON.stringify(user)
     })
+  }
 }
-}
+
+export const NutricionistaApi = {
+  
+  subirReporte: async (formData: FormData): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>("/nutricionista/subir-reporte", {
+      method: "POST",
+      body: formData, // Enviamos el FormData directamente
+      // IMPORTANTE: No agregar headers de Content-Type aquí
+    });
+  },
+
+  editReporte: async (id: number | string, formData: FormData): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/nutricionista/${id}`, {
+      method: "PUT",
+      body: formData,
+    });
+  },
+
+  deleteReporte: async (id: number | string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/nutricionista/${id}`, {
+      method: "DELETE"
+    });
+  },
+
+  getReportes: async (): Promise<NutricionSemanalDto[]> => {
+    return apiCall<NutricionSemanalDto[]>("/nutricionista/reportes", {
+      method: "GET"
+    });
+  }
+};
 
 export default apiCall
