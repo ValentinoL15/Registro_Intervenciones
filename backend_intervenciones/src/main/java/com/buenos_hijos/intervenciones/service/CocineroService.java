@@ -98,6 +98,39 @@ public class CocineroService implements ICocineroService {
         });
     }
 
+    @Override
+    public PlatoDto getPlato(Long id) {
+        Cocina cocina = cocinaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+
+        // Mapeamos a DTO
+        PlatoDto dto = new PlatoDto();
+        dto.setId(cocina.getId());
+        dto.setTipoComida(cocina.getTipoComida());
+        dto.setDescription(cocina.getDescription());
+
+        // Obtenemos el ID del menú padre
+        if (cocina.getMenuDia() != null) {
+            dto.setMenuId(cocina.getMenuDia().getMenuId());
+        }
+
+        return dto;
+    }
+
+    @Override
+    public Page<PlatoDto> getPlatos(Pageable pageable) {
+        Page<Cocina> platosPage = cocinaRepository.findAll(pageable);
+
+        return platosPage.map(cocina -> {
+            PlatoDto dto = new PlatoDto();
+            dto.setId(cocina.getId());
+            dto.setTipoComida(cocina.getTipoComida());
+            dto.setDescription(cocina.getDescription());
+            dto.setMenuId(cocina.getMenuDia().getMenuId());
+            return dto;
+        });
+    }
+
     private Cocina crearPlato(MenuDia menu, Cocina.TipoComida tipo, String desc) {
         Cocina c = new Cocina();
         c.setTipoComida(tipo);
@@ -153,6 +186,31 @@ public class CocineroService implements ICocineroService {
                 "Plato " + cocina.getTipoComida() + " actualizado correctamente",
                 HttpStatus.OK.value()
         );
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse editFechaMenu(Long menuId, EditFechaMenuDto editDto, String currentUser) {
+        Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
+
+        MenuDia menu = menuDiaRepository.findById(menuId)
+                .orElseThrow(() -> new RuntimeException("No se encuentra el menú"));
+
+        if (!menu.getCocinero().getUserId().equals(cocinero.getUserId())) {
+            throw new RuntimeException("No tienes permiso para editar este menú");
+        }
+
+        if (editDto.getFecha() != null) {
+            if (menuDiaRepository.existsByFecha(editDto.getFecha()) && !menu.getFecha().equals(editDto.getFecha())) {
+                throw new RuntimeException("Ya existe un menú para la fecha seleccionada");
+            }
+            menu.setFecha(editDto.getFecha());
+        }
+
+        menuDiaRepository.save(menu);
+
+        return new GeneralResponse(new Date(), "Fecha actualizada correctamente", HttpStatus.OK.value());
     }
 
     @Override

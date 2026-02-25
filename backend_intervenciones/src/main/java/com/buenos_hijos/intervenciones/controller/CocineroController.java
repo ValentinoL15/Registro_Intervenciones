@@ -44,6 +44,16 @@ public class CocineroController {
         return ResponseEntity.ok(cocineroService.getMenus(pageable));
     }
 
+    @GetMapping("/plato/{id}")
+    public ResponseEntity<PlatoDto> getPlato(@PathVariable Long id) {
+        return ResponseEntity.ok(cocineroService.getPlato(id));
+    }
+
+    @GetMapping("/plato")
+    public ResponseEntity<Page<PlatoDto>> getPlatos(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(cocineroService.getPlatos(pageable));
+    }
+
     @PostMapping("/create-comida")
     public ResponseEntity<GeneralResponse> saveCocina(@Valid @RequestBody CreateMenuCompletoDto menuDto, Principal principal) {
         return ResponseEntity.ok(cocineroService.createComida(menuDto, principal.getName()));
@@ -56,13 +66,20 @@ public class CocineroController {
         return ResponseEntity.ok(cocineroService.editComida(cocinaId,comidaDto, principal.getName()));
     }
 
+    @PutMapping("/menu/edit-fecha/{menuId}")
+    public ResponseEntity<GeneralResponse> editFechaMenu(@PathVariable Long menuId,
+                                                         @RequestBody EditFechaMenuDto fechaMenuDto,
+                                                         Principal principal) {
+        return ResponseEntity.ok(cocineroService.editFechaMenu(menuId,fechaMenuDto, principal.getName()));
+    }
+
     @PutMapping("/edit")
     public ResponseEntity<GeneralResponse> editCocinero(@Valid @RequestBody EditCocineroDto cocineroDto, Principal principal){
         return ResponseEntity.ok(cocineroService.editCocinero(cocineroDto, principal.getName()));
     }
 
 
-    @DeleteMapping("/delete-comida/{menuId}")
+    @DeleteMapping("/menu/{menuId}")
     public ResponseEntity<GeneralResponse> deleteComida(@PathVariable Long menuId,
                                                        Principal principal) {
         return ResponseEntity.ok(cocineroService.deleteMenu(menuId, principal.getName()));

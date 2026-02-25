@@ -18,9 +18,15 @@ public interface ICocineroService {
 
     public Page<MenuDiaDto> getMenus(Pageable pageable);
 
+    public PlatoDto getPlato(Long id);
+
+    public Page<PlatoDto> getPlatos(Pageable pageable);
+
     public GeneralResponse createComida(CreateMenuCompletoDto comidaDto, String currentUser);
 
     public GeneralResponse editComida(Long cocinaId, EditComidaDto comidaDto, String currentUser);
+
+    public GeneralResponse editFechaMenu(Long menuId, EditFechaMenuDto fechaMenuDto, String currentUser);
 
     public GeneralResponse editCocinero(EditCocineroDto cocineroDto, String currentUser);
 

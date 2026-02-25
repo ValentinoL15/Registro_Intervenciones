@@ -8,6 +8,8 @@ public interface IChangePasswordService {
 
     public GeneralResponse changePassword(String token, String password);
 
+    public boolean isTokenValid(String token);
+
     public String encryptPassword(String password);
 
 }

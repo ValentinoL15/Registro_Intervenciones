@@ -88,6 +88,20 @@ public class ChangePasswordService implements IChangePasswordService {
     }
 
     @Override
+    public boolean isTokenValid(String token) {
+        return changePasswordRepository.findByToken(token)
+                .map(tokenEntity -> {
+                    if (tokenEntity.isRevoked()) {
+                        return false;
+                    }
+
+                    LocalDateTime now = LocalDateTime.now();
+                    return tokenEntity.getExpiryDate().isAfter(now);
+                })
+                .orElse(false);
+    }
+
+    @Override
     public String encryptPassword(String password) {
         return new BCryptPasswordEncoder().encode(password);
     }

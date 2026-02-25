@@ -44,4 +44,13 @@ public class ChangePasswordController {
         return ResponseEntity.ok(changePasswordService.changePassword(token, password.password()));
     }
 
+    @GetMapping("/validate-token/{token}")
+    public ResponseEntity<?> validateToken(@PathVariable String token) {
+        if (changePasswordService.isTokenValid(token)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.GONE).body("El enlace ha expirado o ya fue utilizado");
+        }
+    }
+
 }

@@ -13,4 +13,6 @@ public interface ICocineroRepository extends JpaRepository<Cocinero,Long> {
 
     Optional<Cocinero> findByUsername(String username);
 
+
+
 }
