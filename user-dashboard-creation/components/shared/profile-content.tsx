@@ -25,20 +25,25 @@ export function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null); // Estado para el contador
+const [isRedirecting, setIsRedirecting] = useState(false); // Estado para mostrar el modal final
   const [error, setError] = useState("");
 
   // Estados del formulario
   const [name, setName] = useState("");
   const [lastname, setLastname] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     if (user) {
       setName(user.name || "");
       setLastname(user.lastname || "");
       setUsername(user.username || "");
+      setEmail(user.email || "");
       setLoading(false);
     }
+    console.log("MI USER" , user)
   }, [user]);
 
   const hasChanges =
@@ -76,25 +81,36 @@ export function ProfileContent() {
 };
 
   const handleRequestPasswordReset = async () => {
-    setIsSubmitting(true);
-    try {
-      await profesionalApi.requestEmail(user!.email);
-      toast({
-        title: "Correo enviado",
-        description: "Se ha enviado un enlace a tu correo. La sesión se cerrará.",
+  setIsSubmitting(true);
+  try {
+    await profesionalApi.requestEmail(user!.email);
+    
+    setIsPasswordModalOpen(false); // Cerramos el modal de confirmación
+    setIsRedirecting(true); // Abrimos el modal de "Sesión cerrándose"
+    setCountdown(5); // Iniciamos en 5 segundos
+
+    // Iniciamos el intervalo del contador
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev !== null && prev <= 1) {
+          clearInterval(interval);
+          logout(); // Cerramos sesión al llegar a 0
+          return 0;
+        }
+        return prev !== null ? prev - 1 : null;
       });
-      setTimeout(() => logout(), 3000);
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "No se pudo enviar el correo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setIsPasswordModalOpen(false);
-    }
-  };
+    }, 1000);
+
+  } catch (err) {
+    toast({
+      title: "Error",
+      description: "No se pudo enviar el correo.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -202,6 +218,31 @@ export function ProfileContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={isRedirecting} onOpenChange={() => {}}>
+  <DialogContent className="sm:max-w-[400px] flex flex-col items-center py-10 text-center">
+    <div className="relative flex items-center justify-center w-20 h-20 mb-4">
+      <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+      <div 
+        className="absolute inset-0 border-4 border-primary rounded-full animate-spin" 
+        style={{ clipPath: 'polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0)', animationDuration: '3s' }}
+      />
+      <span className="text-3xl font-bold text-primary">{countdown}</span>
+    </div>
+    
+    <DialogHeader>
+      <DialogTitle className="text-2xl text-center">¡Correo Enviado!</DialogTitle>
+      <DialogDescription className="text-center text-base pt-2">
+        Por seguridad, tu sesión se cerrará automáticamente en unos segundos. 
+        Revisa tu bandeja de entrada para restablecer tu contraseña.
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm italic">
+      <Loader2 className="w-4 h-4 animate-spin" />
+      Redirigiendo al login...
+    </div>
+  </DialogContent>
+</Dialog>
     </>
   );
 }

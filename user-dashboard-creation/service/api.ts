@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, NutricionSemanalDto, SaveMantenimientoDto, User } from '@/lib/types';
+import { AuthResponse, CocineroDto, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, MenuDiaDto, NutricionSemanalDto, SaveMantenimientoDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -180,6 +180,12 @@ changePasswordWithToken: async(token: string, password: string): Promise<General
     body: JSON.stringify({ password }) 
   })
 },
+
+validateResetToken: async (token: string): Promise<void> => {
+    return apiCall<void>(`/api/password/validate-token/${token}`, {
+      method: "GET",
+    });
+  },
   /////////////////INTERVENCIONES/////////////////////
 
   createIntervencion: async(intervencion:CreateIntervencionDto): Promise<GeneralResponse> => {
@@ -328,6 +334,60 @@ export const NutricionistaApi = {
       method: "GET"
     });
   }
+};
+
+export const CocineroApi = {
+
+  getAllCocineros: async (): Promise<CocineroDto[]> => {
+    return apiCall<CocineroDto[]>(`/cocinero`, {
+      method: "GET"
+    });
+  },
+
+  // Obtiene un cocinero específico por su ID
+  getCocinero: async (id: number | string): Promise<CocineroDto> => {
+    return apiCall<CocineroDto>(`/cocinero/${id}`, {
+      method: "GET"
+    });
+  },
+  
+  getMisMenus: async (): Promise<MenuDiaDto[]> => {
+    return apiCall<MenuDiaDto[]>("/cocinero/menu", {
+      method: "GET"
+    });
+  },
+
+  createComida: async (comidaDto: { fecha: string; descCeliaco: string; descNoCeliaco: string }): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>("/cocinero/create-comida", {
+      method: "POST",
+      body: JSON.stringify(comidaDto),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
+
+  deleteMenu: async (id: number | string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/cocinero/menu/${id}`, {
+      method: "DELETE"
+    });
+  },
+
+  editMenu: async (cocinaId: number, data: { description: string }): Promise<GeneralResponse> => {
+  return apiCall<GeneralResponse>(`/cocinero/edit-comida/${cocinaId}`, { 
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  });
+},
+
+editFecha: async (menuId: number, data: { fecha: string }): Promise<GeneralResponse> => {
+  return apiCall<GeneralResponse>(`/cocinero/menu/edit-fecha/${menuId}`, { 
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  });
+}
 };
 
 export default apiCall

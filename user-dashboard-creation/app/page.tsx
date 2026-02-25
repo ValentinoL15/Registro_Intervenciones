@@ -16,6 +16,7 @@ import {
 import { AlertCircle, Loader2, Heart, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { profesionalApi } from "@/service/api";
+import Image from "next/image";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [emailRecovery, setEmailRecovery] = useState(""); // Nuevo: para recuperación
+  const [isRedirecting, setIsRedirecting] = useState(false); // Estado para la transición final
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false); // Switch de vista
@@ -46,41 +48,29 @@ export default function LoginPage() {
   setIsSubmitting(true);
 
   try {
-    // 1. Ejecutar el login
     const userData = await login(username, password);
     
-    // 2. Determinar la ruta según el rol
-    // Es mejor usar el rol que viene del backend/contexto
-    const role = userData?.role || localStorage.getItem("userRole");
+    // LOGIN EXITOSO: Activamos el loader de pantalla completa inmediatamente
+    setIsRedirecting(true); 
 
+    const role = userData?.role || localStorage.getItem("userRole");
     let targetPath = "/";
 
     switch (role) {
-      case "ADMIN":
-        targetPath = "/admin";
-        break;
-      case "PROFESIONAL":
-        targetPath = "/profesional";
-        break;
-      case "NUTRICIONISTA":
-        targetPath = "/nutricionista";
-        break;
-      case "COCINERO":
-        targetPath = "/cocinero";
-        break;
-      case "MANTENIMIENTO":
-        targetPath = "/mantenimiento";
-        break;
-      default:
-        targetPath = "/"; // O una página de "pendiente de activación"
+      case "ADMIN": targetPath = "/admin"; break;
+      case "PROFESIONAL": targetPath = "/profesional"; break;
+      case "NUTRICIONISTA": targetPath = "/nutricionista"; break;
+      case "COCINERO": targetPath = "/cocinero"; break;
+      case "MANTENIMIENTO": targetPath = "/mantenimiento"; break;
+      default: targetPath = "/";
     }
 
     router.push(targetPath);
   } catch (err: any) {
     setError(err.message || "Credenciales incorrectas");
-  } finally {
-    setIsSubmitting(false);
+    setIsSubmitting(false); // Solo desactivamos si hubo error
   }
+  // Eliminamos el finally para que el botón no vuelva a "Ingresar" si fue exitoso
 };
 
   // Nueva función para recuperar contraseña
@@ -106,20 +96,44 @@ export default function LoginPage() {
     }
   };
 
+  if (isRedirecting) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse" />
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-foreground">Iniciando sistema</h2>
+          <p className="text-muted-foreground">Preparando tu panel de control...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   return (
     <>
     <main className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         {/* Header con Logo */}
         <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary">
-            <Heart className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">Centro de Atención Integral</h1>
-            <p className="text-muted-foreground mt-1">Sistema de Gestión de Intervenciones</p>
-          </div>
-        </div>
+  <div className="relative flex items-center justify-center w-24 h-24"> 
+    {/* Contenedor del logo */}
+    <Image
+      src="/logo-escuela.jpeg" // Ruta a tu imagen en la carpeta public
+      alt="Logo Escuela"
+      fill // Hace que la imagen ocupe el contenedor
+      className="object-contain" // Evita que el logo se deforme
+      priority // Carga la imagen con prioridad por ser el logo
+    />
+  </div>
+  <div className="text-center">
+    <h1 className="text-2xl font-bold text-foreground">Centro de Atención Integral</h1>
+    <p className="text-muted-foreground mt-1">Sistema de Gestión de Intervenciones</p>
+  </div>
+</div>
 
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center">

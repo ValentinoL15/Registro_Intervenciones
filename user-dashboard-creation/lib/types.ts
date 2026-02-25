@@ -161,3 +161,28 @@ export interface EditNutricionSemanalDto {
   urlPdf:string
 }
 
+export interface MenuDiaDto {
+  menuId: string,
+  fecha:string,
+  cocineroId: string,
+  cocina: CocinaDto[]
+}
+
+export interface CocinaDto {
+  id:string,
+  tipoComida: string,
+  description: string,
+  menuId: string
+}
+
+export interface CocineroDto {
+  userId: string,
+  name: string,
+  lastname: string,
+  username:string,
+  email: string,
+  active: boolean
+}
+
+
+

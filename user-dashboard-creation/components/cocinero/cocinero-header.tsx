@@ -18,7 +18,7 @@ interface ProfesionalHeaderProps {
   userName: string;
 }
 
-export function NutricionistaHeader({ userName }: ProfesionalHeaderProps) {
+export function CocineroHeader({ userName }: ProfesionalHeaderProps) {
   const { logout } = useAuth();
   const router = useRouter();
 
@@ -31,13 +31,13 @@ export function NutricionistaHeader({ userName }: ProfesionalHeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push("/nutricionista")}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push("/cocinero")}>
             <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary">
               <Heart className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <h2 className="font-semibold text-foreground">Centro de Atención</h2>
-              <p className="text-xs text-muted-foreground">Panel Nutricionista</p>
+              <p className="text-xs text-muted-foreground">Panel Cocinero</p>
             </div>
           </div>
 
@@ -51,10 +51,10 @@ export function NutricionistaHeader({ userName }: ProfesionalHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild
+               <DropdownMenuItem asChild
                 className="cursor-pointer"
               >
-                <Link href="/nutricionista/profile">
+                <Link href="/cocinero/profile">
                 <User className="w-4 h-4 mr-2" />
                 Mi cuenta
                 </Link>
