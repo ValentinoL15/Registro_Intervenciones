@@ -1,5 +1,5 @@
 import api from '@/app/interceptors/axios.interceptor';
-import { AuthResponse, CocineroDto, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, MenuDiaDto, NutricionSemanalDto, SaveMantenimientoDto, User } from '@/lib/types';
+import { AuthResponse, CocineroDto, CreateIntervencionDto, createProfesionalDTO, EditIntervencionDto, EditMantenimientoDto, EditProfesionalDTO, EditUserDto, EmailDto, GeneralResponse, IntervencionDto, MantenimientoDto, MenuDiaDto, NutricionistaDto, NutricionSemanalDto, SaveMantenimientoDto, User } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -241,20 +241,20 @@ export const AdminApi = {
     })
   },
 
-  createProfesional: async(profesionalData: createProfesionalDTO): Promise<GeneralResponse> => {
-    return apiCall<GeneralResponse>(`/admin/create-profesional`, {
+  createUser: async(profesionalData: createProfesionalDTO): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/admin/create-user`, {
       method: "POST",
       body: JSON.stringify(profesionalData)
     })
   },
 
-  deleteProfesional: async(userId: string): Promise<GeneralResponse> => {
-    return apiCall<GeneralResponse>(`/admin/delete-profesional/${userId}`, {
+  deleteUser: async(userId: string): Promise<GeneralResponse> => {
+    return apiCall<GeneralResponse>(`/admin/delete-user/${userId}`, {
       method: "DELETE",
     })
   },
 
-  altaBajaProfesional: async(userId: string): Promise<GeneralResponse> => {
+  altaBajaUser: async(userId: string): Promise<GeneralResponse> => {
     return apiCall<GeneralResponse>(`/admin/altaBaja/${userId}`, {
       method: "PUT"
     })
@@ -263,6 +263,12 @@ export const AdminApi = {
 }
 
 export const EmpleadoApi = {
+
+  getEmpleados: async(): Promise<User> => {
+    return apiCall<User>(`/empleado`, {
+      method: "GET"
+    })
+  },
 
   createMantenimiento: async(mantenimiento:SaveMantenimientoDto): Promise<GeneralResponse> => {
     return apiCall<GeneralResponse>("/empleado/crear-mantenimiento", {
@@ -290,8 +296,14 @@ export const EmpleadoApi = {
     })
   },
 
-  getMantenimientos: async(): Promise<MantenimientoDto[]> => {
+  getAllMantenimientos: async(): Promise<MantenimientoDto[]> => {
     return apiCall<MantenimientoDto[]>(`/empleado/mantenimiento`, {
+      method: "GET"
+    })
+  },
+
+  getMyMantenimientos: async(): Promise<MantenimientoDto> => {
+    return apiCall<MantenimientoDto>(`/empleado/myMantenimiento`, {
       method: "GET"
     })
   }
@@ -307,6 +319,12 @@ export const UserApi = {
 }
 
 export const NutricionistaApi = {
+
+   getAllNutricionistas: async (): Promise<NutricionistaDto[]> => {
+    return apiCall<NutricionistaDto[]>(`/nutricionista`, {
+      method: "GET"
+    });
+  },
   
   subirReporte: async (formData: FormData): Promise<GeneralResponse> => {
     return apiCall<GeneralResponse>("/nutricionista/subir-reporte", {
@@ -344,7 +362,6 @@ export const CocineroApi = {
     });
   },
 
-  // Obtiene un cocinero específico por su ID
   getCocinero: async (id: number | string): Promise<CocineroDto> => {
     return apiCall<CocineroDto>(`/cocinero/${id}`, {
       method: "GET"
@@ -352,6 +369,12 @@ export const CocineroApi = {
   },
   
   getMisMenus: async (): Promise<MenuDiaDto[]> => {
+    return apiCall<MenuDiaDto[]>("/cocinero/myMenu", {
+      method: "GET"
+    });
+  },
+
+  getMenus: async (): Promise<MenuDiaDto[]> => {
     return apiCall<MenuDiaDto[]>("/cocinero/menu", {
       method: "GET"
     });

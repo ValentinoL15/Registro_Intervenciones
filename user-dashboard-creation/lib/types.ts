@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "PROFESIONAL";
+export type UserRole = "ADMIN" | "PROFESIONAL" | "NUTRICIONISTA" | "COCINERO" | "MANTENIMIENTO";
 
 export type Turno = "MAÑANA" | "TARDE";
 
@@ -10,14 +10,14 @@ export type IntervencionType = "INDIVIDUAL" | "EQUIPO";
 
 export interface User {
   userId: string;
-  name?: string;
-  lastname?: string;
+  name: string;
+  lastname: string;
   username: string;
-  email?: string;
+  email: string;
   role: UserRole;
   hourly?: number;
   disponibilidades?: DisponibilidadDto[]
-  active?: boolean;
+  active: boolean;
   createdAt?: Date;
 }
 
@@ -66,13 +66,13 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-export interface createProfesionalDTO {
+export interface createUserDTO {
   name: string,
   lastname: string,
   username: string,
   email: string,
   hourly: string,
-  disponibilidad: DisponibilidadDto[]
+  disponibilidad?: DisponibilidadDto[]
   role: UserRole
 }
 
@@ -138,7 +138,8 @@ export interface MantenimientoDto {
   mantenimientoId: string,
   fecha: string,
   description: string,
-  empleadoId?: string
+  empleadoId?: string,
+  nombreEmpleado: string
 }
 
 export interface EditUserDto {
@@ -183,6 +184,22 @@ export interface CocineroDto {
   email: string,
   active: boolean
 }
+
+export interface NutricionistaDto {
+  nutricionistaId: string,
+  name: string,
+  lastname: string,
+  email: string,
+  hourly: string
+}
+
+export interface PostDto {
+  id:String,
+  fechaInicio: string,
+  fechaFinal: string,
+  archivo: string
+}
+
 
 
 

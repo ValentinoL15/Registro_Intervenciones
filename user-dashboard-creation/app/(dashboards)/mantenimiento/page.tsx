@@ -31,7 +31,7 @@ export default function MantenimientoPage() {
   const loadMantenimientos = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await EmpleadoApi.getMantenimientos(); 
+      const data = await EmpleadoApi.getMyMantenimientos(); 
       // Si tu backend devuelve un Page, usamos data.content, si no, data directamente
       const listado = data.content || data;
       setMantenimientos(listado);

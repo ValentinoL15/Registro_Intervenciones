@@ -13,7 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, Loader2, Heart, ArrowLeft } from "lucide-react";
+// Añadimos Eye y EyeOff aquí
+import { AlertCircle, Loader2, Heart, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { profesionalApi } from "@/service/api";
 import Image from "next/image";
@@ -26,13 +27,14 @@ export default function LoginPage() {
   // Estados
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [emailRecovery, setEmailRecovery] = useState(""); // Nuevo: para recuperación
-  const [isRedirecting, setIsRedirecting] = useState(false); // Estado para la transición final
+  const [showPassword, setShowPassword] = useState(false); // Estado para el ojito
+  const [emailRecovery, setEmailRecovery] = useState("");
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false); // Switch de vista
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
-  // Efectos existentes...
+  // ... (Efectos y handlers se mantienen igual)
   useEffect(() => {
     const errorType = searchParams.get("error");
     if (errorType === "session_expired") {
@@ -43,52 +45,45 @@ export default function LoginPage() {
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  setIsSubmitting(true);
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
 
-  try {
-    const userData = await login(username, password);
-    
-    // LOGIN EXITOSO: Activamos el loader de pantalla completa inmediatamente
-    setIsRedirecting(true); 
+    try {
+      const userData = await login(username, password);
+      setIsRedirecting(true); 
 
-    const role = userData?.role || localStorage.getItem("userRole");
-    let targetPath = "/";
+      const role = userData?.role || localStorage.getItem("userRole");
+      let targetPath = "/";
 
-    switch (role) {
-      case "ADMIN": targetPath = "/admin"; break;
-      case "PROFESIONAL": targetPath = "/profesional"; break;
-      case "NUTRICIONISTA": targetPath = "/nutricionista"; break;
-      case "COCINERO": targetPath = "/cocinero"; break;
-      case "MANTENIMIENTO": targetPath = "/mantenimiento"; break;
-      default: targetPath = "/";
+      switch (role) {
+        case "ADMIN": targetPath = "/admin"; break;
+        case "PROFESIONAL": targetPath = "/profesional"; break;
+        case "NUTRICIONISTA": targetPath = "/nutricionista"; break;
+        case "COCINERO": targetPath = "/cocinero"; break;
+        case "MANTENIMIENTO": targetPath = "/mantenimiento"; break;
+        default: targetPath = "/";
+      }
+
+      router.push(targetPath);
+    } catch (err: any) {
+      setError(err.message || "Credenciales incorrectas");
+      setIsSubmitting(false);
     }
+  };
 
-    router.push(targetPath);
-  } catch (err: any) {
-    setError(err.message || "Credenciales incorrectas");
-    setIsSubmitting(false); // Solo desactivamos si hubo error
-  }
-  // Eliminamos el finally para que el botón no vuelva a "Ingresar" si fue exitoso
-};
-
-  // Nueva función para recuperar contraseña
   const handleRecoverPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
 
     try {
-      // Simulación de llamada a API
-      console.log("Enviando correo a:", emailRecovery);
       await profesionalApi.requestEmail(emailRecovery)
-      
       toast({
         title: "Correo enviado",
         description: "Si el correo existe, recibirás instrucciones pronto.",
       });
-      setIsForgotPassword(false); // Volver al login
+      setIsForgotPassword(false);
     } catch (err: any) {
       setError("No se pudo procesar la solicitud.");
     } finally {
@@ -97,43 +92,40 @@ export default function LoginPage() {
   };
 
   if (isRedirecting) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse" />
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        </div>
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-foreground">Iniciando sistema</h2>
-          <p className="text-muted-foreground">Preparando tu panel de control...</p>
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse" />
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-foreground">Iniciando sistema</h2>
+            <p className="text-muted-foreground">Preparando tu panel de control...</p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
-    <>
     <main className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        {/* Header con Logo */}
         <div className="flex flex-col items-center gap-4 mb-8">
-  <div className="relative flex items-center justify-center w-24 h-24"> 
-    {/* Contenedor del logo */}
-    <Image
-      src="/logo-escuela.jpeg" // Ruta a tu imagen en la carpeta public
-      alt="Logo Escuela"
-      fill // Hace que la imagen ocupe el contenedor
-      className="object-contain" // Evita que el logo se deforme
-      priority // Carga la imagen con prioridad por ser el logo
-    />
-  </div>
-  <div className="text-center">
-    <h1 className="text-2xl font-bold text-foreground">Centro de Atención Integral</h1>
-    <p className="text-muted-foreground mt-1">Sistema de Gestión de Intervenciones</p>
-  </div>
-</div>
+          <div className="relative flex items-center justify-center w-24 h-24"> 
+            <Image
+              src="/logo-escuela.jpeg"
+              alt="Logo Escuela"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground">Centro de Atención Integral</h1>
+            <p className="text-muted-foreground mt-1">Sistema de Gestión de Intervenciones</p>
+          </div>
+        </div>
 
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center">
@@ -149,7 +141,6 @@ export default function LoginPage() {
           
           <CardContent>
             {isForgotPassword ? (
-              /* FORMULARIO DE RECUPERACIÓN */
               <form onSubmit={handleRecoverPassword} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="recovery-email">Correo Electrónico</Label>
@@ -176,7 +167,6 @@ export default function LoginPage() {
                 </Button>
               </form>
             ) : (
-              /* FORMULARIO DE LOGIN ORIGINAL */
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="email">Username</Label>
@@ -200,13 +190,29 @@ export default function LoginPage() {
                       ¿Olvidaste tu contraseña?
                     </button>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  
+                  {/* CONTENEDOR DEL INPUT CON OJITO */}
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"} // Alterna tipo
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pr-10" // Espacio para que el texto no se tape con el icono
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {error && (
@@ -225,6 +231,5 @@ export default function LoginPage() {
         </Card>
       </div>
     </main>
-    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { profesionalApi } from "@/service/api";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, AlertTriangle } from "lucide-react";
+import { Loader2, KeyRound, AlertTriangle, Eye, EyeOff } from "lucide-react"; // Importamos los iconos de ojo
 import { Toaster } from "@/components/ui/toaster";
 
 export default function ResetPasswordPage() {
@@ -18,6 +18,8 @@ export default function ResetPasswordPage() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Estado para ojo 1
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Estado para ojo 2
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [tokenError, setTokenError] = useState(false);
@@ -25,7 +27,6 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const validateToken = async () => {
       try {
-        // Debes crear este endpoint en tu backend que solo verifique si el token existe y no está revocado
         await profesionalApi.validateResetToken(token); 
         setIsValidating(false);
       } catch (err) {
@@ -58,7 +59,7 @@ export default function ResetPasswordPage() {
         router.push("/");
       }, 3000); 
     } catch (err: any) {
-      setTokenError(true); // Si falla aquí, también bloqueamos la vista
+      setTokenError(true);
       toast({ title: "Error", description: "No se pudo procesar el cambio. El enlace ya no es válido.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
@@ -115,29 +116,56 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleReset}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5"> {/* Aumentado el espacio entre filas */}
+            
+            {/* INPUT NUEVA CONTRASEÑA */}
             <div className="grid gap-2">
               <Label htmlFor="pass">Nueva Contraseña</Label>
-              <Input
-                id="pass"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="pass"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
+
+            {/* INPUT CONFIRMAR CONTRASEÑA */}
             <div className="grid gap-2">
               <Label htmlFor="confirm">Confirmar Contraseña</Label>
-              <Input
-                id="confirm"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirm"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
+
           </CardContent>
-          <CardFooter>
+          
+          {/* BOTÓN CON MARGEN SUPERIOR (pt-2) PARA QUE NO ESTÉ PEGADO */}
+          <CardFooter className="pt-2"> 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Restablecer Contraseña"}
             </Button>

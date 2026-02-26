@@ -26,41 +26,13 @@ import { Trash2, Sun, Moon, UserPlus, UserMinus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminApi, profesionalApi } from "@/service/api"
 
-export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: ProfesionalesTableProps) {
+export function UsersTable({ users, onDelete, altaBaja }: any) {
 
-  const onDeleteHandler = async (userId: string) => {
-    try {
-      // 1. Llamada a la API
-      await AdminApi.deleteUser(userId);
-
-      // 2. Actualización optimista del estado
-      // Esto hace que el usuario desaparezca de la vista al instante
-      onDelete(userId);
-
-      // 3. Opcional: Notificación de éxito
-      console.log("Profesional eliminado correctamente");
-    } catch (error) {
-      console.error("No se pudo eliminar al profesional:", error);
-    }
-  };
-
-  const diasAbreviados: Record<string, string> = {
-    LUNES: "Lun",
-    MARTES: "Mar",
-    MIÉRCOLES: "Mie",
-    JUEVES: "Jue",
-    VIERNES: "Vie",
-  };
-
-  const onToggleStatus = (userId: string) => {
-    
-  }
-
-  if (profesionales.length === 0) {
+  if (users.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">
-          No hay profesionales registrados
+          No hay users registrados
         </p>
       </div>
     );
@@ -74,86 +46,56 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: Profes
           <TableHead>Nombre</TableHead>
           <TableHead>Email</TableHead>
           <TableHead className="text-center">Carga Horaria</TableHead>
-          <TableHead className="min-w-[200px]">Disponibilidad</TableHead>
           <TableHead className="text-center">Condición</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {profesionales.map((prof: User) => (
-          <TableRow key={prof.userId}>
+        {users.map((user: User) => (
+          <TableRow key={user.userId}>
             <TableCell className="font-medium">
-              {prof.name} {prof.lastname}
+              {user.name} {user.lastname}
             </TableCell>
             <TableCell className="text-muted-foreground">
-              {prof.email}
+              {user.email}
             </TableCell>
             <TableCell className="text-center">
-              {prof.hourly}hs
+              {user.hourly}hs
             </TableCell>
-            <TableCell>
-                <div className="flex flex-wrap gap-1.5">
-                  {prof.disponibilidades?.length > 0 ? (
-                    prof.disponibilidades.map((disp: any, idx: number) => (
-                      <Badge 
-                        key={idx} 
-                        variant="outline" 
-                        className="flex items-center gap-1.5 bg-background border-slate-200 py-1"
-                      >
-                        <span className="font-bold text-slate-700">
-                          {diasAbreviados[disp.dia]}
-                        </span>
-                        <div className="w-px h-3 bg-slate-300" />
-                        {disp.turno === "MAÑANA" ? (
-                          <Sun className="w-3 h-3 text-amber-500" />
-                        ) : (
-                          <Moon className="w-3 h-3 text-indigo-500" />
-                        )}
-                        <span className="text-[10px] uppercase text-muted-foreground font-medium">
-                          {disp.turno}
-                        </span>
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground italic">Sin asignar</span>
-                  )}
-                </div>
-              </TableCell>
-           
+
             <TableCell className="text-center">
               <Badge
-                className={prof.active
+                className={user.active
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : "bg-red-50 text-red-700 border-red-200"
                 }
                 variant="outline"
               >
-                <span className={`mr-1.5 size-2 rounded-full ${prof.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                {prof.active ? "Activo" : "Inactivo"}
+                <span className={`mr-1.5 size-2 rounded-full ${user.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                {user.active ? "Activo" : "Inactivo"}
               </Badge>
             </TableCell>
             
-            {/* --- SECCIÓN DE ACCIONES MODIFICADA --- */}
             <TableCell className="text-right">
               <div className="flex justify-end gap-1">
                 
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => altaBaja(prof.userId)}
-                  className={prof.active 
+                  onClick={() => altaBaja(user.userId)}
+                  className={user.active 
                     ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" 
                     : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                   }
-                  title={prof.active ? "Dar de baja" : "Dar de alta"}
+                  title={user.active ? "Dar de baja" : "Dar de alta"}
                 >
-                  {prof.active ? (
+                  {user.active ? (
                     <UserMinus className="w-4 h-4" />
                   ) : (
                     <UserPlus className="w-4 h-4" />
                   )}
                   <span className="sr-only">
-                    {prof.active ? "Dar de baja" : "Dar de alta"}
+                    {user.active ? "Dar de baja" : "Dar de alta"}
                   </span>
                 </Button>
 
@@ -173,14 +115,14 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: Profes
                     <AlertDialogHeader>
                       <AlertDialogTitle>Eliminar profesional</AlertDialogTitle>
                       <AlertDialogDescription>
-                        ¿Estás seguro de que deseas eliminar a {prof.name}{" "}
-                        {prof.lastname}? Esta acción no se puede deshacer.
+                        ¿Estás seguro de que deseas eliminar a {user.name}{" "}
+                        {user.lastname}? Esta acción no se puede deshacer.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onDelete(prof.userId)}
+                        onClick={() => onDelete(user.userId)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Eliminar
@@ -190,7 +132,6 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja }: Profes
                 </AlertDialog>
               </div>
             </TableCell>
-            {/* --- FIN SECCIÓN DE ACCIONES --- */}
             
           </TableRow>
         ))}
