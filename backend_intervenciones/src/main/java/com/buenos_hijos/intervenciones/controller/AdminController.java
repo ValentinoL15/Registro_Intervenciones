@@ -8,6 +8,7 @@ import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveEmpleadoDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
+import com.buenos_hijos.intervenciones.dto.UserDTOs.CreateUserDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,26 +46,10 @@ public class AdminController {
     }
 
     //VERIFICADO
-    @PostMapping("/create-profesional")
-    public ResponseEntity<GeneralResponse> createProfesional(@Valid @RequestBody CreateProfesionalDto profesionalDto,
+    @PostMapping("/create-user")
+    public ResponseEntity<GeneralResponse> createUser(@Valid @RequestBody CreateUserDto userDto,
                                                              Principal principal){
-        return ResponseEntity.ok(adminService.saveProfesional(profesionalDto,principal.getName()));
-    }
-
-    @PostMapping("/create-cocinero")
-    public ResponseEntity<GeneralResponse> createProfesional(@Valid @RequestBody SaveCocineroDto cocineroDto,
-                                                             Principal principal){
-        return ResponseEntity.ok(adminService.saveCocinero(cocineroDto,principal.getName()));
-    }
-
-    @PostMapping("/create-nutricionista")
-    public ResponseEntity<GeneralResponse> createNutricionista(@Valid @RequestBody SaveNutricionistaDto nutricionistaDto, Principal principal){
-        return ResponseEntity.ok(adminService.saveNutricionista(nutricionistaDto, principal.getName()));
-    }
-
-    @PostMapping("/create-empleado")
-    public ResponseEntity<GeneralResponse> createEmpleado(@Valid @RequestBody SaveEmpleadoDto empleadoDto, Principal principal){
-        return ResponseEntity.ok(adminService.saveEmpleado(empleadoDto, principal.getName()));
+        return ResponseEntity.ok(adminService.saveUser(userDto,principal.getName()));
     }
 
     //VERIFICADO
@@ -82,25 +67,17 @@ public class AdminController {
     }
 
     //VERIFICADO
-    @DeleteMapping("/delete-profesional/{profesionalId}")
-    public ResponseEntity<GeneralResponse> deleteProfesional(Principal principal,
-                                                             @PathVariable Long profesionalId){
-        return ResponseEntity.ok(adminService.deleteProfesional(principal.getName(), profesionalId));
+    @DeleteMapping("/delete-user/{userId}")
+    public ResponseEntity<GeneralResponse> deleteUser(Principal principal,
+                                                             @PathVariable Long userId){
+        return ResponseEntity.ok(adminService.deleteUser(principal.getName(), userId));
     }
 
-    @PutMapping("/altaBaja/{profesionalId}")
-    public ResponseEntity<GeneralResponse> altaBajaProfesional(@PathVariable Long profesionalId,
+    @PutMapping("/altaBaja/{userId}")
+    public ResponseEntity<GeneralResponse> altaBajaUser(@PathVariable Long userId,
                                                                Principal principal){
-        return ResponseEntity.ok(adminService.altaBajaProfesional(profesionalId, principal.getName()));
+        return ResponseEntity.ok(adminService.altaBajaUser(userId, principal.getName()));
     }
-
-    @PutMapping("/altaBajaCocinero/{cocineroId}")
-    public ResponseEntity<GeneralResponse> altaBajaCocinero(@PathVariable Long cocineroId,
-                                                               Principal principal){
-        return ResponseEntity.ok(adminService.altaBajaCocinero(cocineroId, principal.getName()));
-    }
-
-
 
 
 

@@ -17,5 +17,7 @@ public class MantenimientoDto {
 
     private Long empleadoId;
 
+    private String nombreEmpleado;
+
 
 }

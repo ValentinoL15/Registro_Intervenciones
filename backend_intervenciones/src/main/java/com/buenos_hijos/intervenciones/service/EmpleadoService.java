@@ -42,7 +42,7 @@ public class EmpleadoService implements IEmpleadoService {
         empleadoDto.setEmail(empleado.getEmail());
         empleadoDto.setUsername(empleado.getUsername());
         empleadoDto.setRoleType(empleado.getRole());
-        empleadoDto.setEmpleadoId(empleado.getUserId());
+        empleadoDto.setUserId(empleado.getUserId());
         return empleadoDto;
     }
 
@@ -79,7 +79,7 @@ public class EmpleadoService implements IEmpleadoService {
     }
 
     @Override
-    public Page<MantenimientoDto> getMantenimientos(Pageable pageable, String currentUser) {
+    public Page<MantenimientoDto> getMyMantenimientos(Pageable pageable, String currentUser) {
 
         Empleado empleado = empleadoRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
@@ -93,8 +93,32 @@ public class EmpleadoService implements IEmpleadoService {
                     if (mantenimiento.getEmpleado() != null) {
                         dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
                     }
+                    dto.setNombreEmpleado(mantenimiento.getEmpleado().getName() + " " + mantenimiento.getEmpleado().getLastname());
                     return dto;
                 });
+    }
+
+    @Override
+    public Page<MantenimientoDto> getAllMantenimientos(Pageable pageable) {
+        Page<Mantenimiento> mantenimientos = mantenimientoRepository.findAll(pageable);
+
+        return mantenimientos.map(mantenimiento -> {
+            MantenimientoDto dto = new MantenimientoDto();
+            dto.setMantenimientoId(mantenimiento.getMantenimientoId());
+            dto.setFecha(mantenimiento.getFecha());
+            dto.setDescription(mantenimiento.getDescription());
+
+            // Validación de seguridad para el empleado
+            if (mantenimiento.getEmpleado() != null) {
+                dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
+                dto.setNombreEmpleado(mantenimiento.getEmpleado().getName() + " " +
+                        mantenimiento.getEmpleado().getLastname());
+            } else {
+                dto.setNombreEmpleado("Empleado no asignado");
+            }
+
+            return dto;
+        });
     }
 
     @Override

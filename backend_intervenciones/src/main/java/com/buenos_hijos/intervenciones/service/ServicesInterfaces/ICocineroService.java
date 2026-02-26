@@ -18,6 +18,8 @@ public interface ICocineroService {
 
     public Page<MenuDiaDto> getMenus(Pageable pageable);
 
+    public Page<MenuDiaDto> getMyMenus(Pageable pageable, String currentUser);
+
     public PlatoDto getPlato(Long id);
 
     public Page<PlatoDto> getPlatos(Pageable pageable);

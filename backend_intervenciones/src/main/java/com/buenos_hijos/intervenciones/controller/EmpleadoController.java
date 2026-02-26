@@ -34,9 +34,14 @@ public class EmpleadoController {
         return ResponseEntity.ok(empleadoService.getEmpleado(empleadoId));
     }
 
+    @GetMapping("/myMantenimiento")
+    public ResponseEntity<Page<MantenimientoDto>> getMyMantenimientos(@PageableDefault Pageable pageable, Principal principal){
+        return ResponseEntity.ok(empleadoService.getMyMantenimientos(pageable, principal.getName()));
+    }
+
     @GetMapping("/mantenimiento")
-    public ResponseEntity<Page<MantenimientoDto>> getMantenimientos(@PageableDefault Pageable pageable, Principal principal){
-        return ResponseEntity.ok(empleadoService.getMantenimientos(pageable, principal.getName()));
+    public ResponseEntity<Page<MantenimientoDto>> getAllMantenimientos(@PageableDefault Pageable pageable){
+        return ResponseEntity.ok(empleadoService.getAllMantenimientos(pageable));
     }
 
     @GetMapping("/mantenimiento/{mantenimientoId}")

@@ -14,5 +14,6 @@ public class MenuDiaDto {
     private LocalDate fecha;
     private Long cocineroId;
     private List<CocinaDto> cocina;
+    private String nombreCocinero;
 
 }

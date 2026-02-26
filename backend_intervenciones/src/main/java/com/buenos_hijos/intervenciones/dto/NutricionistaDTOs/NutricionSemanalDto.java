@@ -13,5 +13,6 @@ public class NutricionSemanalDto {
     private LocalDate fechaInicio;
     private LocalDate fechaFinal;
     private String archivo;
+    private String nombreNutricionista;
 
 }

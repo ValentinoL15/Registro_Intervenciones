@@ -17,7 +17,9 @@ public interface IEmpleadoService {
 
     public MantenimientoDto getMantenimiento(Long mantenimientoId);
 
-    public Page<MantenimientoDto> getMantenimientos(Pageable pageable,  String currentUser);
+    public Page<MantenimientoDto> getMyMantenimientos(Pageable pageable,  String currentUser);
+
+    public Page<MantenimientoDto> getAllMantenimientos(Pageable pageable);
 
     public GeneralResponse saveMantenimiento(SaveMantenimientoDto mantenimientoDto, String currentUser);
 

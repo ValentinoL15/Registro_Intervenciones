@@ -53,6 +53,7 @@ public class CocineroService implements ICocineroService {
             dto.setLastname(cocinero.getLastname());
             dto.setUsername(cocinero.getUsername());
             dto.setEmail(cocinero.getEmail());
+            dto.setHourly(cocinero.getHourly());
             dto.setActive(cocinero.isActive());
             return dto;
         });
@@ -85,6 +86,7 @@ public class CocineroService implements ICocineroService {
             dto.setCocineroId(menu.getCocinero().getUserId());
             dto.setMenuId(menu.getMenuId());
             dto.setFecha(menu.getFecha());
+            dto.setNombreCocinero(menu.getCocinero().getName() + " " + menu.getCocinero().getLastname());
             List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
                 CocinaDto cocinaDto = new CocinaDto();
                 cocinaDto.setId(plato.getId());
@@ -99,17 +101,43 @@ public class CocineroService implements ICocineroService {
     }
 
     @Override
+    public Page<MenuDiaDto> getMyMenus(Pageable pageable, String currentUser) {
+
+        Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("Cocinero no encontrado"));
+
+        return menuDiaRepository.findByCocinero(cocinero, pageable).map(menu -> {
+            MenuDiaDto dto = new MenuDiaDto();
+            dto.setCocineroId(menu.getCocinero().getUserId());
+            dto.setMenuId(menu.getMenuId());
+            dto.setFecha(menu.getFecha());
+            dto.setNombreCocinero(menu.getCocinero().getName() + " " + menu.getCocinero().getLastname());
+
+            List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
+                CocinaDto cocinaDto = new CocinaDto();
+                cocinaDto.setId(plato.getId());
+                cocinaDto.setTipoComida(plato.getTipoComida());
+                cocinaDto.setDescription(plato.getDescription());
+                cocinaDto.setMenuId(menu.getMenuId());
+                return cocinaDto;
+            }).collect(Collectors.toList());
+
+            dto.setCocina(platosDto);
+            return dto;
+        });
+
+    }
+
+    @Override
     public PlatoDto getPlato(Long id) {
         Cocina cocina = cocinaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
 
-        // Mapeamos a DTO
         PlatoDto dto = new PlatoDto();
         dto.setId(cocina.getId());
         dto.setTipoComida(cocina.getTipoComida());
         dto.setDescription(cocina.getDescription());
 
-        // Obtenemos el ID del menú padre
         if (cocina.getMenuDia() != null) {
             dto.setMenuId(cocina.getMenuDia().getMenuId());
         }
@@ -146,12 +174,10 @@ public class CocineroService implements ICocineroService {
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("El cocinero no existe"));
 
-        if(menuDiaRepository.existsByFecha(comidaDto.getFecha())){
-            throw new RuntimeException("Ya hay un menú para esa fecha");
-        }
-
         MenuDia menuDia = new MenuDia();
-        menuDia.setFecha(comidaDto.getFecha());
+        if (comidaDto.getFecha().isAfter(LocalDate.now())) {
+            throw new RuntimeException("No se puede crear un menú para una fecha posterior a la de hoy");
+        }
         menuDia.setCocinero(cocinero);
 
         menuDia.getPlatos().add(crearPlato(menuDia, Cocina.TipoComida.CELIACO, comidaDto.getDescCeliaco()));
@@ -202,8 +228,8 @@ public class CocineroService implements ICocineroService {
         }
 
         if (editDto.getFecha() != null) {
-            if (menuDiaRepository.existsByFecha(editDto.getFecha()) && !menu.getFecha().equals(editDto.getFecha())) {
-                throw new RuntimeException("Ya existe un menú para la fecha seleccionada");
+            if (editDto.getFecha().isAfter(LocalDate.now())) {
+                throw new RuntimeException("No se puede crear un menú para una fecha posterior a la de hoy");
             }
             menu.setFecha(editDto.getFecha());
         }

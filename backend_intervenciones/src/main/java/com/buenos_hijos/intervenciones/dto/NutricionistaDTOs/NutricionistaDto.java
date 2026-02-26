@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 public class NutricionistaDto {
 
-    private Long nutricionistaId;
+    private Long userId;
     private String name;
     private String lastname;
     private String email;

@@ -34,7 +34,6 @@ public class Profesional extends User{
             joinColumns = @JoinColumn(name = "userId")
     )
     private List<Disponibilidad> disponibilidad = new ArrayList<>();
-    private boolean active;
 
     @ManyToMany(mappedBy = "profesionales")
     private List<Intervencion> intervenciones = new ArrayList<>();
@@ -43,11 +42,10 @@ public class Profesional extends User{
 
     }
 
-    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, List<Disponibilidad> disponibilidad, boolean active, List<Intervencion> intervenciones) {
-        super(user_id, name, lastname, username ,email, password, role);
+    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, boolean active,List<Disponibilidad> disponibilidad, List<Intervencion> intervenciones) {
+        super(user_id, name, lastname, username ,email, password, role, active);
         this.hourly = hourly;
         this.disponibilidad = disponibilidad;
-        this.active = active;
         this.intervenciones = (intervenciones != null) ? intervenciones : new ArrayList<>();
     }
 }

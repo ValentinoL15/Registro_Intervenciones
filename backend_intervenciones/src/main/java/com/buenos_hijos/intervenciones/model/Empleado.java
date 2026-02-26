@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Empleado extends User{
 
-    private boolean active;
+    private String hourly;
 
     @OneToMany(mappedBy = "empleado", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Mantenimiento> mantenimientos = new ArrayList<>();

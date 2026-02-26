@@ -44,6 +44,11 @@ public class CocineroController {
         return ResponseEntity.ok(cocineroService.getMenus(pageable));
     }
 
+    @GetMapping("/myMenu")
+    public ResponseEntity<Page<MenuDiaDto>> getMyMenus(@PageableDefault Pageable pageable, Principal principal){
+        return ResponseEntity.ok(cocineroService.getMyMenus(pageable, principal.getName()));
+    }
+
     @GetMapping("/plato/{id}")
     public ResponseEntity<PlatoDto> getPlato(@PathVariable Long id) {
         return ResponseEntity.ok(cocineroService.getPlato(id));

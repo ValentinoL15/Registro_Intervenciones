@@ -31,11 +31,12 @@ public abstract class User {
     private String password;
     @Enumerated(EnumType.STRING)
     private RoleType role;
+    private boolean active = true;
 
     public User() {
     }
 
-    public User(Long userId, String name, String lastname, String username, String email, String password, RoleType role){
+    public User(Long userId, String name, String lastname, String username, String email, String password, RoleType role, boolean active){
         this.userId = userId;
         this.name = name;
         this.lastname = lastname;
@@ -43,5 +44,6 @@ public abstract class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.active = active;
     }
 }

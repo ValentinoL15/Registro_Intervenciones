@@ -39,10 +39,8 @@ public class UserServiceImp implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("No se encuentra el username"));
 
-        if(user instanceof Profesional profesional){
-            if(!profesional.isActive()){
-                throw new DisabledException("El profesional no está dado de alta o fue dado de baja, por favor comuníquese con un adminstrador");
-            }
+        if(!user.isActive()){
+                throw new DisabledException("El usuario no está dado de alta o fue dado de baja, por favor comuníquese con un adminstrador");
         }
 
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();

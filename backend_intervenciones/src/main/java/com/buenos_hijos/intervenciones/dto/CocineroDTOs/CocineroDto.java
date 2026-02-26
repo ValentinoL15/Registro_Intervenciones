@@ -16,6 +16,7 @@ public class CocineroDto {
     private String lastname;
     private String username;
     private String email;
+    private String hourly;
     private boolean active;
 
 }

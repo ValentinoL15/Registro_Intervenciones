@@ -17,7 +17,6 @@ import java.util.List;
 public class Nutricionista extends User{
 
     private String hourly;
-    private boolean active;
     @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Nutricion_Semanal> nutricion = new ArrayList<>();
 

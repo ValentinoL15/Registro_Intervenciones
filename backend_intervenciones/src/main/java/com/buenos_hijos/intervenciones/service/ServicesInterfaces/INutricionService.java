@@ -13,6 +13,8 @@ public interface INutricionService {
 
     public NutricionistaDto getNutricionista(Long nutricionistaId);
 
+    public Page<NutricionistaDto> getNutricionistas(Pageable pageable);
+
     public NutricionSemanalDto getReporte(Long nutricionId);
 
     public Page<NutricionSemanalDto> getMisReportes(Pageable pageable);
@@ -22,5 +24,6 @@ public interface INutricionService {
     public GeneralResponse editNutricionSemanal(Long id,EditNutricionSemanalDto nutricionSemanalDto, MultipartFile nuevoArchivo,String currentUser);
 
     public GeneralResponse deleteNutricionSemanal(Long nutricionSemanalId, String currentUser);
+
 
 }

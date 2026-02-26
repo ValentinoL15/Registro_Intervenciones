@@ -8,10 +8,13 @@ import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveEmpleadoDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
+import com.buenos_hijos.intervenciones.dto.UserDTOs.CreateUserDto;
 import com.buenos_hijos.intervenciones.embeddables.Disponibilidad;
 import com.buenos_hijos.intervenciones.model.*;
 import com.buenos_hijos.intervenciones.repository.*;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IAdminService;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashSet;
@@ -40,6 +44,7 @@ public class AdminService implements IAdminService {
     private final ICocineroRepository cocineroRepository;
     private final INutricionistaRepository nutricionistaRepository;
     private final IEmpleadoRepository empleadoRepository;
+    private final Cloudinary cloudinary;
 
     public String generateRandomPassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -119,7 +124,7 @@ public class AdminService implements IAdminService {
 
     @Override
     @Transactional
-    public GeneralResponse saveProfesional(CreateProfesionalDto profesionalDto, String currentUser) {
+    public GeneralResponse saveUser(CreateUserDto userDto, String currentUser) {
 
         Admin admin = adminRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("No se encuentra el username del administrador"));
@@ -128,166 +133,92 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        if(userRepository.existsByUsername(profesionalDto.getUsername())){
+        if(userRepository.existsByUsername(userDto.getUsername())){
             throw new RuntimeException("El username ya existe por favor utiliza otro");
         }
 
-        if(userRepository.existsByEmail(profesionalDto.getEmail())){
+        if(userRepository.existsByEmail(userDto.getEmail())){
             throw new RuntimeException("El email ya existe por favor utiliza otro");
         }
 
-        if (profesionalDto.getDisponibilidad() == null || profesionalDto.getDisponibilidad().isEmpty()) {
-            throw new RuntimeException("La lista de disponibilidad no puede estar vacía");
-        }
-
-        Set<String> combinacionesVistas = new HashSet<>();
-
-        List<Disponibilidad> disponibilidadesEntidad = profesionalDto.getDisponibilidad().stream()
-                .map(dto -> {
-                    if (dto.getDia() == null || dto.getTurno() == null) {
-                        throw new RuntimeException("Cada disponibilidad debe tener un día y un turno asignado");
-                    }
-
-                    // Creamos una llave única, ej: "LUNES-MAÑANA"
-                    String llave = dto.getDia().toString() + "-" + dto.getTurno().toString();
-
-                    if (!combinacionesVistas.add(llave)) {
-                        throw new RuntimeException("No puedes repetir el mismo turno para el día " + dto.getDia());
-                    }
-
-                    return new Disponibilidad(dto.getDia(), dto.getTurno());
-                })
-                .collect(Collectors.toList());
-
-        Profesional profesional = new Profesional();
-        profesional.setName(profesionalDto.getName());
-        profesional.setLastname(profesionalDto.getLastname());
-        profesional.setUsername(profesionalDto.getUsername());
-        profesional.setEmail(profesionalDto.getEmail());
         String rawPassword = generateRandomPassword();
-        profesional.setPassword(encryptPassword(rawPassword));
-        profesional.setRole(User.RoleType.PROFESIONAL);
-        profesional.setHourly(profesionalDto.getHourly());
-        profesional.setDisponibilidad(disponibilidadesEntidad);
-        profesional.setActive(true);
+        String encryptedPassword = encryptPassword(rawPassword);
 
-        profesionalRepository.save(profesional);
-        emailVerificationService.sendEmailWithCredentials(profesional.getEmail(),rawPassword);
+        switch (userDto.getRole()) {
+            case PROFESIONAL:
+                if (userDto.getDisponibilidad() == null || userDto.getDisponibilidad().isEmpty()) {
+                    throw new RuntimeException("La disponibilidad es obligatoria para profesionales");
+                }
 
-        return new GeneralResponse(
-                new Date(),
-                "Profesional creado con éxito",
-                HttpStatus.CREATED.value()
-        );
-    }
+                Profesional prof = new Profesional();
+                Set<String> combinacionesVistas = new HashSet<>();
 
-    @Override
-    @Transactional
-    public GeneralResponse saveCocinero(SaveCocineroDto cocineroDto, String currentUser) {
-        Admin admin = adminRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new RuntimeException("No se encuentra el username del administrador"));
+                List<Disponibilidad> disponibilidadesEntidad = userDto.getDisponibilidad().stream()
+                        .map(dto -> {
+                            if (dto.getDia() == null || dto.getTurno() == null) {
+                                throw new RuntimeException("Cada disponibilidad debe tener un día y un turno asignado");
+                            }
 
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
+                            String llave = dto.getDia().toString() + "-" + dto.getTurno().toString();
+
+                            if (!combinacionesVistas.add(llave)) {
+                                throw new RuntimeException("No puedes repetir el mismo turno para el día " + dto.getDia());
+                            }
+
+                            return new Disponibilidad(dto.getDia(), dto.getTurno());
+                        })
+                        .collect(Collectors.toList());
+                prof.setHourly(userDto.getHourly());
+                prof.setName(userDto.getName());
+                prof.setLastname(userDto.getLastname());
+                prof.setEmail(userDto.getEmail());
+                prof.setUsername(userDto.getUsername());
+                prof.setDisponibilidad(disponibilidadesEntidad);
+                prof.setRole(User.RoleType.PROFESIONAL);
+                prof.setPassword(encryptedPassword);
+                profesionalRepository.save(prof);
+                break;
+
+            case NUTRICIONISTA:
+                Nutricionista nutri = new Nutricionista();
+                nutri.setName(userDto.getName());
+                nutri.setLastname(userDto.getLastname());
+                nutri.setEmail(userDto.getEmail());
+                nutri.setPassword(encryptedPassword);
+                nutri.setUsername(userDto.getUsername());
+                nutri.setHourly(userDto.getHourly());
+                nutri.setRole(User.RoleType.NUTRICIONISTA);
+                nutricionistaRepository.save(nutri);
+                break;
+
+            case COCINERO:
+                Cocinero cocinero = new Cocinero();
+                cocinero.setName(userDto.getName());
+                cocinero.setLastname(userDto.getLastname());
+                cocinero.setEmail(userDto.getEmail());
+                cocinero.setPassword(encryptedPassword);
+                cocinero.setUsername(userDto.getUsername());
+                cocinero.setHourly(userDto.getHourly());
+                cocinero.setRole(User.RoleType.COCINERO);
+                cocineroRepository.save(cocinero);
+                break;
+
+            case MANTENIMIENTO:
+                Empleado empleado = new Empleado();
+                empleado.setName(userDto.getName());
+                empleado.setLastname(userDto.getLastname());
+                empleado.setEmail(userDto.getEmail());
+                empleado.setPassword(encryptedPassword);
+                empleado.setUsername(userDto.getUsername());
+                empleado.setHourly(userDto.getHourly());
+                empleado.setRole(User.RoleType.MANTENIMIENTO);
+                empleadoRepository.save(empleado);
+                break;
         }
 
-        if(userRepository.existsByUsername(cocineroDto.getUsername())){
-            throw new RuntimeException("El username ya existe por favor utiliza otro");
-        }
+        emailVerificationService.sendEmailWithCredentials(userDto.getEmail(), rawPassword);
 
-        if(userRepository.existsByEmail(cocineroDto.getEmail())){
-            throw new RuntimeException("El email ya existe por favor utiliza otro");
-        }
-
-        Cocinero cocinero = new Cocinero();
-        cocinero.setName(cocineroDto.getName());
-        cocinero.setLastname(cocineroDto.getLastname());
-        cocinero.setRole(User.RoleType.COCINERO);
-        cocinero.setUsername(cocineroDto.getUsername());
-        String rawPassword = generateRandomPassword();
-        cocinero.setPassword(encryptPassword(rawPassword));
-        cocinero.setEmail(cocineroDto.getEmail());
-        cocinero.setActive(true);
-        cocineroRepository.save(cocinero);
-        emailVerificationService.sendEmailWithCredentials(cocinero.getEmail(),rawPassword);
-        return new GeneralResponse(
-                new Date(),
-                "Cocinero creado con éxito",
-                HttpStatus.CREATED.value()
-        );
-
-    }
-
-    @Override
-    @Transactional
-    public GeneralResponse saveNutricionista(SaveNutricionistaDto nutricionistaDto, String currentUser) {
-        Admin admin = adminRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new RuntimeException("No se encuentra el username del administrador"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        if(userRepository.existsByUsername(nutricionistaDto.getUsername())){
-            throw new RuntimeException("El username ya existe por favor utiliza otro");
-        }
-
-        if(userRepository.existsByEmail(nutricionistaDto.getEmail())){
-            throw new RuntimeException("El email ya existe por favor utiliza otro");
-        }
-
-        Nutricionista nutricionista = new Nutricionista();
-        nutricionista.setName(nutricionistaDto.getName());
-        nutricionista.setLastname(nutricionistaDto.getLastname());
-        nutricionista.setRole(User.RoleType.NUTRICIONISTA);
-        nutricionista.setUsername(nutricionistaDto.getUsername());
-        String rawPassword = generateRandomPassword();
-        nutricionista.setPassword(encryptPassword(rawPassword));
-        nutricionista.setEmail(nutricionistaDto.getEmail());
-        nutricionista.setActive(true);
-        nutricionista.setHourly(nutricionistaDto.getHourly());
-        nutricionistaRepository.save(nutricionista);
-        emailVerificationService.sendEmailWithCredentials(nutricionista.getEmail(),rawPassword);
-        return new GeneralResponse(
-                new Date(),
-                "Nutricionista creado con éxito",
-                HttpStatus.CREATED.value()
-        );
-    }
-
-    @Override
-    @Transactional
-    public GeneralResponse saveEmpleado(SaveEmpleadoDto empleadoDto, String currentUser) {
-        Admin admin = adminRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new RuntimeException("No se encuentra el username del administrador"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        if(userRepository.existsByUsername(empleadoDto.getUsername())){
-            throw new RuntimeException("El username ya existe por favor utiliza otro");
-        }
-
-        if(userRepository.existsByEmail(empleadoDto.getEmail())){
-            throw new RuntimeException("El email ya existe por favor utiliza otro");
-        }
-
-        Empleado empleado = new Empleado();
-        empleado.setName(empleadoDto.getName());
-        empleado.setLastname(empleadoDto.getLastname());
-        empleado.setRole(User.RoleType.MANTENIMIENTO);
-        empleado.setEmail(empleadoDto.getEmail());
-        String rawPassword = generateRandomPassword();
-        empleado.setPassword(encryptPassword(rawPassword));
-        empleado.setUsername(empleadoDto.getUsername());
-        empleadoRepository.save(empleado);
-        emailVerificationService.sendEmailWithCredentials(empleado.getEmail(),rawPassword);
-        return new GeneralResponse(
-                new Date(),
-                "Empleado de mantenimiento creado con éxito",
-                HttpStatus.CREATED.value()
-        );
+        return new GeneralResponse(new Date(), "Usuario creado con éxito", 201);
     }
 
     @Override
@@ -348,23 +279,55 @@ public class AdminService implements IAdminService {
 
     @Override
     @Transactional
-    public GeneralResponse deleteProfesional(String currentUser, Long profesionalId) {
+    public GeneralResponse deleteUser(String currentUser, Long userId) {
 
         User admin = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
+
+        User userToDelete = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario a eliminar no existe"));
 
         if(admin.getRole() != User.RoleType.ADMIN){
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        Profesional profesional = profesionalRepository.findById(profesionalId)
-                .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+        switch (userToDelete.getRole()) {
+            case PROFESIONAL -> {
+                if (!profesionalRepository.existsById(userId)) throw new RuntimeException("Profesional no encontrado");
+                profesionalRepository.deleteById(userId);
+            }
+            case COCINERO -> {
+                if (!cocineroRepository.existsById(userId)) throw new RuntimeException("Cocinero no encontrado");
+                cocineroRepository.deleteById(userId);
+            }
+            case MANTENIMIENTO -> {
+                if (!empleadoRepository.existsById(userId)) throw new RuntimeException("Empleado no encontrado");
+                empleadoRepository.deleteById(userId);
+            }
+            case NUTRICIONISTA -> {
+                if (!nutricionistaRepository.existsById(userId)) throw new RuntimeException("Nutricionista no encontrado");
+                Nutricionista nutri = nutricionistaRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("Nutricionista no encontrado"));
+                List<Nutricion_Semanal> reportes = nutri.getNutricion();
 
-        profesionalRepository.deleteById(profesional.getUserId());
+                for (Nutricion_Semanal reporte : reportes) {
+                    try {
+                        if (reporte.getPublicId() != null) {
+                            cloudinary.uploader().destroy(reporte.getPublicId(), ObjectUtils.emptyMap());
+                        }
+                    } catch (IOException e) {
+                        System.err.println("No se pudo eliminar el archivo " + reporte.getPublicId() + " de Cloudinary");
+                    }
+                }
+
+                nutricionistaRepository.delete(nutri);
+            }
+            default -> throw new IllegalArgumentException("Tipo de usuario no válido: " + userToDelete.getRole());
+        }
 
         return new GeneralResponse(
                 new Date(),
-                "Profesional eliminado con éxito",
+                "Usuario eliminado con éxito",
                 HttpStatus.OK.value()
         );
 
@@ -372,7 +335,7 @@ public class AdminService implements IAdminService {
 
     @Override
     @Transactional
-    public GeneralResponse altaBajaProfesional(Long profesionalId, String currentUser) {
+    public GeneralResponse altaBajaUser(Long userId, String currentUser) {
 
         User admin = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
@@ -381,16 +344,16 @@ public class AdminService implements IAdminService {
             throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
         }
 
-        Profesional profesional = profesionalRepository.findById(profesionalId)
-                .orElseThrow(() -> new UsernameNotFoundException("El profesional no se encuentra disponible"));
+        User userToAltaBaja = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
 
-        if(profesional.isActive()){
-            profesional.setActive(false);
+        if(userToAltaBaja.isActive()){
+            userToAltaBaja.setActive(false);
         }else {
-            profesional.setActive(true);
+            userToAltaBaja.setActive(true);
         }
-        profesionalRepository.save(profesional);
-        return new GeneralResponse(new Date(), "Profesional actualizado con éxito", HttpStatus.OK.value());
+        userRepository.save(userToAltaBaja);
+        return new GeneralResponse(new Date(), "Usuario actualizado con éxito", HttpStatus.OK.value());
 
     }
 

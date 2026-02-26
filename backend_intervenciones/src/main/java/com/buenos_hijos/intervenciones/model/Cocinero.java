@@ -21,6 +21,5 @@ public class Cocinero extends User{
 
     @OneToMany(mappedBy = "cocinero", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MenuDia> menus = new ArrayList<>();
-    private boolean active;
 
 }

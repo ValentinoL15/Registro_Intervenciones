@@ -3,6 +3,7 @@ package com.buenos_hijos.intervenciones.controller;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.INutricionService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,16 @@ import java.security.Principal;
 public class NutricionController {
 
     private final INutricionService nutricionService;
+
+    @GetMapping("/{nutricionistaId}")
+    public ResponseEntity<NutricionistaDto> getNutricionista(@PathVariable Long nutricionistaId) {
+        return ResponseEntity.ok(nutricionService.getNutricionista(nutricionistaId));
+    }
+
+    @GetMapping()
+    public ResponseEntity<Page<NutricionistaDto>> getNutricionistas(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(nutricionService.getNutricionistas(pageable));
+    }
 
     @GetMapping("/reportes")
     public ResponseEntity<Page<NutricionSemanalDto>> getReportes(@PageableDefault Pageable pageable) {
@@ -54,12 +65,13 @@ public class NutricionController {
         return ResponseEntity.ok(nutricionService.editNutricionSemanal(id, dto, archivo, principal.getName()));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/reporte/{id}")
     public ResponseEntity<GeneralResponse> deleteReporte(
             @PathVariable Long id,
             Principal principal) {
 
         return ResponseEntity.ok(nutricionService.deleteNutricionSemanal(id, principal.getName()));
     }
+
 
 }

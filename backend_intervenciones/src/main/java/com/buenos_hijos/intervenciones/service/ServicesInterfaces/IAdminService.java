@@ -8,6 +8,7 @@ import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.MantenimientoDTOs.SaveEmpleadoDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.CreateProfesionalDto;
+import com.buenos_hijos.intervenciones.dto.UserDTOs.CreateUserDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,21 +22,15 @@ public interface IAdminService {
 
     public GeneralResponse saveAdmin(CreateAdminDto adminDto);
 
-    public GeneralResponse saveProfesional(CreateProfesionalDto profesionalDto, String currentUser);
-
-    public GeneralResponse saveCocinero(SaveCocineroDto cocineroDto, String currentUser);
-
-    public GeneralResponse saveNutricionista(SaveNutricionistaDto nutricionistaDto, String currentUser);
-
-    public GeneralResponse saveEmpleado(SaveEmpleadoDto empleadoDto, String currentUser);
+    public GeneralResponse saveUser(CreateUserDto userDto, String currentUser);
 
     public GeneralResponse editAdmin(EditAdminDto adminDto, String currentUser);
 
     public GeneralResponse deleteAdmin(String currentUser, Long adminId);
 
-    public GeneralResponse deleteProfesional(String currentUser, Long profesionalId);
+    public GeneralResponse deleteUser(String currentUser, Long userId);
 
-    public GeneralResponse altaBajaProfesional(Long profesionalId, String currentUser);
+    public GeneralResponse altaBajaUser(Long userId, String currentUser);
 
     public GeneralResponse altaBajaCocinero(Long cocineroId, String currentUser);
 

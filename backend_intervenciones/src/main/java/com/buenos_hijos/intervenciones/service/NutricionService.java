@@ -6,14 +6,17 @@ import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemana
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
+import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
 import com.buenos_hijos.intervenciones.model.Nutricion_Semanal;
 import com.buenos_hijos.intervenciones.model.Nutricionista;
+import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.INutricion_SemanalRepository;
 import com.buenos_hijos.intervenciones.repository.INutricionistaRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.INutricionService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -43,13 +46,30 @@ public class NutricionService implements INutricionService {
         Nutricionista nutricionista = nutricionistaRepository.findById(nutricionistaId)
                 .orElseThrow(() -> new RuntimeException("El nutricionista no se encuentra"));
         NutricionistaDto nutricionistaDto = new NutricionistaDto();
-        nutricionistaDto.setNutricionistaId(nutricionista.getUserId());
+        nutricionistaDto.setUserId(nutricionista.getUserId());
         nutricionistaDto.setName(nutricionista.getName());
         nutricionistaDto.setLastname(nutricionista.getLastname());
         nutricionistaDto.setEmail(nutricionista.getEmail());
         nutricionistaDto.setHourly(nutricionista.getHourly());
         nutricionistaDto.setActive(nutricionista.isActive());
         return nutricionistaDto;
+    }
+
+    @Override
+    public Page<NutricionistaDto> getNutricionistas(Pageable pageable) {
+
+        Page<Nutricionista> nutricionistasPage = nutricionistaRepository.findAll(pageable);
+
+        return nutricionistasPage.map(nutricionista -> {
+            NutricionistaDto dto = new NutricionistaDto();
+            dto.setUserId(nutricionista.getUserId());
+            dto.setName(nutricionista.getName());
+            dto.setLastname(nutricionista.getLastname());
+            dto.setEmail(nutricionista.getEmail());
+            dto.setHourly(nutricionista.getHourly());
+            dto.setActive(nutricionista.isActive());
+            return dto;
+        });
     }
 
     @Override
@@ -76,14 +96,30 @@ public class NutricionService implements INutricionService {
             dto.setFechaInicio(reporte.getFechaInicio());
             dto.setFechaFinal(reporte.getFechaFinal());
             dto.setArchivo(reporte.getUrlPdf());
+
+            // Accedemos a la relación y concatenamos nombre y apellido
+            if (reporte.getNutricionista() != null) {
+                String nombreCompleto = reporte.getNutricionista().getName() + " " +
+                        reporte.getNutricionista().getLastname();
+                dto.setNombreNutricionista(nombreCompleto);
+            } else {
+                dto.setNombreNutricionista("Sin asignar");
+            }
+
             return dto;
         });
     }
 
     @Override
+    @Transactional
     public GeneralResponse saveNutricionSemanal(SaveNutricionSemanalDto dto, MultipartFile archivo, String currentUser) {
         Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("Nutricionista no encontrado"));
+
+        if(dto.getFechaFinal().isBefore(dto.getFechaInicio())){
+            throw new RuntimeException("La fecha de inicio debe ser anterior a la final");
+        }
+
 
         try {
             String contentType = archivo.getContentType();
@@ -101,6 +137,7 @@ public class NutricionService implements INutricionService {
 
             String urlGenerada = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
+
 
             // Guardar también el resourceType para saber cómo mostrarlo luego
             Nutricion_Semanal reporte = new Nutricion_Semanal();
@@ -184,4 +221,5 @@ public class NutricionService implements INutricionService {
             throw new RuntimeException("Error al eliminar el archivo de Cloudinary");
         }
     }
+
 }
