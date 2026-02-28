@@ -122,7 +122,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">Centro de Atención Integral</h1>
+            <h1 className="text-2xl font-bold text-foreground">Escuela los Buenos Hijos</h1>
             <p className="text-muted-foreground mt-1">Sistema de Gestión de Intervenciones</p>
           </div>
         </div>

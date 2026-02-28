@@ -1,47 +1,104 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { FileText, CalendarDays, User2, ExternalLink } from "lucide-react";
+import { FileText, CalendarDays, User2, ExternalLink, X, Loader2 } from "lucide-react";
+import { NutricionistaApi } from "@/service/api";
 
-export function NutricionistasTable({ posteos }: { posteos: any[] }) {
-  const [currentPage, setCurrentPage] = useState(1);
+export function NutricionistasTable() {
+  const [reportes, setReportes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  
+  const [filtroDesde, setFiltroDesde] = useState("");
+  const [filtroHasta, setFiltroHasta] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 8;
 
-  // 1. ORDENAMIENTO: Invertimos el array para que la fechaInicio más reciente (o futura) esté arriba
-  const sortedPosteos = [...posteos].sort((a, b) => {
-    return new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime();
-  });
-
-  // 2. LÓGICA DE PAGINACIÓN
-  const totalPages = Math.ceil(sortedPosteos.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentPosteos = sortedPosteos.slice(startIndex, startIndex + itemsPerPage);
-
-  const goToNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const goToPreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await NutricionistaApi.getReportes(
+        filtroDesde,
+        filtroHasta,
+        currentPage,
+        itemsPerPage
+      );
+      
+      setReportes(response.content || []);
+      setTotalPages(response.totalPages || 0);
+      setTotalElements(response.totalElements || 0);
+    } catch (error) {
+      console.error("Error cargando reportes:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, filtroDesde, filtroHasta]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
-    }
-  }, [posteos.length, totalPages, currentPage]);
+    loadData();
+  }, [loadData]);
 
-  if (posteos.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No hay reportes semanales registrados</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filtroDesde, filtroHasta]);
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border overflow-hidden">
+      {/* SECCIÓN DE FILTROS */}
+      <div className="flex flex-wrap items-end gap-4 bg-muted/20 p-4 rounded-lg border border-dashed border-border">
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase text-muted-foreground">Desde</Label>
+          <Input 
+            type="date" 
+            value={filtroDesde} 
+            onChange={(e) => setFiltroDesde(e.target.value)} 
+            className="w-40 h-9 bg-background text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase text-muted-foreground">Hasta</Label>
+          <Input 
+            type="date" 
+            value={filtroHasta} 
+            onChange={(e) => setFiltroHasta(e.target.value)} 
+            className="w-40 h-9 bg-background text-sm"
+          />
+        </div>
+        {(filtroDesde || filtroHasta) && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { setFiltroDesde(""); setFiltroHasta(""); }}
+            className="h-9 text-muted-foreground hover:text-destructive gap-2"
+          >
+            <X className="h-4 w-4" /> Limpiar
+          </Button>
+        )}
+        <div className="ml-auto text-[10px] font-bold text-muted-foreground uppercase bg-background px-2 py-1 rounded border">
+          {totalElements} Reportes Totales
+        </div>
+      </div>
+
+      {/* TABLA CON LOADER INTERNO */}
+      <div className="rounded-md border border-border overflow-hidden relative">
+        
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[1px] transition-opacity duration-300">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-600" />
+            <p className="mt-2 text-xs font-medium text-muted-foreground animate-pulse">
+              Sincronizando reportes...
+            </p>
+          </div>
+        )}
+        
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -50,14 +107,10 @@ export function NutricionistasTable({ posteos }: { posteos: any[] }) {
               <TableHead className="text-right">Reporte</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {currentPosteos.map((reporte) => {
-              // Verificamos si la fecha es futura para cambiar el color
-              const esFuturo = new Date(reporte.fechaInicio) > new Date();
-              
-              return (
-                <TableRow key={reporte.id}>
-                  {/* COLUMNA NUTRICIONISTA */}
+          <TableBody className={isLoading ? "opacity-30" : "opacity-100 transition-opacity"}>
+            {reportes.length > 0 ? (
+              reportes.map((reporte) => (
+                <TableRow key={reporte.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
@@ -66,45 +119,21 @@ export function NutricionistasTable({ posteos }: { posteos: any[] }) {
                       <span className="font-medium text-sm">{reporte.nombreNutricionista}</span>
                     </div>
                   </TableCell>
-
-                  {/* COLUMNA PERIODO (DESDE / HASTA) */}
                   <TableCell>
                     <div className="flex items-center justify-center gap-4">
-                      {/* Fecha Inicio */}
                       <div className="flex flex-col items-center">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Desde</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={`font-normal ${
-                            esFuturo 
-                              ? "bg-purple-50 text-purple-700 border-purple-200" 
-                              : "bg-teal-50 text-teal-700 border-teal-200"
-                          }`}
-                        >
-                          <CalendarDays className="mr-1.5 h-3 w-3" />
-                          {new Date(reporte.fechaInicio).toLocaleDateString("es-AR")}
+                        <Badge variant="secondary" className="bg-teal-50 text-teal-700 border-teal-200 font-normal">
+                          {new Date(reporte.fechaInicio + "T00:00:00").toLocaleDateString("es-AR")}
                         </Badge>
                       </div>
-
-                      {/* Fecha Final */}
+                      <span className="text-muted-foreground text-xs">→</span>
                       <div className="flex flex-col items-center">
-                        <span className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Hasta</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={`font-normal ${
-                            esFuturo 
-                              ? "bg-purple-50 text-purple-700 border-purple-200" 
-                              : "bg-teal-50 text-teal-700 border-teal-200"
-                          }`}
-                        >
-                          <CalendarDays className="mr-1.5 h-3 w-3" />
-                          {new Date(reporte.fechaFinal).toLocaleDateString("es-AR")}
+                        <Badge variant="secondary" className="bg-teal-50 text-teal-700 border-teal-200 font-normal">
+                          {new Date(reporte.fechaFinal + "T00:00:00").toLocaleDateString("es-AR")}
                         </Badge>
                       </div>
                     </div>
                   </TableCell>
-
-                  {/* COLUMNA ACCIONES (PDF) */}
                   <TableCell className="text-right">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -112,87 +141,81 @@ export function NutricionistasTable({ posteos }: { posteos: any[] }) {
                           <FileText className="mr-2 h-4 w-4" /> Ver Reporte
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-                        <DialogHeader className="flex flex-row items-center justify-between border-b pb-2">
-                          <DialogTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-red-500" />
-                            Reporte Semanal: {reporte.nombreNutricionista}
+                      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
+                        <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
+                          <DialogTitle className="text-sm font-bold flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-red-500" />
+                            Reporte: {reporte.nombreNutricionista}
                           </DialogTitle>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(reporte.archivo, "_blank")}
-                            className="mr-6"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => window.open(reporte.archivo, "_blank")} className="mr-8">
                             <ExternalLink className="h-4 w-4 mr-2" /> Expandir
                           </Button>
-                        </DialogHeader>
-                        
-                        {/* Visualizador Adaptado */}
-                        <div className="flex-1 w-full bg-muted rounded-md overflow-hidden mt-4 relative">
-                          {reporte.archivo.match(/\.(jpeg|jpg|gif|png)$/) ? (
-                            <div className="w-full h-full overflow-auto flex justify-center bg-black/5 p-4">
-                              <img
-                                src={reporte.archivo}
-                                alt="Reporte"
-                                className="max-w-full h-auto object-contain shadow-lg"
-                              />
-                            </div>
-                          ) : (
-                            <iframe
-                              src={`${reporte.archivo}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                              className="w-full h-full border-none"
-                              title="Vista previa"
+                        </div>
+                        <div className="flex-1 bg-muted relative">
+                          {reporte.archivo && reporte.archivo.toLowerCase().endsWith('.pdf') ? (
+                            <iframe 
+                              src={`${reporte.archivo}#toolbar=0&view=FitH`} 
+                              className="w-full h-full border-none" 
+                              title="PDF Preview" 
                             />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
+                              <img src={reporte.archivo} alt="Reporte" className="max-w-full h-auto object-contain shadow-lg" />
+                            </div>
                           )}
                         </div>
                       </DialogContent>
                     </Dialog>
                   </TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            ) : (
+              !isLoading && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-20 text-muted-foreground italic">
+                    No se encontraron reportes para el periodo seleccionado.
+                  </TableCell>
+                </TableRow>
+              )
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="mt-4">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); goToPreviousPage(); }}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(0, p - 1)); }}
+                  className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>
 
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index + 1}>
-                  <PaginationLink
-                    href="#"
-                    isActive={currentPage === index + 1}
-                    onClick={(e) => { e.preventDefault(); setCurrentPage(index + 1); }}
+              {[...Array(totalPages)].map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink 
+                    href="#" 
+                    isActive={currentPage === i}
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+                    className="cursor-pointer"
                   >
-                    {index + 1}
+                    {i + 1}
                   </PaginationLink>
                 </PaginationItem>
               ))}
 
               <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); goToNextPage(); }}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages - 1, p + 1)); }}
+                  className={currentPage === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-          <p className="text-center text-xs text-muted-foreground mt-2">
-            Página {currentPage} de {totalPages} ({posteos.length} registros)
-          </p>
         </div>
       )}
     </div>

@@ -159,8 +159,8 @@ export const profesionalApi = {
     })
   },
 
-  editProfesional: async(data: EditProfesionalDTO): Promise<GeneralResponse> => {
-    return apiCall<GeneralResponse>(`/profesional/edit-profesional`, {
+  editProfesional: async(data: EditProfesionalDTO): Promise<Map<string,Object>> => {
+    return apiCall<Map<string,Object>>(`/profesional/edit-profesional`, {
       method: "PUT",
       body: JSON.stringify(data)
     })
@@ -195,11 +195,29 @@ validateResetToken: async (token: string): Promise<void> => {
     })
   },
 
-  getIntervenciones: async(): Promise<IntervencionDto[]> => {
-    return apiCall<IntervencionDto[]>(`/intervenciones`, {
-      method: "GET"
-    })
-  },
+  getIntervenciones: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/intervenciones?${params.toString()}`, {
+    method: "GET"
+  });
+},
+
+getMyIntervenciones: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/intervenciones/mis-intervenciones?${params.toString()}`, {
+    method: "GET"
+  });
+},
 
   getIntervencion: async(intervencionId: string): Promise<IntervencionDto> => {
     return apiCall<IntervencionDto>(`/intervenciones/${intervencionId}`, {
@@ -207,11 +225,6 @@ validateResetToken: async (token: string): Promise<void> => {
     })
   },
 
-  getMyIntervenciones: async(): Promise<IntervencionDto[]> => {
-    return apiCall<IntervencionDto[]>(`/intervenciones/mis-intervenciones`, {
-      method: "GET"
-    })
-  },
 
   editIntervencion: async(intervencionId: string, intervencion: EditIntervencionDto): Promise<GeneralResponse> => {
     return apiCall<GeneralResponse>(`/intervenciones/edit/${intervencionId}`, {
@@ -296,17 +309,30 @@ export const EmpleadoApi = {
     })
   },
 
-  getAllMantenimientos: async(): Promise<MantenimientoDto[]> => {
-    return apiCall<MantenimientoDto[]>(`/empleado/mantenimiento`, {
-      method: "GET"
-    })
-  },
+ getAllMantenimientos: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
 
-  getMyMantenimientos: async(): Promise<MantenimientoDto> => {
-    return apiCall<MantenimientoDto>(`/empleado/myMantenimiento`, {
-      method: "GET"
-    })
-  }
+  return apiCall<any>(`/empleado/mantenimiento?${params.toString()}`, {
+    method: "GET"
+  });
+},
+
+ getmyMantenimientos: async (desde?: string, hasta?: string, page: number = 0, size: number = 6) => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/empleado/myMantenimiento?${params.toString()}`, {
+    method: "GET"
+  });
+},
 }
 
 export const UserApi = {
@@ -342,16 +368,34 @@ export const NutricionistaApi = {
   },
 
   deleteReporte: async (id: number | string): Promise<GeneralResponse> => {
-    return apiCall<GeneralResponse>(`/nutricionista/${id}`, {
+    return apiCall<GeneralResponse>(`/nutricionista/reporte/${id}`, {
       method: "DELETE"
     });
   },
 
-  getReportes: async (): Promise<NutricionSemanalDto[]> => {
-    return apiCall<NutricionSemanalDto[]>("/nutricionista/reportes", {
-      method: "GET"
-    });
-  }
+  getReportes: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/nutricionista/reportes?${params.toString()}`, {
+    method: "GET"
+  });
+},
+
+getMyReportes: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/nutricionista/myReportes?${params.toString()}`, {
+    method: "GET"
+  });
+},
 };
 
 export const CocineroApi = {
@@ -368,17 +412,29 @@ export const CocineroApi = {
     });
   },
   
-  getMisMenus: async (): Promise<MenuDiaDto[]> => {
-    return apiCall<MenuDiaDto[]>("/cocinero/myMenu", {
-      method: "GET"
-    });
-  },
+  getMisMenus: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
 
-  getMenus: async (): Promise<MenuDiaDto[]> => {
-    return apiCall<MenuDiaDto[]>("/cocinero/menu", {
-      method: "GET"
-    });
-  },
+  return apiCall<any>(`/cocinero/myMenu?${params.toString()}`, {
+    method: "GET"
+  });
+},
+
+getMenus: async (desde?: string, hasta?: string, page: number = 0, size: number = 8): Promise<any> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (desde) params.append("desde", desde);
+  if (hasta) params.append("hasta", hasta);
+
+  return apiCall<any>(`/cocinero/menu?${params.toString()}`, {
+    method: "GET"
+  });
+},
 
   createComida: async (comidaDto: { fecha: string; descCeliaco: string; descNoCeliaco: string }): Promise<GeneralResponse> => {
     return apiCall<GeneralResponse>("/cocinero/create-comida", {

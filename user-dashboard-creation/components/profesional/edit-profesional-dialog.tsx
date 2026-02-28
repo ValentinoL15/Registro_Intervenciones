@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroupItem } from "@/components/ui/radio-group";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { profesionalApi } from "@/service/api";
+import { useLoader } from "@/lib/spinnerService";
 
 interface EditProfesionalDialogProps {
   open: boolean;
@@ -40,6 +41,7 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const { showLoader, hideLoader } = useLoader();
 
   useEffect(() => {
     if (intervencion) {
@@ -62,6 +64,9 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
     try {
 
       if (intervencion) {
+
+        showLoader("Actualizando datos de la intervención...");
+
         const fechaISO = `${fecha}T${hora.length === 5 ? hora + ":00" : hora}`;
 
         const updatedData = {
@@ -86,6 +91,7 @@ export function EditProfesionalDialog({ open, onOpenChange, intervencion, onSucc
       console.error(err.message)
     } finally {
       setIsSubmitting(false);
+      hideLoader();
     }
   };
 

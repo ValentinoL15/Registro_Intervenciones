@@ -19,6 +19,8 @@ import { UsersTable } from "@/components/admin/users-table";
 import { NutricionistasTable } from "@/components/admin/nutricionistas-table";
 import { CocinerosTable } from "@/components/admin/cocineros-table";
 import { MantenimientosTable } from "@/components/admin/mantenimientos-table";
+import { useLoader } from "@/lib/spinnerService";
+import { hi } from "date-fns/locale";
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
@@ -36,6 +38,7 @@ export default function AdminDashboard() {
   const [menuesCocina, setMenuesCocina] = useState<MenuDiaDto[]>([]);
   const [mantenimientos, setMantenimientos] = useState<MantenimientoDto[]>([]);
 
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false); 
 
   const openModalWithRole = (role: string) => {
@@ -44,6 +47,8 @@ export default function AdminDashboard() {
   };
   const router = useRouter();
   const { toast } = useToast();
+  const { showLoader, hideLoader } = useLoader();
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const loadProfesionales = async () => {
     try {
@@ -62,6 +67,7 @@ export default function AdminDashboard() {
       const data = await NutricionistaApi.getAllNutricionistas(); // Tu nuevo endpoint
       setNutricionistas([...data.content]);
     } catch (err) { console.error(err); }
+
   };
 
   const loadCocineros = async () => {
@@ -69,6 +75,7 @@ export default function AdminDashboard() {
       const data = await CocineroApi.getAllCocineros();
       setCocineros([...data.content]);
     } catch (err) { console.error(err); }
+    
   };
 
   const loadEmpleados = async () => {
@@ -76,6 +83,7 @@ export default function AdminDashboard() {
       const data = await EmpleadoApi.getEmpleados();
       setEmpleados([...data.content]);
     } catch (err) { console.error(err); }
+    
   };
 
 
@@ -85,7 +93,7 @@ export default function AdminDashboard() {
       setIntervenciones([...data.content])
     } catch (err: any) {
       console.error(err)
-    }
+    } 
   }
 
   const loadPosts = async () => {
@@ -95,6 +103,7 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error(err)
     }
+    
   }
 
   const loadMenues = async () => {
@@ -118,42 +127,51 @@ export default function AdminDashboard() {
 
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.replace("/");
-      } else if (user.role !== "ADMIN") {
-        router.replace("/");
-      } else {
-        // Cargar profesionales cuando el usuario es admin
-        loadProfesionales();
-        loadNutricionistas();
-        loadCocineros();
-        loadIntervenciones();
+  if (!isLoading && user?.role === "ADMIN") {
+    const initDashboard = async () => {
+      // Bloqueamos UNA SOLA VEZ para traer el estado inicial
+      showLoader("Sincronizando panel de control...");
+      try {
+        await Promise.all([
+          loadProfesionales(),
+          loadNutricionistas(),
+          loadCocineros(),
+          loadEmpleados(),
+          loadIntervenciones()
+        ]);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Error de conexión" });
+      } finally {
+        hideLoader();
       }
-    }
-  }, [user, isLoading, router]); // Removemos loadProfesionales de las dependencias
+    };
+    initDashboard();
+  }
+}, [user, isLoading]);
 
   const handleAddUser = async (data: createUserDTO) => {
     try {
-      // 1. Enviamos a la base de datos a través de la API
+
+      showLoader("Creando nuevo usuario..."); 
+      //await new Promise(resolve => setTimeout(resolve, 5000));
       await AdminApi.createUser({
         ...data,
         role: selectedRole
       });
 
-      // 2. Refrescamos la lista local para que aparezca el nuevo
-      if (selectedRole === "PROFESIONAL") {
-        await loadProfesionales();
-      } else if (selectedRole === "NUTRICIONISTA") {
-        await loadNutricionistas();
-      } else if (selectedRole === "COCINERO") {
-        await loadCocineros();
-      } else if (selectedRole === "MANTENIMIENTO") { 
-        await loadEmpleados();
-      }
+      
+      const refreshMap: Record<string, () => Promise<void>> = {
+      "PROFESIONAL": loadProfesionales,
+      "NUTRICIONISTA": loadNutricionistas,
+      "COCINERO": loadCocineros,
+      "MANTENIMIENTO": loadEmpleados,
+    };
 
-      // 3. Cerramos el modal
-      setIsDialogOpen(false);
+    if (refreshMap[selectedRole]) {
+      await refreshMap[selectedRole]();
+    }
+
+    setIsDialogOpen(false);
 
       toast({
         title: "¡Profesional agregado!",
@@ -161,15 +179,21 @@ export default function AdminDashboard() {
       });
 
     } catch (err: any) {
-
+      toast({
+      variant: "destructive",
+      title: "Error al crear",
+      description: err.message || "No se pudo crear el usuario.",
+    });
       throw err;
-    }
+    }finally {
+    hideLoader();
+  }
   };
 
 
   const processDeletion = async (id: string, deleteFn: () => Promise<GeneralResponse>, refreshFn: () => Promise<void>, setLocalState: React.Dispatch<React.SetStateAction<User[]>>) => {
     try {
-      setIsDeletingUser(true);
+      showLoader("Eliminando usuario...")
       await AdminApi.deleteUser(id);
       setLocalState(prev => prev.filter(u => u.userId !== id));
       await refreshFn();
@@ -185,7 +209,7 @@ export default function AdminDashboard() {
         description: error.message || "No se pudo eliminar el registro.",
       });
     } finally {
-      setIsDeletingUser(false); // Desactiva el cargador
+      hideLoader();
     }
   };
 
@@ -219,6 +243,8 @@ export default function AdminDashboard() {
 
       const userRole = userToUpdate?.role;
 
+      showLoader("Actualizando conidición de usuario...")
+
       // 2. Ejecutamos el cambio en la BD
       await AdminApi.altaBajaUser(userId);
 
@@ -250,6 +276,8 @@ export default function AdminDashboard() {
         description: err.message,
       });
       console.error(err);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -400,7 +428,6 @@ export default function AdminDashboard() {
                       </Button>
                     </TabsContent>
 
-                    {/* Si quieres un botón diferente para Posteos, lo podrías poner en otro TabsContent aquí */}
                   </div>
                 </CardHeader>
 

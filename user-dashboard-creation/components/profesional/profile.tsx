@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useLoader } from "@/lib/spinnerService";
 
 interface ProfileInterface {
   user: User
@@ -57,12 +58,13 @@ export function Profile({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const { showLoader, hideLoader } = useLoader();
 
 
   const DIAS_OPTIONS = [
     { label: "Lunes", value: "LUNES" },
     { label: "Martes", value: "MARTES" },
-    { label: "Miércoles", value: "MIERCOLES" },
+    { label: "Miércoles", value: "MIÉRCOLES" },
     { label: "Jueves", value: "JUEVES" },
     { label: "Viernes", value: "VIERNES" },
     { label: "Sábado", value: "SABADO" },
@@ -114,69 +116,44 @@ export function Profile({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isButtonDisabled) return;
+  e.preventDefault();
+  if (isButtonDisabled) return;
 
-    setError(""); // Limpiamos errores previos
-    setIsSubmitting(true);
+  setError(""); 
+  setIsSubmitting(true);
+  showLoader("Actualizando perfil...");
 
-    // VALIDACIÓN DE DUPLICADOS EN FRONTEND
-    const combos = disponibilidades.map(d => `${d.dia}-${d.turno}`);
-    const tieneDuplicados = combos.some((item, index) => combos.indexOf(item) !== index);
+  const combos = disponibilidades.map(d => `${d.dia}-${d.turno}`);
+  const tieneDuplicados = combos.some((item, index) => combos.indexOf(item) !== index);
 
-    if (tieneDuplicados) {
-      setError("No puedes repetir el mismo turno para un mismo día.");
-      setIsSubmitting(false);
-      return;
-    }
+  if (tieneDuplicados) {
+    setError("No puedes repetir el mismo turno para un mismo día.");
+    setIsSubmitting(false);
+    hideLoader();
+    return;
+  }
 
-    const updatedData = {
-      name,
-      lastname,
-      username,
-      hourly,
-      disponibilidades
-    };
+  const updatedData = { name, lastname, username, hourly, disponibilidades };
 
-    try {
-      const updatedProf = await profesionalApi.editProfesional(updatedData);
-      setProfesional(updatedProf);
-      await checkAuth();
-      toast({ title: "Éxito", description: "Perfil actualizado correctamente" });
-    } catch (err: any) {
-      // Si el backend lanza la excepción que configuramos, la capturamos aquí
-      setError(err.message || "Error al actualizar el perfil");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    const response = await profesionalApi.editProfesional(updatedData);
 
-  /*useEffect(() => {
-    if (!user) {
-      router.push("/");
-      return;
-    }
+    if (response.token) {
+    localStorage.setItem("authToken", response.token); 
+  }
 
-    const loadProfesional = async () => {
-      try {
-        const prof = await profesionalApi.getProfesional(user.userId);
-        setProfesional(prof);
-        // Sincronizamos todos los estados locales
-        setName(prof.name);
-        setLastname(prof.lastname);
-        setUsername(prof.username);
-        setHourly(prof.hourly);
-        setTurno(prof.turno);
-        setDays(prof.days || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setProfesional(response.data || response); 
+    
+    await checkAuth(); 
 
-    loadProfesional();
-  }, [user, router]);*/
+    toast({ title: "Éxito", description: "Perfil actualizado correctamente" });
+  } catch (err: any) {
+    setError(err.message || "Error al actualizar el perfil");
+  } finally {
+    setIsSubmitting(false);
+    hideLoader();
+  }
+};
 
   const handleRequestPasswordReset = async () => {
     setIsSubmitting(true);
