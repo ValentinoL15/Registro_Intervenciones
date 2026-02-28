@@ -2,7 +2,9 @@ package com.buenos_hijos.intervenciones.model;
 
 import com.buenos_hijos.intervenciones.embeddables.Disponibilidad;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -11,6 +13,8 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "profesionales")
 public class Profesional extends User{
 
@@ -28,6 +32,7 @@ public class Profesional extends User{
     }
 
     private String hourly;
+    private String degree;
     @ElementCollection
     @CollectionTable(
             name = "disponibilidad_profesional",
@@ -38,14 +43,4 @@ public class Profesional extends User{
     @OneToMany(mappedBy = "creador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Intervencion> intervenciones = new ArrayList<>();
 
-    public Profesional(){
-
-    }
-
-    public Profesional(Long user_id, String name, String lastname, String username ,String email, String password, RoleType role, String hourly, boolean active,List<Disponibilidad> disponibilidad, List<Intervencion> intervenciones) {
-        super(user_id, name, lastname, username ,email, password, role, active);
-        this.hourly = hourly;
-        this.disponibilidad = disponibilidad;
-        this.intervenciones = (intervenciones != null) ? intervenciones : new ArrayList<>();
-    }
 }

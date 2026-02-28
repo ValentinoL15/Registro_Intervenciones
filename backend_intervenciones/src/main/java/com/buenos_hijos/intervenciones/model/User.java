@@ -15,7 +15,8 @@ public abstract class User {
         PROFESIONAL,
         COCINERO,
         NUTRICIONISTA,
-        MANTENIMIENTO
+        MANTENIMIENTO,
+        TECNICO
     }
 
     @Id

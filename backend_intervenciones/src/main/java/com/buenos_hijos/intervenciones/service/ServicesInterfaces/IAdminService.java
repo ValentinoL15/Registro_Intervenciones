@@ -32,14 +32,6 @@ public interface IAdminService {
 
     public GeneralResponse altaBajaUser(Long userId, String currentUser);
 
-    public GeneralResponse altaBajaCocinero(Long cocineroId, String currentUser);
-
-    public GeneralResponse deleteCocinero(Long cocineroId, String currentUser);
-
-    public GeneralResponse deleteNutricionista(Long nutricionistaId, String currentUser);
-
-    public GeneralResponse deleteEmpleado(Long empleadoId, String currentUser);
-
     public String encryptPassword(String password);
 
 }

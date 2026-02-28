@@ -24,6 +24,9 @@ public class EditProfesionalDto {
     @Size(min = 4, max = 20, message = "El username debe contener entre 4 y 20 caracteres")
     private String username;
 
+    @Size(min = 5, max = 20, message = "La dedicación debe contener entre {min} y {max} caracteres")
+    private String degree;
+
     private String hourly;
 
     private List<DisponibilidadDto> disponibilidades;

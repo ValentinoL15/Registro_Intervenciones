@@ -1,26 +1,22 @@
-package com.buenos_hijos.intervenciones.dto.UserDTOs;
+package com.buenos_hijos.intervenciones.dto.TecnicoDTOs;
 
 import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.model.HorarioAsistencia;
 import com.buenos_hijos.intervenciones.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class UserDto {
+@Getter
+@Setter
+public class EditTecnicoDto {
 
-    private Long userId;
-    private String email;
+    private String username;
+    private User.RoleType role;
     private String name;
     private String lastname;
-    private String username;
-    private String degree;
-    private User.RoleType role;
+    private String hourly;
     private List<HorarioAsistenciaDto> horarioAsistencias;
 
 }

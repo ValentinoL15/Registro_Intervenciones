@@ -1,6 +1,7 @@
 package com.buenos_hijos.intervenciones.dto.UserDTOs;
 
 import com.buenos_hijos.intervenciones.dto.DisponibilidadDTOs.DisponibilidadDto;
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.model.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -43,4 +44,10 @@ public class CreateUserDto {
     // OPCIONAL: Solo se valida manualmente en el service si el rol es PROFESIONAL
     @Valid
     private List<DisponibilidadDto> disponibilidad;
+
+    @Valid
+    private List<HorarioAsistenciaDto> horarioAsistencia;
+
+    @Valid
+    private String degree;
 }

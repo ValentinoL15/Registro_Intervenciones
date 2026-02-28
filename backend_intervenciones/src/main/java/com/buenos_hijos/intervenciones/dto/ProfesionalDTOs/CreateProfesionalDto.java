@@ -31,6 +31,11 @@ public class CreateProfesionalDto {
     @Size(min = 5, max = 20, message = "El username debe contener entre 5 y 20 caracteres")
     private String username;
 
+    @NotBlank(message = "La dedicación no puede estar vacía")
+    @Size(min = 5, max = 20, message = "La dedicación debe contener entre {min} y {max} caracteres")
+    private String degree;
+
+
     @NotBlank(message = "El email no puede estar vacío")
     @Pattern(regexp = EMAIL_REGEX, message = "El formato del email no es válido (ej. usuario@dominio.com)")
     private String email;

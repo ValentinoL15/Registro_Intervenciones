@@ -40,11 +40,13 @@ public class AdminService implements IAdminService {
     private final IUserRepository userRepository;
     private final IAdminRepository adminRepository;
     private final IProfesionalRepository profesionalRepository;
+    private final ITecnicoRepository tecnicoRepository;
     private final EmailVerificationService emailVerificationService;
     private final ICocineroRepository cocineroRepository;
     private final INutricionistaRepository nutricionistaRepository;
     private final IEmpleadoRepository empleadoRepository;
     private final Cloudinary cloudinary;
+
 
     public String generateRandomPassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -173,6 +175,7 @@ public class AdminService implements IAdminService {
                 prof.setLastname(userDto.getLastname());
                 prof.setEmail(userDto.getEmail());
                 prof.setUsername(userDto.getUsername());
+                prof.setDegree(userDto.getDegree());
                 prof.setDisponibilidad(disponibilidadesEntidad);
                 prof.setRole(User.RoleType.PROFESIONAL);
                 prof.setPassword(encryptedPassword);
@@ -214,6 +217,35 @@ public class AdminService implements IAdminService {
                 empleado.setRole(User.RoleType.MANTENIMIENTO);
                 empleadoRepository.save(empleado);
                 break;
+
+            case TECNICO:
+                Tecnico2 tecnico2 = new Tecnico2();
+                tecnico2.setName(userDto.getName());
+                tecnico2.setLastname(userDto.getLastname());
+                tecnico2.setEmail(userDto.getEmail());
+                tecnico2.setPassword(encryptedPassword);
+                tecnico2.setUsername(userDto.getUsername());
+                tecnico2.setHourly(userDto.getHourly());
+                tecnico2.setRole(User.RoleType.TECNICO);
+                if (userDto.getHorarioAsistencia() != null && !userDto.getHorarioAsistencia().isEmpty()) {
+                    List<HorarioAsistencia> horariosEntidad = userDto.getHorarioAsistencia().stream()
+                            .map(dto -> {
+                                HorarioAsistencia horario = new HorarioAsistencia();
+                                horario.setDia(dto.getDia());
+                                horario.setInicio(dto.getInicio());
+                                horario.setFin(dto.getFin());
+
+                                horario.setTecnico2(tecnico2);
+
+                                return horario;
+                            })
+                            .collect(Collectors.toList());
+
+                    tecnico2.setHorarioAsistencias(horariosEntidad);
+                }
+                tecnicoRepository.save(tecnico2);
+                break;
+
         }
 
         emailVerificationService.sendEmailWithCredentials(userDto.getEmail(), rawPassword);
@@ -322,6 +354,10 @@ public class AdminService implements IAdminService {
 
                 nutricionistaRepository.delete(nutri);
             }
+            case TECNICO ->  {
+                if (!tecnicoRepository.existsById(userId)) throw new RuntimeException("Técnico no encontrado");
+                tecnicoRepository.deleteById(userId);
+            }
             default -> throw new IllegalArgumentException("Tipo de usuario no válido: " + userToDelete.getRole());
         }
 
@@ -355,93 +391,6 @@ public class AdminService implements IAdminService {
         userRepository.save(userToAltaBaja);
         return new GeneralResponse(new Date(), "Usuario actualizado con éxito", HttpStatus.OK.value());
 
-    }
-
-    @Override
-    @Transactional
-    public GeneralResponse altaBajaCocinero(Long cocineroId, String currentUser) {
-
-        User admin = userRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        Cocinero cocinero = cocineroRepository.findById(cocineroId)
-                .orElseThrow(() -> new UsernameNotFoundException("El cocinero no se encuentra disponible"));
-
-        if(cocinero.isActive()){
-            cocinero.setActive(false);
-        }else {
-            cocinero.setActive(true);
-        }
-        cocineroRepository.save(cocinero);
-        return new GeneralResponse(new Date(), "Cocinero actualizado con éxito", HttpStatus.OK.value());
-
-    }
-
-    @Override
-    public GeneralResponse deleteCocinero(Long cocineroId, String currentUser) {
-        User admin = userRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        Cocinero cocinero = cocineroRepository.findById(cocineroId)
-                .orElseThrow(() -> new UsernameNotFoundException("El cocinero no se encuentra disponible"));
-
-        cocineroRepository.deleteById(cocinero.getUserId());
-
-        return new GeneralResponse(
-                new Date(),
-                "Cocinero eliminado con éxito",
-                HttpStatus.OK.value()
-        );
-    }
-
-    @Override
-    public GeneralResponse deleteNutricionista(Long nutricionistaId, String currentUser) {
-        User admin = userRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        Nutricionista nutricionista = nutricionistaRepository.findById(nutricionistaId)
-                .orElseThrow(() -> new UsernameNotFoundException("El nutricionista no se encuentra disponible"));
-
-        cocineroRepository.deleteById(nutricionista.getUserId());
-
-        return new GeneralResponse(
-                new Date(),
-                "Nutricionista eliminado con éxito",
-                HttpStatus.OK.value()
-        );
-    }
-
-    @Override
-    public GeneralResponse deleteEmpleado(Long empleadoId, String currentUser) {
-        User admin = userRepository.findByUsername(currentUser)
-                .orElseThrow(() -> new UsernameNotFoundException("El usuario no se encuentra disponible"));
-
-        if(admin.getRole() != User.RoleType.ADMIN){
-            throw new RuntimeException("Acceso denegado: Solo los administradores pueden dar bajas");
-        }
-
-        Empleado empleado = empleadoRepository.findById(empleadoId)
-                .orElseThrow(() -> new UsernameNotFoundException("El empleado de mantenimiento no se encuentra disponible"));
-
-        cocineroRepository.deleteById(empleado.getUserId());
-
-        return new GeneralResponse(
-                new Date(),
-                "Empleado de mantenimiento eliminado con éxito",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override

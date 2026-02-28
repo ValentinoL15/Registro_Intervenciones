@@ -19,6 +19,7 @@ public class ProfesionalDto {
     private String name;
     private String lastname;
     private String username;
+    private String degree;
     private String email;
     private User.RoleType role;
     private String hourly;
