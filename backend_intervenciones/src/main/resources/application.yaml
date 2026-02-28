@@ -5,7 +5,11 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 15MB
-
+  data:
+    web:
+      pageable:
+        default-page-size: 100
+        max-page-size: 2000
   mail:
     host: smtp.gmail.com
     port: 587

@@ -10,6 +10,7 @@ import com.buenos_hijos.intervenciones.model.Profesional;
 import com.buenos_hijos.intervenciones.repository.IProfesionalRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IProfesionalService;
+import com.buenos_hijos.intervenciones.utils.JwtUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,10 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +28,7 @@ public class ProfesionalService implements IProfesionalService {
 
     private final IUserRepository userRepository;
     private final IProfesionalRepository profesionalRepository;
+    private final JwtUtils jwtUtils;
 
 
     @Override
@@ -81,7 +80,7 @@ public class ProfesionalService implements IProfesionalService {
 
     @Override
     @Transactional
-    public GeneralResponse editProfesional(EditProfesionalDto profesionalDto, String currentUser) {
+    public Map<String, Object> editProfesional(EditProfesionalDto profesionalDto, String currentUser) {
 
         Profesional profesional = profesionalRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new UsernameNotFoundException("No se encuentra el id del profesional"));
@@ -96,36 +95,21 @@ public class ProfesionalService implements IProfesionalService {
         if(profesionalDto.getLastname() != null){
             profesional.setLastname(profesionalDto.getLastname());
         }
-        if(profesionalDto.getUsername() != null) {
-            // Solo validar si el username que llega es distinto al que ya tiene el profesional
-            if (!profesionalDto.getUsername().equals(profesional.getUsername())) {
-                if(userRepository.existsByUsername(profesionalDto.getUsername())){
-                    throw new RuntimeException("El username ya está en uso, por favor elige otro");
-                }
-                profesional.setUsername(profesionalDto.getUsername());
-            }
-        }
         if(profesionalDto.getHourly() != null) {
             profesional.setHourly(profesionalDto.getHourly());
         }
         if (profesionalDto.getDisponibilidades() != null) {
-            // 1. Limpiamos la lista actual (esto borra las filas viejas en la DB al hacer commit)
             profesional.getDisponibilidad().clear();
 
             Set<String> combinacionesVistas = new HashSet<>();
-            // 2. Mapeamos los DTOs nuevos a entidades
             List<Disponibilidad> nuevasDisponibilidades = profesionalDto.getDisponibilidades().stream()
                     .map(dto -> {
-                        // Validación de nulos
                         if (dto.getDia() == null || dto.getTurno() == null) {
                             throw new RuntimeException("Cada disponibilidad debe tener un día y un turno asignado");
                         }
 
-                        // VALIDACIÓN DE DUPLICADOS
-                        // Creamos una clave única para la combinación día-turno
                         String claveUnica = dto.getDia().toString() + "-" + dto.getTurno().toString();
 
-                        // .add() devuelve false si el elemento ya existía en el Set
                         if (!combinacionesVistas.add(claveUnica)) {
                             throw new RuntimeException("No puedes asignar el turno " + dto.getTurno() +
                                     " para el día " + dto.getDia() + " más de una vez.");
@@ -138,16 +122,29 @@ public class ProfesionalService implements IProfesionalService {
                     })
                     .collect(Collectors.toList());
 
-            // 3. Agregamos las nuevas ya validadas
             profesional.getDisponibilidad().addAll(nuevasDisponibilidades);
         }
 
+        if(profesionalDto.getUsername() != null) {
+            if (!profesionalDto.getUsername().equals(profesional.getUsername())) {
+                if(userRepository.existsByUsername(profesionalDto.getUsername())){
+                    throw new RuntimeException("El username ya está en uso");
+                }
+                profesional.setUsername(profesionalDto.getUsername());
+            }
+        }
+
         profesionalRepository.save(profesional);
-        return new GeneralResponse(
-                new Date(),
-                "Profesional editado con éxito",
-                HttpStatus.OK.value()
-        );
+        String nuevoToken = jwtUtils.generateToken(profesional);
+
+        // Devolvemos un Map para incluir el mensaje y el token
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", new Date());
+        response.put("message", "Profesional editado con éxito");
+        response.put("status", HttpStatus.OK.value());
+        response.put("token", nuevoToken); // <--- ESTO ES LO QUE FALTA
+
+        return response;
     }
 
 }

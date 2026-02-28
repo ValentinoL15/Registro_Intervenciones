@@ -35,7 +35,7 @@ public class Profesional extends User{
     )
     private List<Disponibilidad> disponibilidad = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "profesionales")
+    @OneToMany(mappedBy = "creador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Intervencion> intervenciones = new ArrayList<>();
 
     public Profesional(){

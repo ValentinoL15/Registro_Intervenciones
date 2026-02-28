@@ -24,6 +24,5 @@ public class IntervencionDto {
     private Intervencion.IntervencionType intervencion;
     private String observaciones;
 
-    private List<Long> profesionalesIds;
 
 }

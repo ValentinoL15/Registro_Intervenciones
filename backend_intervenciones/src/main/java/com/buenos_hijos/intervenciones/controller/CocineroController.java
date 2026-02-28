@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -40,13 +41,18 @@ public class CocineroController {
     }
 
     @GetMapping("/menu")
-    public ResponseEntity<Page<MenuDiaDto>> getMenus(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(cocineroService.getMenus(pageable));
+    public ResponseEntity<Page<MenuDiaDto>> getMenus(@PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta){
+        return ResponseEntity.ok(cocineroService.getMenus(desde,hasta,pageable));
     }
 
     @GetMapping("/myMenu")
-    public ResponseEntity<Page<MenuDiaDto>> getMyMenus(@PageableDefault Pageable pageable, Principal principal){
-        return ResponseEntity.ok(cocineroService.getMyMenus(pageable, principal.getName()));
+    public ResponseEntity<Page<MenuDiaDto>> getMyMenus(@PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
+                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+                                                       Principal principal){
+        return ResponseEntity.ok(cocineroService.getMyMenus(desde, hasta, pageable, principal.getName()));
     }
 
     @GetMapping("/plato/{id}")

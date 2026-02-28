@@ -22,10 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Map;
 
@@ -79,35 +81,48 @@ public class NutricionService implements INutricionService {
                     NutricionSemanalDto dto = new NutricionSemanalDto();
                     dto.setFechaInicio(reporte.getFechaInicio());
                     dto.setFechaFinal(reporte.getFechaFinal());
-                    dto.setArchivo(reporte.getUrlPdf()); // Usamos la URL generada de Cloudinary
+                    dto.setArchivo(reporte.getUrlPdf());
                     return dto;
                 })
                 .orElseThrow(() -> new RuntimeException("Reporte nutricional no encontrado"));
     }
 
     @Override
-    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable) {
+    public Page<NutricionSemanalDto> getReportes(Pageable pageable,LocalDate desde, LocalDate hasta) {
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
 
-        Page<Nutricion_Semanal> nutricionSemanal = nutricionSemanalRepository.findAll(pageable);
+        Page<Nutricion_Semanal> reportes = nutricionSemanalRepository.findByFechaInicioBetween(start, end, pageable);
 
-        return nutricionSemanal.map(reporte -> {
-            NutricionSemanalDto dto = new NutricionSemanalDto();
-            dto.setId(reporte.getId());
-            dto.setFechaInicio(reporte.getFechaInicio());
-            dto.setFechaFinal(reporte.getFechaFinal());
-            dto.setArchivo(reporte.getUrlPdf());
+        return reportes.map(this::convertToDto);
+    }
 
-            // Accedemos a la relación y concatenamos nombre y apellido
-            if (reporte.getNutricionista() != null) {
-                String nombreCompleto = reporte.getNutricionista().getName() + " " +
-                        reporte.getNutricionista().getLastname();
-                dto.setNombreNutricionista(nombreCompleto);
-            } else {
-                dto.setNombreNutricionista("Sin asignar");
-            }
+    @Override
+    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable,LocalDate desde, LocalDate hasta, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Nutricionista no encontrado"));
 
-            return dto;
-        });
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
+
+        Page<Nutricion_Semanal> reportes = nutricionSemanalRepository.findByNutricionistaAndFechaInicioBetween(nutricionista, start, end, pageable);
+
+        return reportes.map(this::convertToDto);
+    }
+
+    private NutricionSemanalDto convertToDto(Nutricion_Semanal reporte) {
+        NutricionSemanalDto dto = new NutricionSemanalDto();
+        dto.setId(reporte.getId());
+        dto.setFechaInicio(reporte.getFechaInicio());
+        dto.setFechaFinal(reporte.getFechaFinal());
+        dto.setArchivo(reporte.getUrlPdf());
+
+        if (reporte.getNutricionista() != null) {
+            dto.setNombreNutricionista(reporte.getNutricionista().getName() + " " + reporte.getNutricionista().getLastname());
+        } else {
+            dto.setNombreNutricionista("Sin asignar");
+        }
+        return dto;
     }
 
     @Override
@@ -171,6 +186,10 @@ public class NutricionService implements INutricionService {
 
         Nutricion_Semanal reporte = nutricionSemanalRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reporte no encontrado"));
+
+        if(dto.getFechaFinal().isBefore(dto.getFechaInicio())){
+            throw new RuntimeException("La fecha de inicio debe ser anterior a la final");
+        }
 
         reporte.setFechaInicio(dto.getFechaInicio());
         reporte.setFechaFinal(dto.getFechaFinal());

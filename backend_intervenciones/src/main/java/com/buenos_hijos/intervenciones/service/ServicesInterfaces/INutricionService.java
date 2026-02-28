@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+
 public interface INutricionService {
 
     public NutricionistaDto getNutricionista(Long nutricionistaId);
@@ -17,7 +19,9 @@ public interface INutricionService {
 
     public NutricionSemanalDto getReporte(Long nutricionId);
 
-    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable);
+    public Page<NutricionSemanalDto> getReportes(Pageable pageable,LocalDate desde, LocalDate hasta);
+
+    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable, LocalDate desde, LocalDate hasta,String currentUser);
 
     public GeneralResponse saveNutricionSemanal(SaveNutricionSemanalDto nutricionSemanalDto, MultipartFile archivo , String currentUser);
 

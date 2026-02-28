@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/nutricionista")
@@ -37,8 +39,18 @@ public class NutricionController {
     }
 
     @GetMapping("/reportes")
-    public ResponseEntity<Page<NutricionSemanalDto>> getReportes(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(nutricionService.getMisReportes(pageable));
+    public ResponseEntity<Page<NutricionSemanalDto>> getReportes(@PageableDefault(size = 8, sort = "fechaInicio", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(nutricionService.getReportes(pageable,desde,hasta));
+    }
+
+    @GetMapping("/myReportes")
+    public ResponseEntity<Page<NutricionSemanalDto>> getMyReportes(@PageableDefault(size = 8, sort = "fechaInicio", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+                                                                   Principal principal){
+        return ResponseEntity.ok(nutricionService.getMisReportes(pageable,desde,hasta, principal.getName()));
     }
 
     @GetMapping("/reporte/{nutricionId}")

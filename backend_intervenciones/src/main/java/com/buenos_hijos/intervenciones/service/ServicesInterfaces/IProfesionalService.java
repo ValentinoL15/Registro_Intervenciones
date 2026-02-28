@@ -7,12 +7,14 @@ import com.buenos_hijos.intervenciones.dto.ProfesionalDTOs.ProfesionalDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Map;
+
 public interface IProfesionalService {
 
     public Page<ProfesionalDto> getAllProfesionals(Pageable pageable);
 
     public ProfesionalDto getProfesional(Long user_id);
 
-    public GeneralResponse editProfesional(EditProfesionalDto profesionalDto, String currentUser);
+    public Map<String, Object> editProfesional(EditProfesionalDto profesionalDto, String currentUser);
 
 }

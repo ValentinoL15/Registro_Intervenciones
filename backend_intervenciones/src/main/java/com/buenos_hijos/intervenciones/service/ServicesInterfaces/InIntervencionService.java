@@ -7,13 +7,14 @@ import com.buenos_hijos.intervenciones.dto.IntervencionDTOs.IntervencionDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface InIntervencionService {
 
-    public Page<IntervencionDto> getAllIntervenciones(Pageable pageable);
+    public Page<IntervencionDto> getAllIntervenciones(LocalDate desde, LocalDate hasta,Pageable pageable);
 
-    public Page<IntervencionDto> getMyIntervenciones(Pageable pageable, String currentUser);
+    public Page<IntervencionDto> getMyIntervenciones(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser);
 
     public IntervencionDto getIntervencion(Long intervencion_id);
 

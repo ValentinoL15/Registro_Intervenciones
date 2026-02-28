@@ -9,11 +9,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,13 +26,17 @@ public class IntervencionController {
     private final InIntervencionService intervencionService;
 
     @GetMapping()
-    public ResponseEntity<Page<IntervencionDto>> getIntervenciones(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(intervencionService.getAllIntervenciones(pageable));
+    public ResponseEntity<Page<IntervencionDto>> getIntervenciones(@PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(intervencionService.getAllIntervenciones(desde,hasta,pageable));
     }
 
     @GetMapping("/mis-intervenciones")
-    public ResponseEntity<Page<IntervencionDto>> getMyIntervenciones(@PageableDefault Pageable pageable,Principal principal){
-        return ResponseEntity.ok(intervencionService.getMyIntervenciones(pageable, principal.getName()));
+    public ResponseEntity<Page<IntervencionDto>> getMyIntervenciones(@PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,Principal principal){
+        return ResponseEntity.ok(intervencionService.getMyIntervenciones(desde,hasta,pageable, principal.getName()));
     }
 
     @GetMapping("/{intervencion_id}")

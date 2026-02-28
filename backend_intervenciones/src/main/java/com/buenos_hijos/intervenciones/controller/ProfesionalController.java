@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/profesional")
@@ -36,8 +37,8 @@ public class ProfesionalController {
 
     //VERIFICADO
     @PutMapping("/edit-profesional")
-    public ResponseEntity<GeneralResponse> editProfesional(@Valid @RequestBody EditProfesionalDto profesionalDto,
-                                                           Principal principal){
+    public ResponseEntity<Map<String,Object>> editProfesional(@Valid @RequestBody EditProfesionalDto profesionalDto,
+                                               Principal principal){
         return ResponseEntity.ok(profesionalService.editProfesional(profesionalDto, principal.getName()));
     }
 

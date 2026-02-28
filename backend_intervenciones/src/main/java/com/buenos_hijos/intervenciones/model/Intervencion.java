@@ -31,7 +31,7 @@ public class Intervencion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long intervencionId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creador_id")
     private Profesional creador;
     private DestinyType tipo;
@@ -41,14 +41,6 @@ public class Intervencion {
     private String motivo;
     private IntervencionType intervencion;
     private String observaciones;
-
-    @ManyToMany()
-    @JoinTable(
-            name = "intervencion_profesional",
-            joinColumns = @JoinColumn(name = "intervencion_id"),
-            inverseJoinColumns = @JoinColumn(name = "profesional_id", referencedColumnName = "user_id")
-    )
-    private List<Profesional> profesionales = new ArrayList<>();
 
 
 }

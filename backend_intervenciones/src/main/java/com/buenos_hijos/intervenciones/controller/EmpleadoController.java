@@ -10,11 +10,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDate;
 
 
 @RestController
@@ -35,13 +38,18 @@ public class EmpleadoController {
     }
 
     @GetMapping("/myMantenimiento")
-    public ResponseEntity<Page<MantenimientoDto>> getMyMantenimientos(@PageableDefault Pageable pageable, Principal principal){
-        return ResponseEntity.ok(empleadoService.getMyMantenimientos(pageable, principal.getName()));
+    public ResponseEntity<Page<MantenimientoDto>> getMyMantenimientos(@PageableDefault(size = 6) Pageable pageable,
+                                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+                                                                      Principal principal){
+        return ResponseEntity.ok(empleadoService.getMyMantenimientos(desde,hasta,pageable, principal.getName()));
     }
 
     @GetMapping("/mantenimiento")
-    public ResponseEntity<Page<MantenimientoDto>> getAllMantenimientos(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(empleadoService.getAllMantenimientos(pageable));
+    public ResponseEntity<Page<MantenimientoDto>> getAllMantenimientos(@PageableDefault(size = 10) Pageable pageable,
+                                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta){
+        return ResponseEntity.ok(empleadoService.getAllMantenimientos(desde, hasta,pageable));
     }
 
     @GetMapping("/mantenimiento/{mantenimientoId}")

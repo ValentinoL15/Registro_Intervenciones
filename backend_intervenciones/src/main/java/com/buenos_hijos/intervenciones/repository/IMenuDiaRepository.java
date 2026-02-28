@@ -14,4 +14,9 @@ public interface IMenuDiaRepository extends JpaRepository<MenuDia,Long> {
 
     Page<MenuDia> findByCocinero(Cocinero cocinero, Pageable pageable);
 
+    Page<MenuDia> findByFechaBetween(LocalDate start, LocalDate end, Pageable pageable);
+
+    // Para el Cocinero: Sus propios menús filtrados por fecha
+    Page<MenuDia> findByCocineroAndFechaBetween(Cocinero cocinero, LocalDate start, LocalDate end, Pageable pageable);
+
 }

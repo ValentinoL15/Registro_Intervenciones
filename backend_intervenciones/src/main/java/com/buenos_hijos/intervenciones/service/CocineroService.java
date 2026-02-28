@@ -80,52 +80,46 @@ public class CocineroService implements ICocineroService {
     }
 
     @Override
-    public Page<MenuDiaDto> getMenus(Pageable pageable) {
-        return menuDiaRepository.findAll(pageable).map(menu -> {
-            MenuDiaDto dto = new MenuDiaDto();
-            dto.setCocineroId(menu.getCocinero().getUserId());
-            dto.setMenuId(menu.getMenuId());
-            dto.setFecha(menu.getFecha());
-            dto.setNombreCocinero(menu.getCocinero().getName() + " " + menu.getCocinero().getLastname());
-            List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
-                CocinaDto cocinaDto = new CocinaDto();
-                cocinaDto.setId(plato.getId());
-                cocinaDto.setTipoComida(plato.getTipoComida());
-                cocinaDto.setDescription(plato.getDescription());
-                cocinaDto.setMenuId(menu.getMenuId());
-                return cocinaDto;
-        }).collect(Collectors.toList());
-            dto.setCocina(platosDto);
-            return dto;
-        });
+    public Page<MenuDiaDto> getMenus(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        // Normalización de fechas (rango infinito por defecto)
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
+
+        return menuDiaRepository.findByFechaBetween(start, end, pageable)
+                .map(this::convertToDto);
     }
 
     @Override
-    public Page<MenuDiaDto> getMyMenus(Pageable pageable, String currentUser) {
-
+    public Page<MenuDiaDto> getMyMenus(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser) {
         Cocinero cocinero = cocineroRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("Cocinero no encontrado"));
 
-        return menuDiaRepository.findByCocinero(cocinero, pageable).map(menu -> {
-            MenuDiaDto dto = new MenuDiaDto();
-            dto.setCocineroId(menu.getCocinero().getUserId());
-            dto.setMenuId(menu.getMenuId());
-            dto.setFecha(menu.getFecha());
-            dto.setNombreCocinero(menu.getCocinero().getName() + " " + menu.getCocinero().getLastname());
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
 
-            List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
-                CocinaDto cocinaDto = new CocinaDto();
-                cocinaDto.setId(plato.getId());
-                cocinaDto.setTipoComida(plato.getTipoComida());
-                cocinaDto.setDescription(plato.getDescription());
-                cocinaDto.setMenuId(menu.getMenuId());
-                return cocinaDto;
-            }).collect(Collectors.toList());
+        return menuDiaRepository.findByCocineroAndFechaBetween(cocinero, start, end, pageable)
+                .map(this::convertToDto);
+    }
 
-            dto.setCocina(platosDto);
-            return dto;
-        });
+    // Método de mapeo centralizado
+    private MenuDiaDto convertToDto(MenuDia menu) {
+        MenuDiaDto dto = new MenuDiaDto();
+        dto.setCocineroId(menu.getCocinero().getUserId());
+        dto.setMenuId(menu.getMenuId());
+        dto.setFecha(menu.getFecha());
+        dto.setNombreCocinero(menu.getCocinero().getName() + " " + menu.getCocinero().getLastname());
 
+        List<CocinaDto> platosDto = menu.getPlatos().stream().map(plato -> {
+            CocinaDto cocinaDto = new CocinaDto();
+            cocinaDto.setId(plato.getId());
+            cocinaDto.setTipoComida(plato.getTipoComida());
+            cocinaDto.setDescription(plato.getDescription());
+            cocinaDto.setMenuId(menu.getMenuId());
+            return cocinaDto;
+        }).collect(Collectors.toList());
+
+        dto.setCocina(platosDto);
+        return dto;
     }
 
     @Override
@@ -179,6 +173,7 @@ public class CocineroService implements ICocineroService {
             throw new RuntimeException("No se puede crear un menú para una fecha posterior a la de hoy");
         }
         menuDia.setCocinero(cocinero);
+        menuDia.setFecha(comidaDto.getFecha());
 
         menuDia.getPlatos().add(crearPlato(menuDia, Cocina.TipoComida.CELIACO, comidaDto.getDescCeliaco()));
         menuDia.getPlatos().add(crearPlato(menuDia, Cocina.TipoComida.NOCELIACO, comidaDto.getDescNoCeliaco()));

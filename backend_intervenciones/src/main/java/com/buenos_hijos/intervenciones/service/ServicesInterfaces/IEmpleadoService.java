@@ -9,6 +9,8 @@ import com.buenos_hijos.intervenciones.model.Empleado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
+
 public interface IEmpleadoService {
 
     public EmpleadoDto getEmpleado(Long empleadoId);
@@ -17,9 +19,9 @@ public interface IEmpleadoService {
 
     public MantenimientoDto getMantenimiento(Long mantenimientoId);
 
-    public Page<MantenimientoDto> getMyMantenimientos(Pageable pageable,  String currentUser);
+    public Page<MantenimientoDto> getMyMantenimientos(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser);
 
-    public Page<MantenimientoDto> getAllMantenimientos(Pageable pageable);
+    public Page<MantenimientoDto> getAllMantenimientos(LocalDate desde, LocalDate hasta, Pageable pageable);
 
     public GeneralResponse saveMantenimiento(SaveMantenimientoDto mantenimientoDto, String currentUser);
 

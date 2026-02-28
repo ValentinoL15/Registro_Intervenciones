@@ -20,6 +20,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,75 +36,29 @@ public class IntervencionService implements InIntervencionService {
     private final IProfesionalRepository profesionalRepository;
 
     @Override
-    @Transactional
-    public Page<IntervencionDto> getAllIntervenciones(@PageableDefault Pageable pageable) {
-        Page<Intervencion> intervenciones = intervencionRepository.findAll(pageable);
+    public Page<IntervencionDto> getAllIntervenciones(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        LocalDateTime start = (desde != null) ? desde.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
+        LocalDateTime end = (hasta != null) ? hasta.atTime(LocalTime.MAX) : LocalDateTime.of(2100, 12, 31, 23, 59);
 
-        return intervenciones.map(intervencion -> {
-            // Extraemos solo los IDs de la lista de profesionales
-            List<Long> idsProfesionales = intervencion.getProfesionales().stream()
-                    .map(Profesional::getUserId) // Asegúrate de que el método sea getUserId() según tu modelo
-                    .collect(Collectors.toList());
-
-            return new IntervencionDto(
-                    intervencion.getIntervencionId(),
-                    intervencion.getCreador().getUserId(),
-                    intervencion.getTipo(),
-                    intervencion.getNombre(),
-                    intervencion.getFecha(),
-                    intervencion.getHora(),
-                    intervencion.getMotivo(),
-                    intervencion.getIntervencion(),
-                    intervencion.getObservaciones(),
-                    idsProfesionales
-            );
-        });
+        return intervencionRepository.findByFechaBetween(start, end, pageable)
+                .map(this::convertToDto);
     }
 
     @Override
-    public Page<IntervencionDto> getMyIntervenciones(Pageable pageable, String currentUser) {
-
+    public Page<IntervencionDto> getMyIntervenciones(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser) {
         User user = userRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("No se encuentra el usuario"));
 
-        if (!user.getUsername().equals(currentUser)) {
-            throw new RuntimeException("Accesso denegado: No tienes los permisos suficientes para ver las intervenciones");
-        }
+        LocalDateTime start = (desde != null) ? desde.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
+        LocalDateTime end = (hasta != null) ? hasta.atTime(LocalTime.MAX) : LocalDateTime.of(2100, 12, 31, 23, 59);
 
-        Page<Intervencion> intervenciones = intervencionRepository.findByCreadorUserId(pageable, user.getUserId());
-
-        return intervenciones.map(intervencion -> {
-            List<Long> idsProfesionales = intervencion.getProfesionales().stream()
-                    .map(Profesional::getUserId)
-                    .collect(Collectors.toList());
-
-            return new IntervencionDto(
-                    intervencion.getIntervencionId(),
-                    intervencion.getCreador().getUserId(),
-                    intervencion.getTipo(),
-                    intervencion.getNombre(),
-                    intervencion.getFecha(),
-                    intervencion.getHora(),
-                    intervencion.getMotivo(),
-                    intervencion.getIntervencion(),
-                    intervencion.getObservaciones(),
-                    idsProfesionales
-            );
-        });
+        // El Repository DEBE recibir LocalDateTime ahora
+        return intervencionRepository.findByCreadorUserIdAndFechaBetween(user.getUserId(), start, end, pageable)
+                .map(this::convertToDto);
     }
 
-    @Override
-    @Transactional
-    public IntervencionDto getIntervencion(Long intervencion_id) {
-        Intervencion intervencion = intervencionRepository.findById(intervencion_id)
-                .orElseThrow(() -> new RuntimeException("Intervención no encontrada con ID: " + intervencion_id));
+    private IntervencionDto convertToDto(Intervencion intervencion) {
 
-        // 2. Extraemos los IDs de los profesionales
-        List<Long> profesionalesIds = intervencion.getProfesionales().stream()
-                .map(Profesional::getUserId) // Usamos el ID heredado de User
-                .collect(Collectors.toList());
-
-        // 3. Mapeamos y retornamos el DTO
         return new IntervencionDto(
                 intervencion.getIntervencionId(),
                 intervencion.getCreador().getUserId(),
@@ -111,8 +68,27 @@ public class IntervencionService implements InIntervencionService {
                 intervencion.getHora(),
                 intervencion.getMotivo(),
                 intervencion.getIntervencion(),
-                intervencion.getObservaciones(),
-                profesionalesIds
+                intervencion.getObservaciones()
+
+        );
+    }
+
+    @Override
+    @Transactional
+    public IntervencionDto getIntervencion(Long intervencion_id) {
+        Intervencion intervencion = intervencionRepository.findById(intervencion_id)
+                .orElseThrow(() -> new RuntimeException("Intervención no encontrada con ID: " + intervencion_id));
+
+        return new IntervencionDto(
+                intervencion.getIntervencionId(),
+                intervencion.getCreador().getUserId(),
+                intervencion.getTipo(),
+                intervencion.getNombre(),
+                intervencion.getFecha(),
+                intervencion.getHora(),
+                intervencion.getMotivo(),
+                intervencion.getIntervencion(),
+                intervencion.getObservaciones()
         );
     }
 
@@ -133,7 +109,6 @@ public class IntervencionService implements InIntervencionService {
         intervencion.setMotivo(intervencionDto.getMotivo());
         intervencion.setIntervencion(intervencionDto.getIntervencion());
         intervencion.setObservaciones(intervencionDto.getObservaciones());
-        intervencion.setProfesionales(participantes);
         intervencionRepository.save(intervencion);
         return new GeneralResponse(
                 new Date(),

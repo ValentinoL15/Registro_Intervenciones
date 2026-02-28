@@ -16,9 +16,9 @@ public interface ICocineroService {
 
     public MenuDiaDto getMenu(Long menuId);
 
-    public Page<MenuDiaDto> getMenus(Pageable pageable);
+    public Page<MenuDiaDto> getMenus(LocalDate desde, LocalDate hasta,Pageable pageable);
 
-    public Page<MenuDiaDto> getMyMenus(Pageable pageable, String currentUser);
+    public Page<MenuDiaDto> getMyMenus(LocalDate desde, LocalDate hasta,Pageable pageable, String currentUser);
 
     public PlatoDto getPlato(Long id);
 

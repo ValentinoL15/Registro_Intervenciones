@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Service
@@ -42,6 +43,7 @@ public class EmpleadoService implements IEmpleadoService {
         empleadoDto.setEmail(empleado.getEmail());
         empleadoDto.setUsername(empleado.getUsername());
         empleadoDto.setRoleType(empleado.getRole());
+        empleadoDto.setHourly(empleado.getHourly());
         empleadoDto.setUserId(empleado.getUserId());
         return empleadoDto;
     }
@@ -56,6 +58,7 @@ public class EmpleadoService implements IEmpleadoService {
                         empleado.getLastname(),
                         empleado.getUsername(),
                         empleado.getEmail(),
+                        empleado.getHourly(),
                         empleado.isActive(),
                         empleado.getRole()
                 )
@@ -79,46 +82,42 @@ public class EmpleadoService implements IEmpleadoService {
     }
 
     @Override
-    public Page<MantenimientoDto> getMyMantenimientos(Pageable pageable, String currentUser) {
+    public Page<MantenimientoDto> getMyMantenimientos(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser) {
 
         Empleado empleado = empleadoRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
 
-        return mantenimientoRepository.findByEmpleado(empleado, pageable)
-                .map(mantenimiento -> {
-                    MantenimientoDto dto = new MantenimientoDto();
-                    dto.setMantenimientoId(mantenimiento.getMantenimientoId());
-                    dto.setFecha(mantenimiento.getFecha());
-                    dto.setDescription(mantenimiento.getDescription());
-                    if (mantenimiento.getEmpleado() != null) {
-                        dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
-                    }
-                    dto.setNombreEmpleado(mantenimiento.getEmpleado().getName() + " " + mantenimiento.getEmpleado().getLastname());
-                    return dto;
-                });
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
+
+        return mantenimientoRepository.findByEmpleadoAndFechaBetween(empleado, start, end, pageable)
+                .map(this::convertToDto);
     }
 
     @Override
-    public Page<MantenimientoDto> getAllMantenimientos(Pageable pageable) {
-        Page<Mantenimiento> mantenimientos = mantenimientoRepository.findAll(pageable);
+    public Page<MantenimientoDto> getAllMantenimientos(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
 
-        return mantenimientos.map(mantenimiento -> {
-            MantenimientoDto dto = new MantenimientoDto();
-            dto.setMantenimientoId(mantenimiento.getMantenimientoId());
-            dto.setFecha(mantenimiento.getFecha());
-            dto.setDescription(mantenimiento.getDescription());
+        Page<Mantenimiento> mantenimientos = mantenimientoRepository.findByFechaBetween(start, end, pageable);
 
-            // Validación de seguridad para el empleado
-            if (mantenimiento.getEmpleado() != null) {
-                dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
-                dto.setNombreEmpleado(mantenimiento.getEmpleado().getName() + " " +
-                        mantenimiento.getEmpleado().getLastname());
-            } else {
-                dto.setNombreEmpleado("Empleado no asignado");
-            }
+        return mantenimientos.map(this::convertToDto);
+    }
 
-            return dto;
-        });
+    private MantenimientoDto convertToDto(Mantenimiento mantenimiento) {
+        MantenimientoDto dto = new MantenimientoDto();
+        dto.setMantenimientoId(mantenimiento.getMantenimientoId());
+        dto.setFecha(mantenimiento.getFecha());
+        dto.setDescription(mantenimiento.getDescription());
+
+        if (mantenimiento.getEmpleado() != null) {
+            dto.setEmpleadoId(mantenimiento.getEmpleado().getUserId());
+            dto.setNombreEmpleado(mantenimiento.getEmpleado().getName() + " " +
+                    mantenimiento.getEmpleado().getLastname());
+        } else {
+            dto.setNombreEmpleado("Empleado no asignado");
+        }
+        return dto;
     }
 
     @Override
@@ -130,6 +129,10 @@ public class EmpleadoService implements IEmpleadoService {
 
         if(!empleado.getUsername().equals(currentUser)) {
             throw new AccessDeniedException();
+        }
+
+        if(mantenimientoDto.getFecha().isAfter(LocalDate.now())){
+            throw new RuntimeException("No puedes crear un arreglo un dia posterior al de hoy");
         }
 
 
