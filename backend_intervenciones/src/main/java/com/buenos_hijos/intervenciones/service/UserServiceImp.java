@@ -97,10 +97,12 @@ public class UserServiceImp implements UserDetailsService {
         UserDto userDto = new UserDto(
                 user.getUserId(),
                 user.getEmail(),
-                user.getUsername(),
-                user.getRole(),
                 user.getName(),
-                user.getLastname()
+                user.getLastname(),
+                user.getUsername(),
+                null,
+                user.getRole(),
+                null
         );
         return userDto;
     }
