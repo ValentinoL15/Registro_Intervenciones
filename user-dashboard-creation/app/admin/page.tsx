@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { dataStore } from "@/lib/store";
-import { type User, type DiaSemana, type Turno, type IntervencionDto, type createUserDTO, PostDto, MenuDiaDto, MantenimientoDto, GeneralResponse } from "@/lib/types";
+import { type User, type DiaSemana, type Turno, type IntervencionDto, type createUserDTO, PostDto, MenuDiaDto, MantenimientoDto, GeneralResponse, DescriptionDto } from "@/lib/types";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { ProfesionalesTable } from "@/components/admin/profesionales-table";
 import { IntervencionesTable } from "@/components/admin/intervenciones-table";
@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ClipboardList, Plus, Loader2 } from "lucide-react";
-import { AdminApi, CocineroApi, EmpleadoApi, NutricionistaApi, profesionalApi } from "@/service/api";
+import { AdminApi, CocineroApi, EmpleadoApi, NutricionistaApi, profesionalApi, TecnicoApi } from "@/service/api";
 import { useToast } from "@/hooks/use-toast";
 import { UsersTable } from "@/components/admin/users-table";
 import { NutricionistasTable } from "@/components/admin/nutricionistas-table";
@@ -21,6 +21,13 @@ import { CocinerosTable } from "@/components/admin/cocineros-table";
 import { MantenimientosTable } from "@/components/admin/mantenimientos-table";
 import { useLoader } from "@/lib/spinnerService";
 import { hi } from "date-fns/locale";
+import { TecnicoDescriptionTable } from "@/components/admin/tecnico-description-table";
+import { EditProfesionalDialog } from "@/components/admin/edit-profesionales-dialog";
+import { EditNutricionistaDialog } from "@/components/admin/edit-nutricionista-dialog";
+import { EditSimpleUserDialog } from "@/components/admin/edit-simple-user-dialog";
+import { EditTecnicoDialog } from "@/components/admin/edit-tecnico-dialog";
+
+
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
@@ -32,6 +39,38 @@ export default function AdminDashboard() {
   const [nutricionistas, setNutricionistas] = useState<User[]>([]);
   const [cocineros, setCocineros] = useState<User[]>([]);
   const [empleados, setEmpleados] = useState<User[]>([]);
+  const [tecnicos, setTecnicos] = useState<User[]>([]);
+  const [descripcionesTecnicos, setDescripcionesTecnicos] = useState({
+    content: [],
+    totalPages: 0,
+    number: 0,
+    totalElements: 0
+  });
+  const [totales, setTotales] = useState({
+  profesionales: 0,
+  nutricionistas: 0,
+  cocineros: 0,
+  mantenimiento: 0,
+  tecnicos: 0,
+  intervenciones: 0,
+  actividadTotal: 0
+});
+
+const [counts, setCounts] = useState({
+  staff: 0,
+  actividad: 0
+});
+
+  const [descripcionesNutri, setDescripcionesNutri] = useState({
+    content: [],
+    totalPages: 0,
+    number: 0,
+    totalElements: 0
+  });
+  const [filtroDesde, setFiltroDesde] = useState<string>("");
+  const [filtroHasta, setFiltroHasta] = useState<string>("");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Estados para Actividad (Posteos/Tareas)
   const [posteosNutri, setPosteosNutri] = useState<PostDto[]>([]);
@@ -39,7 +78,7 @@ export default function AdminDashboard() {
   const [mantenimientos, setMantenimientos] = useState<MantenimientoDto[]>([]);
 
   const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [isDeletingUser, setIsDeletingUser] = useState(false); 
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const openModalWithRole = (role: string) => {
     setSelectedRole(role);
@@ -49,6 +88,197 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const { showLoader, hideLoader } = useLoader();
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Sumamos todos los usuarios activos de cada estado
+const totalStaffReal = totales.profesionales + totales.nutricionistas + totales.cocineros + totales.mantenimiento + totales.tecnicos;
+
+// Para la actividad, sumamos los totales de los objetos de página que ya tenés
+const totalActividadReal = 
+  totales.intervenciones + 
+  descripcionesTecnicos.totalElements + 
+  descripcionesNutri.totalElements + 
+  mantenimientos.length + menuesCocina.length
+
+  const loadStatistics = useCallback(async () => {
+  try {
+    // Realizamos peticiones "ligeras" a todos los endpoints de actividad
+    const [profs, nutris, cocis, emples, tecs, ints, nTec, nNut, mant, mens] = await Promise.all([
+      profesionalApi.getProfesionales(),
+      NutricionistaApi.getAllNutricionistas(),
+      CocineroApi.getAllCocineros(),
+      EmpleadoApi.getEmpleados(),
+      TecnicoApi.getTecnicos(), // Asumiendo que este devuelve lista completa
+      profesionalApi.getIntervenciones(),
+      TecnicoApi.getDescriptions("", "", 0, 1),
+      NutricionistaApi.getDescriptions("", "", 0, 1),
+      EmpleadoApi.getAllMantenimientos(),
+      CocineroApi.getMenus()
+    ]);
+
+    const totalStaff = (profs.totalElements || 0) + (nutris.totalElements || 0) + 
+                       (cocis.totalElements || 0) + (emples.totalElements || 0) + 
+                       (Array.isArray(tecs) ? tecs.length : 0);
+
+    const totalActividad = (ints.totalElements || 0) + (nTec.totalElements || 0) + 
+                           (nNut.totalElements || 0) + (mant.totalElements || 0) + 
+                           (mens.totalElements || 0);
+
+    setCounts({
+      staff: totalStaff,
+      actividad: totalActividad
+    });
+  } catch (err) {
+    console.error("Error al cargar estadísticas:", err);
+  }
+}, []);
+
+const refreshGlobalCounts = useCallback(async () => {
+  try {
+    const [profs, nutris, cocis, emples, tecs, ints, nTec, nNut, mant, mens] = await Promise.all([
+      profesionalApi.getProfesionales(),
+      NutricionistaApi.getAllNutricionistas(),
+      CocineroApi.getAllCocineros(),
+      EmpleadoApi.getEmpleados(),
+      TecnicoApi.getTecnicos(), // Este suele ser lista completa
+      profesionalApi.getIntervenciones(),
+      TecnicoApi.getDescriptions("", "", 0, 1),
+      NutricionistaApi.getDescriptions("", "", 0, 1),
+      EmpleadoApi.getAllMantenimientos(),
+      CocineroApi.getMenus()
+    ]);
+
+    setCounts({
+      staff: (profs.totalElements || 0) + (nutris.totalElements || 0) + 
+             (cocis.totalElements || 0) + (emples.totalElements || 0) + 
+             (Array.isArray(tecs) ? tecs.length : 0),
+      intervenciones: ints.totalElements || 0,
+      notasTecnicos: nTec.totalElements || 0,
+      notasNutri: nNut.totalElements || 0,
+      mantenimientos: mant.totalElements || 0,
+      menues: mens.totalElements || 0
+    });
+  } catch (err) {
+    console.error("Error al sincronizar contadores:", err);
+  }
+}, []);
+
+  const handleEditClick = (user: User) => {
+    setIsEditModalOpen(false);
+    setEditingUser(null);
+
+    // Lógica de detección de rol mejorada
+    let detectedRole = user.role?.toUpperCase();
+
+    if (!detectedRole) {
+      // Si no hay rol, intentamos deducirlo por sus propiedades
+      if (user.horarioAsistencias) {
+        detectedRole = "NUTRICIONISTA";
+      } else if (cocineros.some(c => c.userId === user.userId)) {
+        detectedRole = "COCINERO";
+      } else if (empleados.some(e => e.userId === user.userId)) {
+        detectedRole = "MANTENIMIENTO";
+      } else {
+        detectedRole = "PROFESIONAL";
+      }
+    }
+
+    const userWithRole = {
+      ...user,
+      role: detectedRole
+    };
+
+    setTimeout(() => {
+      console.log("Editando usuario con rol:", detectedRole);
+      setEditingUser(userWithRole);
+      setIsEditModalOpen(true);
+    }, 50);
+  };
+
+  const handleUpdateSimpleUser = async (data: any) => {
+    if (!editingUser) return;
+    try {
+      showLoader("Actualizando perfil...");
+
+      if (editingUser.role === "COCINERO") {
+        await AdminApi.editCocinero(editingUser.userId, data);
+        await loadCocineros();
+      } else if (editingUser.role === "MANTENIMIENTO") {
+        await AdminApi.editEmpleado(editingUser.userId, data); // <--- Endpoint de mantenimiento
+        await loadEmpleados();
+      }
+
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+      toast({ title: "Éxito", description: "El perfil ha sido actualizado correctamente." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      hideLoader();
+    }
+  };
+
+
+  const handleUpdateProfesional = async (data: any) => {
+    if (!editingUser) return;
+
+    try {
+      showLoader("Actualizando profesional...");
+      await AdminApi.editProfesional(editingUser.userId, data);
+
+      toast({
+        title: "Éxito",
+        description: "El profesional ha sido actualizado correctamente.",
+      });
+
+      await loadProfesionales(); // Refrescar la tabla
+      setIsEditModalOpen(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "No se pudo actualizar.",
+      });
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleUpdateNutricionista = async (data: any) => {
+    if (!editingUser) return;
+    try {
+      showLoader("Actualizando...");
+      await AdminApi.editNutricionista(editingUser.userId, data);
+
+      // Cerramos y limpiamos TODO el estado de edición
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+
+      toast({ title: "Éxito", description: "Cambios guardados." });
+      await loadNutricionistas();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleUpdateTecnico = async (data: any) => {
+    if (!editingUser) return;
+    try {
+      showLoader("Actualizando técnico...");
+      await AdminApi.editTecnico(editingUser.userId, data);
+
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+
+      toast({ title: "Éxito", description: "Cronograma técnico actualizado." });
+      await loadTecnicos();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      hideLoader();
+    }
+  };
 
   const loadProfesionales = async () => {
     try {
@@ -75,7 +305,7 @@ export default function AdminDashboard() {
       const data = await CocineroApi.getAllCocineros();
       setCocineros([...data.content]);
     } catch (err) { console.error(err); }
-    
+
   };
 
   const loadEmpleados = async () => {
@@ -83,7 +313,15 @@ export default function AdminDashboard() {
       const data = await EmpleadoApi.getEmpleados();
       setEmpleados([...data.content]);
     } catch (err) { console.error(err); }
-    
+
+  };
+
+  const loadTecnicos = async () => {
+    try {
+      const data = await TecnicoApi.getTecnicos();
+      console.log("DATITAAA", data)
+      setTecnicos([...data]);
+    } catch (err) { console.error(err); }
   };
 
 
@@ -93,7 +331,7 @@ export default function AdminDashboard() {
       setIntervenciones([...data.content])
     } catch (err: any) {
       console.error(err)
-    } 
+    }
   }
 
   const loadPosts = async () => {
@@ -103,7 +341,7 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error(err)
     }
-    
+
   }
 
   const loadMenues = async () => {
@@ -124,21 +362,37 @@ export default function AdminDashboard() {
     }
   }
 
+  const loadTecnicoDescriptions = useCallback(async (page = 0) => {
+    try {
+      const data = await TecnicoApi.getDescriptions(filtroDesde, filtroHasta, page, 8);
+      setDescripcionesTecnicos(data);
+    } catch (err) {
+      console.error("Error al cargar notas técnicas:", err);
+    }
+  }, [filtroDesde, filtroHasta]);
+
+  // Carga Bitácora de Nutricionistas
+  const loadNutriDescriptions = useCallback(async (page = 0) => {
+    try {
+      // Asegúrate de que NutricionistaApi.getDescriptions esté apuntando al endpoint correcto
+      const data = await NutricionistaApi.getDescriptions(filtroDesde, filtroHasta, page, 8);
+      console.log("Datos Nutri recibidos:", data); // Para verificar en consola
+      setDescripcionesNutri(data);
+    } catch (err) {
+      console.error("Error al cargar notas de nutrición:", err);
+    }
+  }, [filtroDesde, filtroHasta]);
 
 
-  useEffect(() => {
+ useEffect(() => {
   if (!isLoading && user?.role === "ADMIN") {
     const initDashboard = async () => {
-      // Bloqueamos UNA SOLA VEZ para traer el estado inicial
       showLoader("Sincronizando panel de control...");
       try {
-        await Promise.all([
-          loadProfesionales(),
-          loadNutricionistas(),
-          loadCocineros(),
-          loadEmpleados(),
-          loadIntervenciones()
-        ]);
+        // Cargamos estadísticas primero para que los números aparezcan de entrada
+        await loadStatistics();
+        // Cargamos la primera pestaña por defecto
+        await loadProfesionales();
       } catch (error) {
         toast({ variant: "destructive", title: "Error de conexión" });
       } finally {
@@ -147,31 +401,33 @@ export default function AdminDashboard() {
     };
     initDashboard();
   }
-}, [user, isLoading]);
+}, [user, isLoading, loadStatistics]);
 
   const handleAddUser = async (data: createUserDTO) => {
     try {
 
-      showLoader("Creando nuevo usuario..."); 
+      showLoader("Creando nuevo usuario...");
       //await new Promise(resolve => setTimeout(resolve, 5000));
       await AdminApi.createUser({
         ...data,
         role: selectedRole
       });
 
-      
+
       const refreshMap: Record<string, () => Promise<void>> = {
-      "PROFESIONAL": loadProfesionales,
-      "NUTRICIONISTA": loadNutricionistas,
-      "COCINERO": loadCocineros,
-      "MANTENIMIENTO": loadEmpleados,
-    };
+        "PROFESIONAL": loadProfesionales,
+        "NUTRICIONISTA": loadNutricionistas,
+        "COCINERO": loadCocineros,
+        "MANTENIMIENTO": loadEmpleados,
+        "TECNICO": loadTecnicos
+      };
 
-    if (refreshMap[selectedRole]) {
-      await refreshMap[selectedRole]();
-    }
+      if (refreshMap[selectedRole]) {
+        await refreshMap[selectedRole]();
+      }
+      await loadStatistics();
 
-    setIsDialogOpen(false);
+      setIsDialogOpen(false);
 
       toast({
         title: "¡Profesional agregado!",
@@ -180,14 +436,14 @@ export default function AdminDashboard() {
 
     } catch (err: any) {
       toast({
-      variant: "destructive",
-      title: "Error al crear",
-      description: err.message || "No se pudo crear el usuario.",
-    });
+        variant: "destructive",
+        title: "Error al crear",
+        description: err.message || "No se pudo crear el usuario.",
+      });
       throw err;
-    }finally {
-    hideLoader();
-  }
+    } finally {
+      hideLoader();
+    }
   };
 
 
@@ -196,6 +452,7 @@ export default function AdminDashboard() {
       showLoader("Eliminando usuario...")
       await AdminApi.deleteUser(id);
       setLocalState(prev => prev.filter(u => u.userId !== id));
+      await loadStatistics();
       await refreshFn();
       toast({
         title: "Eliminado",
@@ -213,22 +470,40 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteProfesional = (id: string) => 
+  const handleDeleteProfesional = (id: string) =>
     processDeletion(id, () => AdminApi.deleteUser(id), async () => { await loadProfesionales(); await loadIntervenciones(); }, setProfesionales);
 
-  const handleDeleteNutricionista = (id: string) => 
+  const handleDeleteNutricionista = (id: string) =>
     processDeletion(id, () => AdminApi.deleteUser(id), async () => { await loadNutricionistas(); await loadPosts(); }, setNutricionistas);
 
-  const handleDeleteCocinero = (id: string) => 
+  const handleDeleteCocinero = (id: string) =>
     processDeletion(id, () => AdminApi.deleteUser(id), async () => { await loadCocineros(); await loadMenues(); }, setCocineros);
 
-  const handleDeleteEmpleado = (id: string) => 
+  const handleDeleteEmpleado = (id: string) =>
     processDeletion(id, () => AdminApi.deleteUser(id), async () => { await loadEmpleados(); await loadMantenimientos(); }, setEmpleados);
 
+  const handleDeleteTecnico = (id: string) =>
+    processDeletion(id, () => AdminApi.deleteUser(id), async () => {
+      await loadTecnicos();
+      await loadTecnicoDescriptions();
+    }, setTecnicos);
 
-  const getProfesionalName = (profesionalId: string) => {
-    const prof = profesionales.find((p) => p.userId === profesionalId);
-    return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
+
+  const getProfesionalName = (userId: string) => {
+    // Buscamos en todas las listas de usuarios
+    const allUsers = [
+      ...profesionales,
+      ...tecnicos,
+      ...nutricionistas,
+      ...cocineros,
+      ...empleados
+    ];
+
+    const foundUser = allUsers.find((u) => u.userId === userId);
+
+    return foundUser
+      ? `${foundUser.name} ${foundUser.lastname}`
+      : "Usuario no encontrado";
   };
 
   const onToggleStatus = async (userId: string) => {
@@ -259,11 +534,16 @@ export default function AdminDashboard() {
       else if (userRole === "MANTENIMIENTO") {
         await loadEmpleados();
 
-      } else {
+      }
+      else if (userRole === "TECNICO") {
+        await loadTecnicos()
+      }
+      else {
         await loadProfesionales();
         await loadNutricionistas();
         await loadCocineros();
         await loadEmpleados();
+        await loadTecnicos();
       }
 
       toast({
@@ -283,7 +563,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader userName={`${user?.name} ${user?.lastname}`} />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
@@ -302,8 +581,8 @@ export default function AdminDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-2xl">{activeProfs.length}</CardTitle>
-                <p className="text-sm text-muted-foreground">Profesionales activos</p>
+                <CardTitle className="text-2xl">{counts.staff}</CardTitle>
+                <p className="text-sm text-muted-foreground">Personal total activo</p>
               </div>
             </CardHeader>
           </Card>
@@ -313,8 +592,8 @@ export default function AdminDashboard() {
                 <ClipboardList className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <CardTitle className="text-2xl">{intervenciones.length}</CardTitle>
-                <p className="text-sm text-muted-foreground">Intervenciones registradas</p>
+                <CardTitle className="text-2xl">{counts.actividad}</CardTitle>
+                <p className="text-sm text-muted-foreground">Registros de Actividad Total</p>
               </div>
             </CardHeader>
           </Card>
@@ -329,6 +608,7 @@ export default function AdminDashboard() {
             if (value === "nutricionistas") {
               loadNutricionistas();
               loadPosts();
+              loadNutriDescriptions()
             }
             if (value === "cocineros") {
               loadCocineros();
@@ -338,10 +618,12 @@ export default function AdminDashboard() {
               loadEmpleados();
               loadMantenimientos();
             }
+            if (value === "tecnico") { loadTecnicos(); loadTecnicoDescriptions(); }
           }}
         >
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
             <TabsTrigger value="profesionales">Profesionales</TabsTrigger>
+            <TabsTrigger value="tecnico">Técnicos</TabsTrigger>
             <TabsTrigger value="nutricionistas">Nutrición</TabsTrigger>
             <TabsTrigger value="cocineros">Cocina</TabsTrigger>
             <TabsTrigger value="mantenimiento">Mant.</TabsTrigger>
@@ -387,6 +669,7 @@ export default function AdminDashboard() {
                       profesionales={profesionales.filter(p => p.role === "PROFESIONAL")}
                       onDelete={handleDeleteProfesional}
                       altaBaja={onToggleStatus}
+                      onEdit={handleEditClick} // <--- Pasamos la función
                     />
                   </TabsContent>
 
@@ -406,19 +689,18 @@ export default function AdminDashboard() {
             <Card>
               <Tabs defaultValue="lista-personal" className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  {/* Lado Izquierdo: Título, Descripción y TabsList */}
                   <div className="flex flex-col gap-1">
                     <CardTitle className="text-xl">Cuerpo de Nutrición</CardTitle>
-                    <CardDescription>Gestión de personal y supervisión de menús.</CardDescription>
+                    <CardDescription>Gestión de personal, menús y bitácora de seguimiento.</CardDescription>
+
                     <TabsList className="bg-muted/50 mt-4 w-fit">
                       <TabsTrigger value="lista-personal" className="text-xs">Personal</TabsTrigger>
                       <TabsTrigger value="lista-posteos" className="text-xs">Posteos / Menús</TabsTrigger>
+                      <TabsTrigger value="lista-descripciones" className="text-xs">Bitácora / Notas</TabsTrigger>
                     </TabsList>
                   </div>
 
-                  {/* Lado Derecho: El botón ahora se muestra condicionalmente según el Tab activo */}
                   <div className="flex items-center">
-                    {/* Este div actúa como contenedor del botón para que el layout no salte */}
                     <TabsContent value="lista-personal" className="mt-0 border-none shadow-none p-0">
                       <Button
                         onClick={() => openModalWithRole("NUTRICIONISTA")}
@@ -427,20 +709,37 @@ export default function AdminDashboard() {
                         <Plus className="w-4 h-4" /> Agregar Nutricionista
                       </Button>
                     </TabsContent>
-
                   </div>
                 </CardHeader>
 
                 <CardContent>
+                  {/* Pestaña 1: Personal */}
                   <TabsContent value="lista-personal" className="mt-0 border-none p-0">
                     <UsersTable
                       users={nutricionistas}
                       onDelete={handleDeleteNutricionista}
                       altaBaja={onToggleStatus}
+                      onEdit={handleEditClick}
                     />
                   </TabsContent>
+
+                  {/* Pestaña 2: Menús Semanales */}
                   <TabsContent value="lista-posteos" className="mt-0 border-none p-0">
                     <NutricionistasTable posteos={posteosNutri} />
+                  </TabsContent>
+
+                  {/* Pestaña 3: Bitácora de Nutrición */}
+                  <TabsContent value="lista-descripciones" className="mt-0 border-none p-0">
+                    <TecnicoDescriptionTable
+                      // Usamos el estado específico que ya cargamos con loadNutriDescriptions
+                      data={descripcionesNutri}
+                      getProfesionalName={getProfesionalName}
+                      onPageChange={(newPage) => loadNutriDescriptions(newPage)}
+                      filtroDesde={filtroDesde}
+                      filtroHasta={filtroHasta}
+                      setFiltroDesde={setFiltroDesde}
+                      setFiltroHasta={setFiltroHasta}
+                    />
                   </TabsContent>
                 </CardContent>
               </Tabs>
@@ -480,6 +779,7 @@ export default function AdminDashboard() {
                       users={cocineros}
                       onDelete={handleDeleteCocinero} // Asegúrate de tener esta función
                       altaBaja={onToggleStatus}
+                      onEdit={handleEditClick}
                     />
                   </TabsContent>
 
@@ -527,6 +827,7 @@ export default function AdminDashboard() {
                       users={empleados}
                       onDelete={handleDeleteEmpleado}
                       altaBaja={onToggleStatus}
+                      onEdit={handleEditClick}
                     />
                   </TabsContent>
 
@@ -538,9 +839,106 @@ export default function AdminDashboard() {
               </Tabs>
             </Card>
           </TabsContent>
+
+          {/* TAB TECNICO */}
+          <TabsContent value="tecnico">
+            <Card>
+              <Tabs defaultValue="lista-personal" className="w-full">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  {/* Lado Izquierdo */}
+                  <div className="flex flex-col gap-1">
+                    <CardTitle className="text-xl">Cuerpo Técnico</CardTitle>
+                    <CardDescription>Gestión de técnicos y supervisión de sus descripciones publicadas.</CardDescription>
+                    <TabsList className="bg-muted/50 mt-4 w-fit">
+                      <TabsTrigger value="lista-personal" className="text-xs">Personal</TabsTrigger>
+                      <TabsTrigger value="lista-posteos" className="text-xs">Descripciones / Posteos</TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  {/* Lado Derecho: Botón Agregar */}
+                  <div className="flex items-center">
+                    <TabsContent value="lista-personal" className="mt-0 p-0 border-none shadow-none">
+                      <Button
+                        onClick={() => openModalWithRole("TECNICO")}
+                        className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <Plus className="w-4 h-4" /> Agregar Técnico
+                      </Button>
+                    </TabsContent>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  {/* Sub-Pestaña 1: Tabla de Usuarios */}
+                  <TabsContent value="lista-personal" className="mt-0 border-none p-0">
+                    <UsersTable
+                      users={tecnicos}
+                      onDelete={handleDeleteTecnico}
+                      altaBaja={onToggleStatus}
+                      onEdit={handleEditClick}
+                    />
+                  </TabsContent>
+
+                  {/* Sub-Pestaña 2: Tabla de Posteos (Necesitarás crear este componente o reutilizar uno) */}
+                  <TabsContent value="lista-posteos" className="mt-0 border-none p-0">
+                    {/* Aquí puedes crear un componente <TecnicosDescTable /> similar a IntervencionesTable */}
+                    <TecnicoDescriptionTable
+                      data={descripcionesTecnicos}
+                      getProfesionalName={getProfesionalName}
+                      onPageChange={(newPage) => loadTecnicoDescriptions(newPage)} // Maneja el cambio de página
+                      filtroDesde={filtroDesde}
+                      filtroHasta={filtroHasta}
+                      setFiltroDesde={setFiltroDesde}
+                      setFiltroHasta={setFiltroHasta}
+                    />
+                  </TabsContent>
+                </CardContent>
+              </Tabs>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
+      {/* --- SECCIÓN DE MODALES DE EDICIÓN --- */}
+      {isEditModalOpen && editingUser && editingUser.role && (
+        <>
+          {editingUser.role.toUpperCase() === "NUTRICIONISTA" && (
+            <EditNutricionistaDialog
+              open={isEditModalOpen}
+              onOpenChange={setIsEditModalOpen}
+              user={editingUser}
+              onConfirm={handleUpdateNutricionista}
+            />
+          )}
+
+          {isEditModalOpen && (editingUser?.role === "COCINERO" || editingUser?.role === "MANTENIMIENTO") && (
+            <EditSimpleUserDialog
+              open={isEditModalOpen}
+              onOpenChange={setIsEditModalOpen}
+              user={editingUser}
+              onConfirm={handleUpdateSimpleUser}
+            />
+          )}
+
+          {isEditModalOpen && editingUser?.role?.toUpperCase() === "TECNICO" && (
+            <EditTecnicoDialog
+              open={isEditModalOpen}
+              onOpenChange={setIsEditModalOpen}
+              user={editingUser}
+              onConfirm={handleUpdateTecnico}
+            />
+          )}
+
+          {editingUser.role.toUpperCase() === "PROFESIONAL" && (
+            <EditProfesionalDialog
+              open={isEditModalOpen}
+              onOpenChange={setIsEditModalOpen}
+              user={editingUser}
+              onConfirm={handleUpdateProfesional}
+            />
+          )}
+        </>
+      )}
       <AddProfesionalDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

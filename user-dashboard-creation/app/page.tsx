@@ -62,6 +62,7 @@ export default function LoginPage() {
         case "NUTRICIONISTA": targetPath = "/nutricionista"; break;
         case "COCINERO": targetPath = "/cocinero"; break;
         case "MANTENIMIENTO": targetPath = "/mantenimiento"; break;
+        case "TECNICO": targetPath = "/tecnico"; break;
         default: targetPath = "/";
       }
 
@@ -169,7 +170,7 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="email">Username</Label>
+                  <Label htmlFor="email">Username o Email</Label>
                   <Input
                     id="email"
                     type="text"

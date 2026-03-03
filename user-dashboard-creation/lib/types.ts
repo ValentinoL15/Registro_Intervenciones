@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "PROFESIONAL" | "NUTRICIONISTA" | "COCINERO" | "MANTENIMIENTO";
+export type UserRole = "ADMIN" | "PROFESIONAL" | "NUTRICIONISTA" | "COCINERO" | "MANTENIMIENTO" | "TECNICO";
 
 export type Turno = "MAÑANA" | "TARDE";
 
@@ -15,8 +15,11 @@ export interface User {
   username: string;
   email: string;
   role: UserRole;
+  degree?: string,
   hourly?: number;
-  disponibilidades?: DisponibilidadDto[]
+  disponibilidades?: DisponibilidadDto[],
+  horarioAsistencias? : HorarioAsistenciaDto[],
+  descriptions?: DescriptionDto[],
   active: boolean;
   createdAt?: Date;
 }
@@ -74,14 +77,6 @@ export interface createUserDTO {
   hourly: string,
   disponibilidad?: DisponibilidadDto[]
   role: UserRole
-}
-
-export interface EditProfesionalDTO {
-  name: string,
-  lastname: string,
-  username: string,
-  hourly: string,
-  disponibilidad: DisponibilidadDto[]
 }
 
 export interface DisponibilidadDto {
@@ -199,6 +194,79 @@ export interface PostDto {
   fechaFinal: string,
   archivo: string
 }
+
+export interface TecnicoDto {
+  userId: string,
+  email: string,
+  username: string,
+  role: UserRole,
+  name: string,
+  lastname: string,
+  hourly: string,
+  horarioAsistencias: HorarioAsistenciaDto[],
+  active: boolean
+}
+
+export interface HorarioAsistenciaDto {
+  id: string,
+  dia: DiaSemana,
+  inicio: string,
+  fin: string,
+  user_id: string
+}
+
+export interface DescriptionDto {
+  id:string,
+  description: string,
+  fecha: string,
+  tecnicoId: string
+}
+
+export interface CreateDescriptionDto {
+  description: string,
+  fecha: string
+}
+
+export interface EditDescriptionDto {
+  description: string,
+  fecha: string
+}
+
+export interface EditProfesionalDTO {
+  name: string,
+  lastname: string,
+  username: string,
+  hourly: string,
+  disponibilidad: DisponibilidadDto[]
+}
+
+export interface EditTecnicoDto {
+  name: string,
+  lastname: string,
+  hourly: string,
+  horarioAsistencias: HorarioAsistenciaDto[]
+}
+
+export interface EditNutricionistaDto {
+   name: string,
+  lastname: string,
+  hourly: string,
+  horarioAsistencias: HorarioAsistenciaDto[]
+}
+
+export interface EditEmpleadoDto {
+  name: string,
+  lastname: string,
+  hourly: string,
+}
+
+export interface EditCocineroDto {
+  name: string,
+  lastname: string,
+  hourly: string,
+}
+
+
 
 
 

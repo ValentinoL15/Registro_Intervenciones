@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { Toaster } from "@/components/ui/toaster";
+import { AdminHeader } from "@/components/admin/admin-header";
 
 export default function AdminLayout({ children }: { children: React.ReactNode; }) {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -34,6 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode; }
   }
 
   return <>
+  <AdminHeader userName={`${user.username}`} />
   {children}
   <GlobalLoader />
   <Toaster />

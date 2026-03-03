@@ -22,17 +22,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Sun, Moon, UserPlus, UserMinus, Loader2 } from "lucide-react";
+import { 
+  Trash2, 
+  Sun, 
+  Moon, 
+  UserPlus, 
+  UserMinus, 
+  Loader2, 
+  Edit, 
+  UserCircle, 
+  Clock 
+} from "lucide-react";
 
-// Añadimos isLoading a las props
 interface ProfesionalesTableProps {
   profesionales: User[];
   onDelete: (id: string) => void;
   altaBaja: (id: string) => void;
-  isLoading?: boolean; 
+  isLoading?: boolean;
+  onEdit: (user: User) => void;
 }
 
-export function ProfesionalesTable({ profesionales, onDelete, altaBaja, isLoading }: ProfesionalesTableProps) {
+export function ProfesionalesTable({ 
+  profesionales, 
+  onDelete, 
+  altaBaja, 
+  isLoading, 
+  onEdit 
+}: ProfesionalesTableProps) {
 
   const diasAbreviados: Record<string, string> = {
     LUNES: "Lun",
@@ -40,98 +56,154 @@ export function ProfesionalesTable({ profesionales, onDelete, altaBaja, isLoadin
     MIÉRCOLES: "Mie",
     JUEVES: "Jue",
     VIERNES: "Vie",
+    SABADO: "Sab",
+    DOMINGO: "Dom"
   };
 
   if (!isLoading && profesionales.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground text-sm italic">No hay registros encontrados</p>
+      <div className="text-center py-12 border rounded-xl border-dashed bg-muted/5 italic text-sm text-muted-foreground">
+        No hay registros encontrados
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border border-border overflow-hidden relative">
-      
+    <div className="rounded-xl border border-border overflow-hidden relative bg-card shadow-sm">
+
       {/* OVERLAY DEL LOADER LOCAL */}
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px] transition-all duration-300">
-          <div className="flex flex-col items-center gap-2 bg-card p-4 rounded-lg shadow-lg border">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sincronizando...</p>
-          </div>
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/60 backdrop-blur-sm transition-all duration-300">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       )}
 
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead>Nombre</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead className="text-center">Carga Horaria</TableHead>
-            <TableHead className="min-w-[200px]">Disponibilidad</TableHead>
-            <TableHead className="text-center">Condición</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+          <TableRow className="bg-muted/30">
+            <TableHead className="py-4 pl-6 font-semibold">Profesional</TableHead>
+            <TableHead className="font-semibold">Contacto</TableHead>
+            <TableHead className="text-center font-semibold">Carga Horaria</TableHead>
+            <TableHead className="min-w-[200px] font-semibold">Disponibilidad</TableHead>
+            <TableHead className="text-center font-semibold">Condición</TableHead>
+            <TableHead className="text-right pr-6 font-semibold">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className={isLoading ? "opacity-40" : ""}>
           {profesionales.map((prof: User) => (
-            <TableRow key={prof.userId} className="transition-colors hover:bg-muted/30">
-              <TableCell className="font-medium whitespace-nowrap">
-                {prof.name} {prof.lastname}
+            <TableRow key={prof.userId} className="transition-colors hover:bg-muted/20">
+              <TableCell className="py-4 pl-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center border border-teal-200 shrink-0">
+                    <UserCircle className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm leading-tight text-slate-800">
+                      {prof.name} {prof.lastname}
+                    </span>
+                    {prof.degree && (
+                      <span className="text-[11px] text-teal-600 italic font-medium mt-0.5">
+                        {prof.degree}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </TableCell>
-              <TableCell className="text-muted-foreground text-xs font-mono">
+
+              <TableCell className="text-xs text-muted-foreground font-medium">
                 {prof.email}
               </TableCell>
-              <TableCell className="text-center text-xs">
-                <Badge variant="secondary">{prof.hourly}hs</Badge>
+
+              <TableCell className="text-center">
+                <Badge variant="outline" className="gap-1 font-medium border-slate-200 bg-background">
+                  <Clock className="w-3 h-3 opacity-60" /> {prof.hourly}hs
+                </Badge>
               </TableCell>
+
               <TableCell>
                 <div className="flex flex-wrap gap-1.5">
                   {prof.disponibilidades?.map((disp: any, idx: number) => (
-                    <Badge 
-                      key={idx} 
-                      variant="outline" 
-                      className="flex items-center gap-1.5 bg-background border-slate-200 py-1 text-[10px]"
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="flex items-center gap-1.5 bg-background border-slate-200 py-0.5 px-2 text-[10px] font-semibold"
                     >
-                      <span className="font-bold">{diasAbreviados[disp.dia]}</span>
-                      <div className="w-px h-3 bg-slate-300" />
-                      {disp.turno === "MAÑANA" ? <Sun className="w-3 h-3 text-amber-500" /> : <Moon className="w-3 h-3 text-indigo-500" />}
-                      {disp.turno}
+                      <span className="text-slate-700">{diasAbreviados[disp.dia] || disp.dia}</span>
+                      <div className="w-px h-3 bg-slate-200" />
+                      {disp.turno === "MAÑANA" ? (
+                        <Sun className="w-3 h-3 text-amber-500" />
+                      ) : (
+                        <Moon className="w-3 h-3 text-indigo-500" />
+                      )}
+                      <span className="text-slate-500 lowercase">{disp.turno.toLowerCase()}</span>
                     </Badge>
                   ))}
                 </div>
               </TableCell>
+
               <TableCell className="text-center">
-                <Badge className={prof.active ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"} variant="outline">
-                  <span className={`mr-1.5 size-1.5 rounded-full ${prof.active ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                <Badge 
+                  className={`rounded-full px-2.5 py-0.5 font-semibold text-[11px] border-none shadow-sm ${
+                    prof.active ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+                  }`}
+                >
                   {prof.active ? "Activo" : "Inactivo"}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
+
+              {/* COLUMNA DE ACCIONES SIEMPRE VISIBLE */}
+              <TableCell className="text-right pr-6">
+                <div className="flex justify-end gap-1.5">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => altaBaja(prof.userId)}
-                    className={prof.active ? "text-amber-600 hover:bg-amber-50" : "text-emerald-600 hover:bg-emerald-50"}
+                    onClick={() => onEdit(prof)}
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 shadow-sm transition-all"
+                    title="Editar perfil"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => altaBaja(prof.userId.toString())}
+                    className={`h-8 w-8 border border-slate-100 shadow-sm transition-all ${
+                      prof.active 
+                        ? "text-amber-600 hover:bg-amber-50 hover:border-amber-200" 
+                        : "text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200"
+                    }`}
+                    title={prof.active ? "Dar de baja" : "Dar de alta"}
                   >
                     {prof.active ? <UserMinus className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
                   </Button>
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-destructive hover:bg-red-50 border border-slate-100 hover:border-red-200 shadow-sm transition-all"
+                        title="Eliminar"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>¿Confirmar eliminación?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta acción borrará permanentemente a {prof.name} {prof.lastname}.</AlertDialogDescription>
+                        <AlertDialogTitle className="text-xl font-bold">¿Confirmar eliminación?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción borrará permanentemente a <strong>{prof.name} {prof.lastname}</strong> del sistema. No se puede deshacer.
+                        </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(prof.userId)} className="bg-destructive text-white">Eliminar</AlertDialogAction>
+                      <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => onDelete(prof.userId.toString())} 
+                          className="bg-destructive text-white rounded-xl hover:bg-destructive/90 font-bold"
+                        >
+                          Eliminar ahora
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
