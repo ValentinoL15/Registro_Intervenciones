@@ -1,5 +1,6 @@
 package com.buenos_hijos.intervenciones.dto.NutricionistaDTOs;
 
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -7,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -35,5 +38,7 @@ public class SaveNutricionistaDto {
 
     @NotBlank(message = "El horario no puede estar vacío")
     private String hourly;
+
+    private List<HorarioAsistenciaDto> horarioAsistencia;
 
 }

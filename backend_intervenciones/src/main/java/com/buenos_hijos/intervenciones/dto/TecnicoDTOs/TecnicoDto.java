@@ -1,5 +1,6 @@
 package com.buenos_hijos.intervenciones.dto.TecnicoDTOs;
 
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.model.HorarioAsistencia;
 import com.buenos_hijos.intervenciones.model.User;
 import lombok.Getter;
@@ -18,7 +19,8 @@ public class TecnicoDto {
     private String name;
     private String lastname;
     private String hourly;
-    private List<HorarioAsistencia> horarioAsistencias;
-
+    private String degree;
+    private List<HorarioAsistenciaDto> horarioAsistencias;
+    private boolean active;
 
 }

@@ -35,21 +35,19 @@ public class UserServiceImp implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("No se encuentra el username"));
+    public UserDetails loadUserByUsername(String loginInput) throws UsernameNotFoundException {
+        User user = userRepository.findByUsernameOrEmail(loginInput, loginInput)
+                .orElseThrow(() -> new UsernameNotFoundException("No se encuentra el usuario con: " + loginInput));
 
         if(!user.isActive()){
-                throw new DisabledException("El usuario no está dado de alta o fue dado de baja, por favor comuníquese con un adminstrador");
+            throw new DisabledException("El usuario no está dado de alta o fue dado de baja...");
         }
 
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
-
-        String roleName = user.getRole().name();
-        authorityList.add(new SimpleGrantedAuthority("ROLE_".concat(roleName)));
+        authorityList.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
 
         return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
+                user.getUsername(), // Seguimos usando el username real para el objeto UserDetails
                 user.getPassword(),
                 authorityList);
 
@@ -70,25 +68,30 @@ public class UserServiceImp implements UserDetailsService {
     }
 
     public AuthResponse login(LoginDTO loginDTO) {
-        String username = loginDTO.getUsername();
+        String loginInput = loginDTO.getUsername(); // El input del usuario
         String password = loginDTO.getPassword();
 
-        User user = userRepository.findByUsername(username)
+        // Buscamos por username o email
+        User user = userRepository.findByUsernameOrEmail(loginInput, loginInput)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-
-        Authentication authentication = this.authenticate(username,password);
+        // Autenticamos usando el loginInput (que loadUserByUsername procesará)
+        Authentication authentication = this.authenticate(loginInput, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String access_token = jwtUtils.generateToken(user);
-        Long userId = user.getUserId();
-        String userRole = user.getRole().name();
-        String name = user.getName();
-        String lastname = user.getLastname();
 
-
-        AuthResponse authResponse = new AuthResponse("Logueado correctamente",access_token,username,userId,userRole,name,lastname);
-        return authResponse;
+        // Retornamos el username real del usuario, sin importar si entró con el email
+        return new AuthResponse(
+                "Logueado correctamente",
+                access_token,
+                user.getUsername(),
+                user.getUserId(),
+                user.getRole().name(),
+                user.getName(),
+                user.getLastname(),
+                user.getEmail()
+        );
     }
 
     public UserDto getUser(Long user_id) {

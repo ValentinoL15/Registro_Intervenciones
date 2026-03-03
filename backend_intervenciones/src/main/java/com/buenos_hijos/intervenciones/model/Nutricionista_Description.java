@@ -7,30 +7,24 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "horarios_asistencia")
-public class HorarioAsistencia {
+public class Nutricionista_Description {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Enumerated(EnumType.STRING)
-    private Profesional.DaysType dia;
-    private LocalTime inicio;
-    private LocalTime fin;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private LocalDate fecha;
 
     @ManyToOne
-    @JoinColumn(name = "tecnico_id")
-    private Tecnico2 tecnico2;
-
-    @ManyToOne
-    @JoinColumn(name = "nutricionista_id")
+    @JoinColumn(name = "nutricionistaId")
     private Nutricionista nutricionista;
 
 }

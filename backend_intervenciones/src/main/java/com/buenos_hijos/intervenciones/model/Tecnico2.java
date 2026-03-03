@@ -21,8 +21,12 @@ import java.util.List;
 public class Tecnico2 extends User{
 
     private String hourly;
+    private String degree;
 
     @OneToMany(mappedBy = "tecnico2", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HorarioAsistencia> horarioAsistencias = new ArrayList<>();
+
+    @OneToMany(mappedBy = "tecnico2", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Tecnico_Description> descriptions = new ArrayList<>();
 
 }

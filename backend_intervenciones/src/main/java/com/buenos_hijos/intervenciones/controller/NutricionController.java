@@ -1,11 +1,15 @@
 package com.buenos_hijos.intervenciones.controller;
 
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.CreateDescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.DescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.EditDescriptionDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.INutricionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -36,6 +40,42 @@ public class NutricionController {
     @GetMapping()
     public ResponseEntity<Page<NutricionistaDto>> getNutricionistas(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(nutricionService.getNutricionistas(pageable));
+    }
+
+    @GetMapping("/myDescriptions")
+    public ResponseEntity<Page<DescriptionDto>> getMyDescriptions(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+                                                                  @PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
+                                                                  Principal principal) {
+        return ResponseEntity.ok(nutricionService.getMyDescriptions(desde, hasta, pageable, principal.getName()));
+    }
+
+    //VERIFICADO
+    @GetMapping("/descriptions")
+    public ResponseEntity<Page<DescriptionDto>> getAllDescriptions(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @PageableDefault(size = 8, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable){
+
+        // PASAR LOS PARÁMETROS AQUÍ
+        return ResponseEntity.ok(nutricionService.getAllDescriptions(desde, hasta, pageable));
+    }
+
+    @PostMapping("/create-description")
+    public ResponseEntity<GeneralResponse> creatDescription(@Valid @RequestBody CreateDescriptionDto descriptionDto, Principal principal) {
+        return ResponseEntity.ok(nutricionService.saveDescription(descriptionDto, principal.getName()));
+    }
+
+    //VERIFICADO
+    @PutMapping("/edit-description/{descriptionId}")
+    public ResponseEntity<GeneralResponse> editDescription(@PathVariable Long descriptionId, @RequestBody EditDescriptionDto descriptionDto, Principal principal){
+        return ResponseEntity.ok(nutricionService.editDescription(descriptionId,descriptionDto, principal.getName()));
+    }
+
+    //VERIFICADO
+    @DeleteMapping("/{descriptionId}")
+    public ResponseEntity<GeneralResponse> deleteDescription(@PathVariable Long descriptionId, Principal principal){
+        return ResponseEntity.ok(nutricionService.deleteDescription(descriptionId, principal.getName()));
     }
 
     @GetMapping("/reportes")

@@ -25,4 +25,6 @@ public class EditCocineroDto {
     @Size(min = 5, max = 20, message = "El username debe contener entre 5 y 20 caracteres")
     private String username;
 
+    private String hourly;
+
 }

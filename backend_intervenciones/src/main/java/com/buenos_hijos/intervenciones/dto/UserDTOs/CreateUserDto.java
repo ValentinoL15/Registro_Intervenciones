@@ -1,6 +1,7 @@
 package com.buenos_hijos.intervenciones.dto.UserDTOs;
 
 import com.buenos_hijos.intervenciones.dto.DisponibilidadDTOs.DisponibilidadDto;
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.CreateHorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.model.User;
 import jakarta.validation.Valid;
@@ -46,7 +47,7 @@ public class CreateUserDto {
     private List<DisponibilidadDto> disponibilidad;
 
     @Valid
-    private List<HorarioAsistenciaDto> horarioAsistencia;
+    private List<CreateHorarioAsistenciaDto> horarioAsistencia;
 
     @Valid
     private String degree;

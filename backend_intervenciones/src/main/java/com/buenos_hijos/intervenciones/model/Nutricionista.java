@@ -20,4 +20,10 @@ public class Nutricionista extends User{
     @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Nutricion_Semanal> nutricion = new ArrayList<>();
 
+    @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HorarioAsistencia> horarioAsistencias = new ArrayList<>();
+
+    @OneToMany(mappedBy = "nutricionista", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Nutricionista_Description> descriptions = new ArrayList<>();
+
 }

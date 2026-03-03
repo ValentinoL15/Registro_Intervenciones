@@ -1,15 +1,18 @@
 package com.buenos_hijos.intervenciones.service;
 
 import com.buenos_hijos.intervenciones.config.CloudinaryConfig;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.CreateDescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.DescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.EditDescriptionDto;
 import com.buenos_hijos.intervenciones.dto.GeneralResponse;
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
 import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
 import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
-import com.buenos_hijos.intervenciones.model.Nutricion_Semanal;
-import com.buenos_hijos.intervenciones.model.Nutricionista;
-import com.buenos_hijos.intervenciones.model.User;
+import com.buenos_hijos.intervenciones.model.*;
+import com.buenos_hijos.intervenciones.repository.INutDescriptionRepository;
 import com.buenos_hijos.intervenciones.repository.INutricion_SemanalRepository;
 import com.buenos_hijos.intervenciones.repository.INutricionistaRepository;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
@@ -29,7 +32,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +43,7 @@ public class NutricionService implements INutricionService {
     private final INutricionistaRepository nutricionistaRepository;
     private final INutricion_SemanalRepository nutricionSemanalRepository;
     private final IUserRepository userRepository;
+    private final INutDescriptionRepository nutDescriptionRepository;
 
     @Autowired
     private Cloudinary cloudinary;
@@ -54,6 +60,19 @@ public class NutricionService implements INutricionService {
         nutricionistaDto.setEmail(nutricionista.getEmail());
         nutricionistaDto.setHourly(nutricionista.getHourly());
         nutricionistaDto.setActive(nutricionista.isActive());
+        if (nutricionista.getHorarioAsistencias() != null) {
+            List<HorarioAsistenciaDto> horarioDtos = nutricionista.getHorarioAsistencias().stream()
+                    .map(horario -> {
+                        HorarioAsistenciaDto hDto = new HorarioAsistenciaDto();
+                        hDto.setDia(horario.getDia());
+                        hDto.setInicio(horario.getInicio());
+                        hDto.setFin(horario.getFin());
+                        return hDto;
+                    })
+                    .collect(Collectors.toList());
+
+            nutricionistaDto.setHorarioAsistencias(horarioDtos);
+        }
         return nutricionistaDto;
     }
 
@@ -69,6 +88,20 @@ public class NutricionService implements INutricionService {
             dto.setLastname(nutricionista.getLastname());
             dto.setEmail(nutricionista.getEmail());
             dto.setHourly(nutricionista.getHourly());
+            if (nutricionista.getHorarioAsistencias() != null) {
+                List<HorarioAsistenciaDto> horarioDtos = nutricionista.getHorarioAsistencias().stream()
+                        .map(horario -> {
+                            HorarioAsistenciaDto hDto = new HorarioAsistenciaDto();
+                            hDto.setDia(horario.getDia());
+                            hDto.setInicio(horario.getInicio());
+                            hDto.setFin(horario.getFin());
+                            hDto.setUser_id(nutricionista.getUserId());
+                            return hDto;
+                        })
+                        .collect(Collectors.toList());
+
+                dto.setHorarioAsistencias(horarioDtos);
+            }
             dto.setActive(nutricionista.isActive());
             return dto;
         });
@@ -153,8 +186,6 @@ public class NutricionService implements INutricionService {
             String urlGenerada = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
 
-
-            // Guardar también el resourceType para saber cómo mostrarlo luego
             Nutricion_Semanal reporte = new Nutricion_Semanal();
             reporte.setFechaInicio(dto.getFechaInicio());
             reporte.setFechaFinal(dto.getFechaFinal());
@@ -239,6 +270,114 @@ public class NutricionService implements INutricionService {
         } catch (IOException e) {
             throw new RuntimeException("Error al eliminar el archivo de Cloudinary");
         }
+    }
+
+    @Override
+    public Page<DescriptionDto> getMyDescriptions(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser) {
+        LocalDate fechaDesde = (desde != null) ? desde : LocalDate.of(1970, 1, 1);
+        LocalDate fechaHasta = (hasta != null) ? hasta : LocalDate.of(2099, 12, 31);
+
+        // Llamamos al nuevo método filtrado
+        Page<Nutricionista_Description> descriptionPage = nutDescriptionRepository
+                .findByNutricionista_UsernameAndFechaBetween(currentUser, fechaDesde, fechaHasta, pageable);
+
+        return descriptionPage.map(description -> new DescriptionDto(
+                description.getId(),
+                description.getDescription(),
+                description.getFecha(),
+                description.getNutricionista().getUserId()
+        ));
+    }
+
+    @Override
+    public Page<DescriptionDto> getAllDescriptions(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        LocalDate fechaDesde = (desde != null) ? desde : LocalDate.of(1970, 1, 1);
+        LocalDate fechaHasta = (hasta != null) ? hasta : LocalDate.of(2099, 12, 31);
+
+        // Usamos un método del repo que busque por rango de fechas para TODOS los técnicos
+        Page<Nutricionista_Description> descriptionPage = nutDescriptionRepository.findByFechaBetween(fechaDesde, fechaHasta, pageable);
+
+        return descriptionPage.map(description -> new DescriptionDto(
+                description.getId(),
+                description.getDescription(),
+                description.getFecha(),
+                description.getNutricionista().getUserId()
+        ));
+    }
+
+    @Override
+    public GeneralResponse saveDescription(CreateDescriptionDto descriptionDto, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        if(descriptionDto.getFecha().isAfter(LocalDate.now())){
+            throw new RuntimeException("No puedes asignar una tarea posterior al dia de hoy");
+        }
+
+        Nutricionista_Description nutricionistaDescription = new Nutricionista_Description();
+        nutricionistaDescription.setDescription(descriptionDto.getDescription());
+        nutricionistaDescription.setFecha(descriptionDto.getFecha());
+        nutricionistaDescription.setNutricionista(nutricionista);
+        nutDescriptionRepository.save(nutricionistaDescription);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción creada con éxito",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Override
+    public GeneralResponse editDescription(Long descriptionId, EditDescriptionDto descriptionDto,String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        Nutricionista_Description nutricionistaDescription = nutDescriptionRepository.findById(descriptionId)
+                .orElseThrow(() -> new RuntimeException("Descripción no encontrada"));
+
+        if(!nutricionista.getUserId().equals(nutricionistaDescription.getNutricionista().getUserId())){
+            throw new AccessDeniedException();
+        }
+
+        if(descriptionDto.getDescription() != null) {
+            String desc = descriptionDto.getDescription().trim();
+            if(desc.length() < 10 || desc.length() > 500){
+                throw new IllegalArgumentException("La descripción debe tener entre 10 y 500 caracteres.");
+            }
+            nutricionistaDescription.setDescription(descriptionDto.getDescription());
+        }
+        if(descriptionDto.getFecha() != null){
+            if(descriptionDto.getFecha().isAfter(LocalDate.now())){
+                throw new RuntimeException("No puedes asignar una tarea posterior al dia de hoy");
+            }
+            nutricionistaDescription.setFecha(descriptionDto.getFecha());
+        }
+
+        nutDescriptionRepository.save(nutricionistaDescription);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción actualizada correctamente",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Override
+    public GeneralResponse deleteDescription(Long descriptionId, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        Nutricionista_Description nutricionistaDescription = nutDescriptionRepository.findById(descriptionId)
+                .orElseThrow(() -> new RuntimeException("Descripción no encontrada"));
+
+        if(!nutricionista.getUserId().equals(nutricionistaDescription.getNutricionista().getUserId())){
+            throw new AccessDeniedException();
+        }
+
+        nutDescriptionRepository.deleteById(descriptionId);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción eliminada correctamente",
+                HttpStatus.OK.value()
+        );
     }
 
 }

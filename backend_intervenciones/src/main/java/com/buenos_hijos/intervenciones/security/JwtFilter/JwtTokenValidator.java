@@ -33,7 +33,11 @@ public class JwtTokenValidator extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         final String requestURI = request.getRequestURI();
-        if (requestURI.startsWith("/api/auth") || requestURI.startsWith("/api/email")) {
+
+        // AGREGAR LA RUTA AQUÍ PARA QUE EL FILTRO NO SE META
+        if (requestURI.startsWith("/api/auth") ||
+                requestURI.startsWith("/api/email") ||
+                requestURI.startsWith("/api/password")) {
             filterChain.doFilter(request, response);
             return;
         }
