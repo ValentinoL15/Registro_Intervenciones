@@ -13,12 +13,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface INutricionService {
 
     public NutricionistaDto getNutricionista(Long nutricionistaId);
 
-    public Page<NutricionistaDto> getNutricionistas(Pageable pageable);
+    public List<NutricionistaDto> getNutricionistas();
 
     public NutricionSemanalDto getReporte(Long nutricionId);
 

@@ -12,7 +12,7 @@ public interface ICocineroService {
 
     public CocineroDto getCocinero(Long userId);
 
-    public Page<CocineroDto> getCocineros(Pageable pageable);
+    public List<CocineroDto> getCocineros();
 
     public MenuDiaDto getMenu(Long menuId);
 

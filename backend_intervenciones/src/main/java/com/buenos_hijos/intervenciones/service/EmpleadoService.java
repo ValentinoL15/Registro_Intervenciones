@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,9 +51,9 @@ public class EmpleadoService implements IEmpleadoService {
     }
 
     @Override
-    public Page<EmpleadoDto> getEmpleados(Pageable pageable) {
-        Page<Empleado> empleados = empleadoRepository.findAll(pageable);
-        return empleados.map(
+    public List<EmpleadoDto> getEmpleados() {
+        List<Empleado> empleados = empleadoRepository.findAll();
+        return empleados.stream().map(
                 empleado -> new EmpleadoDto(
                         empleado.getUserId(),
                         empleado.getName(),
@@ -62,7 +64,7 @@ public class EmpleadoService implements IEmpleadoService {
                         empleado.isActive(),
                         empleado.getRole()
                 )
-        );
+        ).collect(Collectors.toList());
     }
 
     @Override

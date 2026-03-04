@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.List;
 
 
 @RestController
@@ -28,8 +29,8 @@ public class EmpleadoController {
     private final IEmpleadoService empleadoService;
 
     @GetMapping()
-    public ResponseEntity<Page<EmpleadoDto>> getEmpleados(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(empleadoService.getEmpleados(pageable));
+    public ResponseEntity<List<EmpleadoDto>> getEmpleados() {
+        return ResponseEntity.ok(empleadoService.getEmpleados());
     }
 
     @GetMapping("/{empleadoId}")

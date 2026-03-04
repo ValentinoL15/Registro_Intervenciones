@@ -24,7 +24,7 @@ public interface IAdminService {
 
     public AdminDto getAdmin(Long userId);
 
-    public Page<AdminDto> getAllAdmins(Pageable pageable);
+    public List<AdminDto> getAllAdmins();
 
     public GeneralResponse saveAdmin(CreateAdminDto adminDto);
 

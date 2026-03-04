@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/nutricionista")
@@ -38,8 +39,8 @@ public class NutricionController {
     }
 
     @GetMapping()
-    public ResponseEntity<Page<NutricionistaDto>> getNutricionistas(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(nutricionService.getNutricionistas(pageable));
+    public ResponseEntity<List<NutricionistaDto>> getNutricionistas() {
+        return ResponseEntity.ok(nutricionService.getNutricionistas());
     }
 
     @GetMapping("/myDescriptions")

@@ -26,8 +26,8 @@ public class CocineroController {
     private final ICocineroService cocineroService;
 
     @GetMapping()
-    public ResponseEntity<Page<CocineroDto>> getAllCocineros(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(cocineroService.getCocineros(pageable));
+    public ResponseEntity<List<CocineroDto>> getAllCocineros(){
+        return ResponseEntity.ok(cocineroService.getCocineros());
     }
 
     @GetMapping("/{cocineroId}")

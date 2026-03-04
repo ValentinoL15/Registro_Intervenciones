@@ -77,11 +77,11 @@ public class NutricionService implements INutricionService {
     }
 
     @Override
-    public Page<NutricionistaDto> getNutricionistas(Pageable pageable) {
+    public List<NutricionistaDto> getNutricionistas() {
 
-        Page<Nutricionista> nutricionistasPage = nutricionistaRepository.findAll(pageable);
+        List<Nutricionista> nutricionistasPage = nutricionistaRepository.findAll();
 
-        return nutricionistasPage.map(nutricionista -> {
+        return nutricionistasPage.stream().map(nutricionista -> {
             NutricionistaDto dto = new NutricionistaDto();
             dto.setUserId(nutricionista.getUserId());
             dto.setName(nutricionista.getName());
@@ -104,7 +104,7 @@ public class NutricionService implements INutricionService {
             }
             dto.setActive(nutricionista.isActive());
             return dto;
-        });
+        }).collect(Collectors.toList());
     }
 
     @Override

@@ -45,8 +45,8 @@ public class CocineroService implements ICocineroService {
     }
 
     @Override
-    public Page<CocineroDto> getCocineros(Pageable pageable) {
-        return cocineroRepository.findAll(pageable).map(cocinero -> {
+    public List<CocineroDto> getCocineros() {
+        return cocineroRepository.findAll().stream().map(cocinero -> {
             CocineroDto dto = new CocineroDto();
             dto.setUserId(cocinero.getUserId());
             dto.setName(cocinero.getName());
@@ -56,7 +56,7 @@ public class CocineroService implements ICocineroService {
             dto.setHourly(cocinero.getHourly());
             dto.setActive(cocinero.isActive());
             return dto;
-        });
+        }).collect(Collectors.toList());
     }
 
     @Override

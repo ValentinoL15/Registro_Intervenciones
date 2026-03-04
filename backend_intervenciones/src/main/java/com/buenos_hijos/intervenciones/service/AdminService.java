@@ -87,10 +87,10 @@ public class AdminService implements IAdminService {
     }
 
     @Override
-    public Page<AdminDto> getAllAdmins(@PageableDefault Pageable pageable) {
+    public List<AdminDto> getAllAdmins() {
 
-        Page<Admin> admins = adminRepository.findAll(pageable);
-        Page<AdminDto> adminDtos = admins.map(
+        List<Admin> admins = adminRepository.findAll();
+        List<AdminDto> adminDtos = admins.stream().map(
             admin -> new AdminDto(
                     admin.getUserId(),
                     admin.getName(),
@@ -99,7 +99,7 @@ public class AdminService implements IAdminService {
                     admin.getEmail(),
                     admin.getRole()
             )
-        );
+        ).collect(Collectors.toList());
         return adminDtos;
 
     }

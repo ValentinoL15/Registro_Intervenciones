@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,8 +39,8 @@ public class AdminController {
 
     //VERIFICADO
     @GetMapping()
-    public ResponseEntity<Page<AdminDto>> getAdmins(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(adminService.getAllAdmins(pageable));
+    public ResponseEntity<List<AdminDto>> getAdmins(){
+        return ResponseEntity.ok(adminService.getAllAdmins());
     }
 
     //VERIFICADO

@@ -32,9 +32,9 @@ public class ProfesionalService implements IProfesionalService {
 
 
     @Override
-    public Page<ProfesionalDto> getAllProfesionals(Pageable pageable) {
-        Page<Profesional> profesionals = profesionalRepository.findAll(pageable);
-        return profesionals.map(prof -> {
+    public List<ProfesionalDto> getAllProfesionals() {
+        List<Profesional> profesionals = profesionalRepository.findAll();
+        return profesionals.stream().map(prof -> {
             // Convertimos la lista de Disponibilidad (Entity) a DisponibilidadDto
             List<DisponibilidadDto> dispDtos = prof.getDisponibilidad().stream()
                     .map(disp -> new DisponibilidadDto(disp.getDia(), disp.getTurno()))
@@ -52,7 +52,7 @@ public class ProfesionalService implements IProfesionalService {
                     dispDtos,
                     prof.isActive()
             );
-        });
+        }).collect(Collectors.toList());
     }
 
     @Override
