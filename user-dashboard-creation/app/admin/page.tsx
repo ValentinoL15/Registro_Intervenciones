@@ -77,7 +77,6 @@ const [counts, setCounts] = useState({
   const [menuesCocina, setMenuesCocina] = useState<MenuDiaDto[]>([]);
   const [mantenimientos, setMantenimientos] = useState<MantenimientoDto[]>([]);
 
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const openModalWithRole = (role: string) => {
@@ -89,25 +88,14 @@ const [counts, setCounts] = useState({
   const { showLoader, hideLoader } = useLoader();
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Sumamos todos los usuarios activos de cada estado
-const totalStaffReal = totales.profesionales + totales.nutricionistas + totales.cocineros + totales.mantenimiento + totales.tecnicos;
-
-// Para la actividad, sumamos los totales de los objetos de página que ya tenés
-const totalActividadReal = 
-  totales.intervenciones + 
-  descripcionesTecnicos.totalElements + 
-  descripcionesNutri.totalElements + 
-  mantenimientos.length + menuesCocina.length
-
   const loadStatistics = useCallback(async () => {
   try {
-    // Realizamos peticiones "ligeras" a todos los endpoints de actividad
     const [profs, nutris, cocis, emples, tecs, ints, nTec, nNut, mant, mens] = await Promise.all([
       profesionalApi.getProfesionales(),
       NutricionistaApi.getAllNutricionistas(),
       CocineroApi.getAllCocineros(),
       EmpleadoApi.getEmpleados(),
-      TecnicoApi.getTecnicos(), // Asumiendo que este devuelve lista completa
+      TecnicoApi.getTecnicos(),
       profesionalApi.getIntervenciones(),
       TecnicoApi.getDescriptions("", "", 0, 1),
       NutricionistaApi.getDescriptions("", "", 0, 1),
@@ -115,13 +103,27 @@ const totalActividadReal =
       CocineroApi.getMenus()
     ]);
 
-    const totalStaff = (profs.totalElements || 0) + (nutris.totalElements || 0) + 
-                       (cocis.totalElements || 0) + (emples.totalElements || 0) + 
-                       (Array.isArray(tecs) ? tecs.length : 0);
+    // Función auxiliar para contar elementos sin importar si es Array o PaginatedDTO
+    const getCount = (data: any) => {
+      if (Array.isArray(data)) return data.length;
+      if (data && typeof data.totalElements === 'number') return data.totalElements;
+      if (data && Array.isArray(data.content)) return data.content.length;
+      return 0;
+    };
 
-    const totalActividad = (ints.totalElements || 0) + (nTec.totalElements || 0) + 
-                           (nNut.totalElements || 0) + (mant.totalElements || 0) + 
-                           (mens.totalElements || 0);
+    const totalStaff = 
+      getCount(profs) + 
+      getCount(nutris) + 
+      getCount(cocis) + 
+      getCount(emples) + 
+      getCount(tecs);
+
+    const totalActividad = 
+      getCount(ints) + 
+      getCount(nTec) + 
+      getCount(nNut) + 
+      getCount(mant) + 
+      getCount(mens);
 
     setCounts({
       staff: totalStaff,
@@ -132,7 +134,7 @@ const totalActividadReal =
   }
 }, []);
 
-const refreshGlobalCounts = useCallback(async () => {
+/*const refreshGlobalCounts = useCallback(async () => {
   try {
     const [profs, nutris, cocis, emples, tecs, ints, nTec, nNut, mant, mens] = await Promise.all([
       profesionalApi.getProfesionales(),
@@ -160,7 +162,7 @@ const refreshGlobalCounts = useCallback(async () => {
   } catch (err) {
     console.error("Error al sincronizar contadores:", err);
   }
-}, []);
+}, []);*/
 
   const handleEditClick = (user: User) => {
     setIsEditModalOpen(false);
@@ -283,8 +285,8 @@ const refreshGlobalCounts = useCallback(async () => {
   const loadProfesionales = async () => {
     try {
       const data = await profesionalApi.getProfesionales();
-      setProfesionales([...data.content]);
-      const activos = data.content.filter((prof: User) => prof.active === true);
+      setProfesionales(data);
+      const activos = data.filter((prof: User) => prof.active === true);
 
       setActiveProfs(activos);
     } catch (err) {
@@ -295,7 +297,7 @@ const refreshGlobalCounts = useCallback(async () => {
   const loadNutricionistas = async () => {
     try {
       const data = await NutricionistaApi.getAllNutricionistas(); // Tu nuevo endpoint
-      setNutricionistas([...data.content]);
+      setNutricionistas(data);
     } catch (err) { console.error(err); }
 
   };
@@ -303,7 +305,7 @@ const refreshGlobalCounts = useCallback(async () => {
   const loadCocineros = async () => {
     try {
       const data = await CocineroApi.getAllCocineros();
-      setCocineros([...data.content]);
+      setCocineros(data);
     } catch (err) { console.error(err); }
 
   };
@@ -311,7 +313,7 @@ const refreshGlobalCounts = useCallback(async () => {
   const loadEmpleados = async () => {
     try {
       const data = await EmpleadoApi.getEmpleados();
-      setEmpleados([...data.content]);
+      setEmpleados(data);
     } catch (err) { console.error(err); }
 
   };
@@ -371,17 +373,18 @@ const refreshGlobalCounts = useCallback(async () => {
     }
   }, [filtroDesde, filtroHasta]);
 
-  // Carga Bitácora de Nutricionistas
-  const loadNutriDescriptions = useCallback(async (page = 0) => {
-    try {
-      // Asegúrate de que NutricionistaApi.getDescriptions esté apuntando al endpoint correcto
-      const data = await NutricionistaApi.getDescriptions(filtroDesde, filtroHasta, page, 8);
-      console.log("Datos Nutri recibidos:", data); // Para verificar en consola
-      setDescripcionesNutri(data);
-    } catch (err) {
-      console.error("Error al cargar notas de nutrición:", err);
-    }
-  }, [filtroDesde, filtroHasta]);
+const loadNutriDescriptions = useCallback(async (page = 0) => {
+  try {
+    const data = await NutricionistaApi.getDescriptions(filtroDesde, filtroHasta, page, 8);
+    setDescripcionesNutri(data);
+  } catch (err) {
+    console.error("Error al cargar notas de nutrición:", err);
+  }
+}, [filtroDesde, filtroHasta]); 
+
+useEffect(() => {
+  loadNutriDescriptions(0); 
+}, [filtroDesde, filtroHasta, loadNutriDescriptions]);
 
 
  useEffect(() => {

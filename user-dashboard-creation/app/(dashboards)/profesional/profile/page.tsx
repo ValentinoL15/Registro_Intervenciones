@@ -37,8 +37,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <ProfesionalHeader userName={`${user?.name} ${user?.lastname}`} />
-      
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="flex w-full max-w-4xl justify-center">
           <Profile user={user}/>

@@ -371,61 +371,78 @@ export default function TecnicoDashboard() {
                 </Table>
 
                 {/* PAGINACIÓN */}
-                {totalPages > 1 && (
-                  <div className="p-4 border-t bg-muted/10">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage((p) => Math.max(1, p - 1));
-                            }}
-                            className={
-                              currentPage === 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
-                          />
-                        </PaginationItem>
+                {/* PAGINACIÓN TRUNCADA */}
+{totalPages > 1 && (
+  <div className="p-4 border-t bg-muted/10">
+    <Pagination>
+      <PaginationContent>
+        {/* BOTÓN ANTERIOR */}
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setCurrentPage((p) => Math.max(1, p - 1));
+            }}
+            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
 
-                        {[...Array(totalPages)].map((_, i) => (
-                          <PaginationItem key={i + 1}>
-                            <PaginationLink
-                              href="#"
-                              isActive={currentPage === i + 1}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage(i + 1);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              {i + 1}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
+        {/* LÓGICA DE NÚMEROS INTELIGENTES */}
+        {(() => {
+          const pages = [];
+          const delta = 1; // Páginas a mostrar a los lados de la actual
 
-                        <PaginationItem>
-                          <PaginationNext
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage((p) =>
-                                Math.min(totalPages, p + 1)
-                              );
-                            }}
-                            className={
-                              currentPage === totalPages
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
+          for (let i = 1; i <= totalPages; i++) {
+            // Mostrar siempre: primera, última, y el rango alrededor de la actual
+            if (
+              i === 1 || 
+              i === totalPages || 
+              (i >= currentPage - delta && i <= currentPage + delta)
+            ) {
+              pages.push(
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === i}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(i);
+                    }}
+                    className="cursor-pointer h-8 w-8 text-xs"
+                  >
+                    {i}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            } 
+            // Agregar elipsis si hay un salto
+            else if (i === currentPage - delta - 1 || i === currentPage + delta + 1) {
+              pages.push(
+                <PaginationItem key={i}>
+                  <span className="px-2 py-2 text-muted-foreground text-xs">...</span>
+                </PaginationItem>
+              );
+            }
+          }
+          return pages;
+        })()}
+
+        {/* BOTÓN SIGUIENTE */}
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setCurrentPage((p) => Math.min(totalPages, p + 1));
+            }}
+            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  </div>
+)}
               </div>
             </CardContent>
           </Card>

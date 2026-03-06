@@ -24,6 +24,7 @@ import { es } from "date-fns/locale";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -55,6 +56,51 @@ export function TecnicoDescriptionTable({
   setFiltroHasta
 }: TecnicoDescriptionTableProps) {
   const descripciones = data.content || [];
+
+  // --- LÓGICA DE PAGINACIÓN COMPACTA (4 NÚMEROS + PUNTITOS) ---
+  const renderPageNumbers = () => {
+    const pages = [];
+    const totalPages = data.totalPages;
+    const current = data.number;
+    
+    // Determinamos el rango de páginas centrales (queremos mostrar 4 números en total)
+    // Mostramos la primera, la última y 2 más cerca de la actual
+    const delta = 1; 
+
+    for (let i = 0; i < totalPages; i++) {
+      // Regla: Mostrar siempre la primera (0), la última (totalPages - 1)
+      // y las páginas inmediatamente adyacentes a la actual
+      if (
+        i === 0 || 
+        i === totalPages - 1 || 
+        (i >= current - delta && i <= current + delta)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              isActive={current === i}
+              onClick={(e) => { e.preventDefault(); onPageChange(i); }}
+              className={`cursor-pointer h-8 w-8 text-xs ${
+                current === i ? "bg-indigo-600 text-white hover:bg-indigo-700" : ""
+              }`}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } 
+      // Agregar elipsis si hay un hueco mayor a 1 entre los números
+      else if (i === current - delta - 1 || i === current + delta + 1) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis className="h-8 w-8 text-slate-400" />
+          </PaginationItem>
+        );
+      }
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-4">
@@ -159,28 +205,24 @@ export function TecnicoDescriptionTable({
               <PaginationItem>
                 <PaginationPrevious 
                   href="#" 
-                  onClick={(e) => { e.preventDefault(); if(data.number > 0) onPageChange(data.number - 1); }}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    if(data.number > 0) onPageChange(data.number - 1); 
+                  }}
                   className={data.number === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>
               
-              {[...Array(data.totalPages)].map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink 
-                    href="#" 
-                    isActive={data.number === i}
-                    onClick={(e) => { e.preventDefault(); onPageChange(i); }}
-                    className="cursor-pointer h-8 w-8 text-xs"
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {/* Invocamos la lógica de renderizado inteligente */}
+              {renderPageNumbers()}
 
               <PaginationItem>
                 <PaginationNext 
                   href="#" 
-                  onClick={(e) => { e.preventDefault(); if(data.number < data.totalPages - 1) onPageChange(data.number + 1); }}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    if(data.number < data.totalPages - 1) onPageChange(data.number + 1); 
+                  }}
                   className={data.number === data.totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>

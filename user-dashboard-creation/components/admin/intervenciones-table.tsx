@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import type { IntervencionDto, User } from "@/lib/types"; // Importamos el tipo User
+import type { IntervencionDto, User } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, User as UserIcon, Home, Building, Calendar, X, Loader2 } from "lucide-react";
@@ -10,11 +10,19 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { ViewObs } from "./view-obs";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationEllipsis, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "../ui/pagination";
 
 export function IntervencionesTable() {
   const [intervenciones, setIntervenciones] = useState<IntervencionDto[]>([]);
-  const [profesionales, setProfesionales] = useState<User[]>([]); // 1. Lista local de profesionales
+  const [profesionales, setProfesionales] = useState<User[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,19 +32,17 @@ export function IntervencionesTable() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 8;
 
-  // 2. FUNCIÓN DE BÚSQUEDA CORREGIDA
   const getProfesionalName = (profesionalId: any) => {
     if (!profesionalId) return "Desconocido";
-    // Convertimos ambos a String para asegurar la comparación
     const prof = profesionales.find((p) => String(p.userId) === String(profesionalId));
     return prof ? `${prof.name} ${prof.lastname}` : "Desconocido";
   };
 
-  // 3. CARGA DE PROFESIONALES (Necesaria para los nombres)
   const loadInitialData = useCallback(async () => {
     try {
       const dataProfs = await profesionalApi.getProfesionales();
-      setProfesionales(dataProfs.content || []);
+      // Asumimos que getProfesionales devuelve un array directo o un content
+      setProfesionales(Array.isArray(dataProfs) ? dataProfs : dataProfs.content || []);
     } catch (err) {
       console.error("Error cargando profesionales en tabla:", err);
     }
@@ -63,7 +69,7 @@ export function IntervencionesTable() {
   }, [filtroDesde, filtroHasta, currentPage]);
 
   useEffect(() => {
-    loadInitialData(); // Cargamos los profesionales una vez al inicio
+    loadInitialData();
   }, [loadInitialData]);
 
   useEffect(() => {
@@ -73,6 +79,40 @@ export function IntervencionesTable() {
   useEffect(() => {
     setCurrentPage(0);
   }, [filtroDesde, filtroHasta]);
+
+  // --- LÓGICA DE PAGINACIÓN TRUNCADA ---
+  const renderPageNumbers = () => {
+    const pages = [];
+    const delta = 1; 
+
+    for (let i = 0; i < totalPages; i++) {
+      if (
+        i === 0 || 
+        i === totalPages - 1 || 
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer h-8 w-8 text-xs"
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (i === currentPage - delta - 1 || i === currentPage + delta + 1) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis className="h-8 w-8" />
+          </PaginationItem>
+        );
+      }
+    }
+    return pages;
+  };
 
   const formatDate = (fecha: any) => {
     if (!fecha) return "-";
@@ -121,13 +161,10 @@ export function IntervencionesTable() {
         </div>
       </div>
 
-      <div className="rounded-md border border-border overflow-hidden relative">
+      <div className="rounded-md border border-border overflow-hidden relative bg-card">
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[1px] transition-opacity duration-300">
             <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground animate-pulse">
-              Cargando...
-            </p>
           </div>
         )}
 
@@ -147,40 +184,39 @@ export function IntervencionesTable() {
             {intervenciones.length > 0 ? (
               intervenciones.map((intervencion) => (
                 <TableRow key={intervencion.intervencionId} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-medium whitespace-nowrap">
+                  <TableCell className="font-medium whitespace-nowrap text-xs">
                     {formatDate(intervencion.fecha)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-xs">
                     {intervencion.hora}
                   </TableCell>
-                  {/* AQUÍ ESTÁ LA CLAVE: Usamos la función corregida */}
-                  <TableCell className="max-w-[150px] truncate text-blue-700 font-medium">
+                  <TableCell className="max-w-[150px] truncate text-blue-700 font-medium text-xs">
                     {getProfesionalName(intervencion.creadorId)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {intervencion.tipo === "FAMILIA" ? (
-                        <Home className="w-4 h-4 text-muted-foreground" />
+                        <Home className="w-3.5 h-3.5 text-muted-foreground" />
                       ) : (
-                        <Building className="w-4 h-4 text-muted-foreground" />
+                        <Building className="w-3.5 h-3.5 text-muted-foreground" />
                       )}
-                      <span className="text-sm">{intervencion.nombre}</span>
+                      <span className="text-xs">{intervencion.nombre}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <p className="text-sm line-clamp-1 max-w-[200px]">{intervencion.motivo}</p>
+                    <p className="text-xs line-clamp-1 max-w-[200px]">{intervencion.motivo}</p>
                   </TableCell>
                   <TableCell className="text-center">
                     {intervencion.observaciones?.trim() ? (
                       <ViewObs intervencion={intervencion} />
                     ) : (
-                      <span className="text-muted-foreground/30 italic text-xs">Sin obs.</span>
+                      <span className="text-muted-foreground/30 italic text-[10px]">Sin obs.</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant={intervencion.intervencion === "EQUIPO" ? "default" : "secondary"}
-                      className="text-[10px] uppercase font-bold px-2"
+                      className="text-[9px] uppercase font-bold px-2 py-0"
                     >
                       {intervencion.intervencion === "EQUIPO" ? "Equipo" : "Indiv."}
                     </Badge>
@@ -200,9 +236,9 @@ export function IntervencionesTable() {
         </Table>
       </div>
 
-      {/* PAGINACIÓN */}
+      {/* PAGINACIÓN TRUNCADA */}
       {totalPages > 1 && (
-        <div className="mt-4">
+        <div className="mt-4 flex justify-center">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
@@ -213,18 +249,7 @@ export function IntervencionesTable() {
                 />
               </PaginationItem>
 
-              {[...Array(totalPages)].map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    href="#"
-                    isActive={currentPage === index}
-                    onClick={(e) => { e.preventDefault(); setCurrentPage(index); }}
-                    className="cursor-pointer"
-                  >
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {renderPageNumbers()}
 
               <PaginationItem>
                 <PaginationNext

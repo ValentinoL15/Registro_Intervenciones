@@ -312,8 +312,8 @@ export const AdminApi = {
 
 export const EmpleadoApi = {
 
-  getEmpleados: async (): Promise<User> => {
-    return apiCall<User>(`/empleado`, {
+  getEmpleados: async (): Promise<User[]> => {
+    return apiCall<User[]>(`/empleado`, {
       method: "GET"
     })
   },
@@ -381,8 +381,8 @@ export const UserApi = {
 
 export const NutricionistaApi = {
 
-  getAllNutricionistas: async (): Promise<NutricionistaDto[]> => {
-    return apiCall<NutricionistaDto[]>(`/nutricionista`, {
+  getAllNutricionistas: async (): Promise<User[]> => {
+    return apiCall<User[]>(`/nutricionista`, {
       method: "GET"
     });
   },
@@ -487,8 +487,8 @@ export const NutricionistaApi = {
 
 export const CocineroApi = {
 
-  getAllCocineros: async (): Promise<CocineroDto[]> => {
-    return apiCall<CocineroDto[]>(`/cocinero`, {
+  getAllCocineros: async (): Promise<User[]> => {
+    return apiCall<User[]>(`/cocinero`, {
       method: "GET"
     });
   },

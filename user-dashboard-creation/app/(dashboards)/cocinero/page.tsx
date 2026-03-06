@@ -7,14 +7,32 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ChefHat, UtensilsCrossed, Trash2, History, Calendar, Ban, CheckCircle2, Edit, X } from "lucide-react";
+import { ChefHat, UtensilsCrossed, Trash2, History, Calendar, Ban, CheckCircle2, Edit, X, Save, Loader2 } from "lucide-react";
 import { CocineroApi } from "@/service/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription } from "@/components/ui/alert-dialog";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger, 
+  AlertDialogDescription 
+} from "@/components/ui/alert-dialog";
 import { MenuDiaDto } from "@/lib/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLoader } from "@/lib/spinnerService";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationEllipsis, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 
 export default function CocineroPage() {
@@ -34,10 +52,11 @@ export default function CocineroPage() {
   const { toast } = useToast();
   const { showLoader, hideLoader } = useLoader();
 
+  // --- CARGA DE DATOS ---
   const loadMenus = useCallback(async () => {
     try {
       setIsLoading(true);
-      showLoader("Cargando menús..."); // Usamos el loader global
+      showLoader("Sincronizando cocina...");
       const response = await CocineroApi.getMisMenus(
         filtroDesde,
         filtroHasta,
@@ -50,12 +69,11 @@ export default function CocineroPage() {
       setTotalElements(response.totalElements || 0);
     } catch (error) {
       console.error("Error al cargar menús:", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudieron obtener los registros." });
     } finally {
       setIsLoading(false);
-      hideLoader(); // Cerramos el loader global
+      hideLoader();
     }
-  }, [currentPage, filtroDesde, filtroHasta, toast, showLoader, hideLoader]);
+  }, [currentPage, filtroDesde, filtroHasta, showLoader, hideLoader]);
 
   useEffect(() => {
     loadMenus();
@@ -65,7 +83,41 @@ export default function CocineroPage() {
     setCurrentPage(0);
   }, [filtroDesde, filtroHasta]);
 
-  // ... (handleSubmit, handleUpdate y handleDelete se mantienen igual)
+  // --- LÓGICA DE PAGINACIÓN COMPACTA ---
+  const renderPageNumbers = () => {
+    const pages = [];
+    const delta = 1; 
+
+    for (let i = 0; i < totalPages; i++) {
+      if (
+        i === 0 || 
+        i === totalPages - 1 || 
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer h-8 w-8 text-xs"
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (i === currentPage - delta - 1 || i === currentPage + delta + 1) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis className="h-8 w-8" />
+          </PaginationItem>
+        );
+      }
+    }
+    return pages;
+  };
+
+  // --- MANEJADORES ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -79,7 +131,7 @@ export default function CocineroPage() {
     };
 
     try {
-      showLoader("Creando menú...");
+      showLoader("Publicando menú...");
       await CocineroApi.createComida(menuData);
       toast({ title: "¡Buen provecho!", description: "El menú ha sido publicado." });
       form.reset();
@@ -114,7 +166,7 @@ export default function CocineroPage() {
         idNoCeliaco && CocineroApi.editMenu(idNoCeliaco, { description: descNoCeliaco })
       ]);
 
-      toast({ title: "Éxito", description: "Menú actualizado correctamente." });
+      toast({ title: "Actualizado", description: "Menú corregido con éxito." });
       setEditingMenu(null);
       loadMenus();
     } catch (error: any) {
@@ -127,19 +179,20 @@ export default function CocineroPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      showLoader("Eliminando menú...");
+      showLoader("Eliminando...");
       await CocineroApi.deleteMenu(id);
-      toast({ title: "Eliminado", description: "El menú ha sido retirado." });
+      toast({ title: "Eliminado", description: "El registro ha sido borrado." });
       loadMenus();
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el registro." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar." });
     } finally {
       hideLoader();
     }
   };
 
   return (
-    <main className="container mx-auto px-4 py-10 max-w-5xl space-y-10">
+    <main className="container mx-auto px-4 py-10 max-w-5xl space-y-10 animate-in fade-in duration-500">
+      {/* HEADER */}
       <div className="flex flex-col gap-2 border-b pb-5">
         <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-3 text-foreground">
           <ChefHat className="w-10 h-10 text-orange-600" /> Panel de Cocina
@@ -147,6 +200,7 @@ export default function CocineroPage() {
         <p className="text-lg text-muted-foreground">Gestiona los platos diarios para alumnos celiacos y generales.</p>
       </div>
 
+      {/* FORMULARIO CARGA */}
       <Card className="shadow-lg border-t-4 border-t-orange-600">
         <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-2">
@@ -156,8 +210,8 @@ export default function CocineroPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="max-w-[200px] space-y-2">
-              <Label htmlFor="fecha">Fecha del Menú</Label>
-              <Input id="fecha" name="fecha" type="date" required />
+              <Label htmlFor="fecha" className="font-bold">Fecha del Menú</Label>
+              <Input id="fecha" name="fecha" type="date" required className="h-10" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -166,7 +220,7 @@ export default function CocineroPage() {
                   <CheckCircle2 className="w-5 h-5" />
                   <Label className="text-lg">Menú General</Label>
                 </div>
-                <Textarea name="descNoCeliaco" placeholder="Descripción del plato..." className="min-h-[120px] bg-white" required />
+                <Textarea name="descNoCeliaco" placeholder="Ej: Tallarines con boloñesa..." className="min-h-[120px] bg-white resize-none" required />
               </div>
 
               <div className="space-y-3 p-4 rounded-xl bg-orange-50/50 border border-orange-100">
@@ -174,32 +228,34 @@ export default function CocineroPage() {
                   <Ban className="w-5 h-5" />
                   <Label className="text-lg">Menú Celiaco</Label>
                 </div>
-                <Textarea name="descCeliaco" placeholder="Descripción del plato..." className="min-h-[120px] bg-white" required />
+                <Textarea name="descCeliaco" placeholder="Ej: Fideos de arroz sin TACC..." className="min-h-[120px] bg-white resize-none" required />
               </div>
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6 shadow-md" disabled={isSubmitting}>
-                Publicar Menú
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6 shadow-md rounded-xl" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : "Publicar Menú"}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
 
+      {/* HISTORIAL */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30 border-b">
           <CardTitle className="flex items-center justify-between text-xl font-bold">
             <div className="flex items-center gap-2">
               <History className="w-5 h-5 text-muted-foreground" /> Historial de Menús
             </div>
-            <span className="text-xs font-normal text-muted-foreground uppercase tracking-wider">
-              {totalElements} Registros Totales
-            </span>
+            <Badge variant="outline" className="bg-white border-orange-200 text-orange-700 px-3">
+              {totalElements} Registros
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
           
+          {/* FILTROS */}
           <div className="flex flex-wrap items-end gap-4 bg-muted/20 p-4 rounded-lg border border-dashed">
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold uppercase text-muted-foreground">Desde</Label>
@@ -216,30 +272,30 @@ export default function CocineroPage() {
             )}
           </div>
 
-          <div className="rounded-xl border overflow-hidden relative">
-            {/* AQUÍ ELIMINAMOS EL BLOQUE DEL CARGADOR NARANJA */}
+          {/* TABLA */}
+          <div className="rounded-xl border overflow-hidden relative bg-white">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[180px] font-bold">Fecha</TableHead>
-                  <TableHead className="font-bold">Platos del Día</TableHead>
-                  <TableHead className="text-right font-bold">Acciones</TableHead>
+                  <TableHead className="font-bold">Platos Publicados</TableHead>
+                  <TableHead className="text-right font-bold pr-6">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {menus.length > 0 ? (
                   menus.map((menu) => (
-                    <TableRow key={menu.menuId} className="hover:bg-muted/5 transition-colors">
-                      <TableCell className="align-top py-4 font-bold text-primary">
+                    <TableRow key={menu.menuId} className="hover:bg-muted/5 transition-colors align-top">
+                      <TableCell className="py-4 font-bold text-primary">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-orange-600" />
                           {new Date(menu.fecha + "T00:00:00").toLocaleDateString("es-AR")}
                         </div>
                       </TableCell>
                       <TableCell className="py-2">
-                        <div className="flex flex-row gap-2 overflow-x-auto pb-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-2">
                           {menu.cocina?.map((plato: any) => (
-                            <div key={plato.id} className={`min-w-[220px] p-3 rounded-md border text-xs shadow-sm ${plato.tipoComida === 'CELIACO' ? 'bg-orange-50/50 border-orange-100' : 'bg-green-50/50 border-green-100'}`}>
+                            <div key={plato.id} className={`p-3 rounded-lg border text-xs shadow-sm ${plato.tipoComida === 'CELIACO' ? 'bg-orange-50/50 border-orange-100' : 'bg-green-50/50 border-green-100'}`}>
                               <span className="font-black block mb-1 uppercase opacity-70">
                                 {plato.tipoComida === 'CELIACO' ? '⚠️ Celiaco' : '✅ General'}
                               </span>
@@ -248,9 +304,9 @@ export default function CocineroPage() {
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right align-top py-4">
+                      <TableCell className="text-right py-4 pr-6">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="text-blue-600" onClick={() => {
+                          <Button variant="ghost" size="icon" className="text-blue-600 h-8 w-8" onClick={() => {
                             const celiaco = menu.cocina?.find((p: any) => p.tipoComida === 'CELIACO')?.description || "";
                             const noCeliaco = menu.cocina?.find((p: any) => p.tipoComida === 'NOCELIACO')?.description || "";
                             setEditingMenu({ ...menu, descCeliaco: celiaco, descNoCeliaco: noCeliaco });
@@ -259,16 +315,16 @@ export default function CocineroPage() {
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="icon" className="text-destructive h-8 w-8"><Trash2 className="w-4 h-4" /></Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="rounded-2xl">
                               <AlertDialogHeader>
                                 <AlertDialogTitle>¿Eliminar este menú?</AlertDialogTitle>
-                                <AlertDialogDescription>Esta acción retirará la publicación del menú para esta fecha.</AlertDialogDescription>
+                                <AlertDialogDescription>Se borrarán los platos del {new Date(menu.fecha + "T00:00:00").toLocaleDateString()}.</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(menu.menuId)} className="bg-destructive hover:bg-destructive/90 text-white">Eliminar</AlertDialogAction>
+                                <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(menu.menuId)} className="bg-red-600 text-white rounded-xl">Borrar</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
@@ -276,18 +332,19 @@ export default function CocineroPage() {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
+                ) : !isLoading && (
                   <TableRow>
                     <TableCell colSpan={3} className="h-32 text-center text-muted-foreground italic">
-                      No se encontraron menús para el periodo seleccionado.
+                      No hay registros en este periodo.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
 
+            {/* PAGINACIÓN COMPACTA */}
             {totalPages > 1 && (
-              <div className="p-4 border-t bg-muted/10">
+              <div className="p-4 border-t bg-muted/10 flex justify-center">
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
@@ -297,18 +354,9 @@ export default function CocineroPage() {
                         className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>
-                    {[...Array(totalPages)].map((_, i) => (
-                      <PaginationItem key={i}>
-                        <PaginationLink 
-                          href="#" 
-                          isActive={currentPage === i}
-                          onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
-                          className="cursor-pointer"
-                        >
-                          {i + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+
+                    {renderPageNumbers()}
+
                     <PaginationItem>
                       <PaginationNext 
                         href="#" 
@@ -324,31 +372,31 @@ export default function CocineroPage() {
         </CardContent>
       </Card>
 
-      {/* DIALOG DE EDICIÓN */}
+      {/* DIALOG EDICIÓN */}
       <Dialog open={!!editingMenu} onOpenChange={() => setEditingMenu(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-bold">
-              <Edit className="w-5 h-5 text-orange-600" /> Editar Menú del Día
+        <DialogContent className="sm:max-w-[500px] border-none shadow-2xl rounded-3xl overflow-hidden p-0">
+          <div className="bg-orange-600 p-6 text-white">
+            <DialogTitle className="flex items-center gap-2 font-bold text-xl">
+              <Edit className="w-6 h-6" /> Editar Menú
             </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-4 py-4">
+          </div>
+          <form onSubmit={handleUpdate} className="p-6 space-y-5 bg-white">
             <div className="space-y-2">
-              <Label>Fecha del Registro</Label>
-              <Input name="fecha" type="date" defaultValue={editingMenu?.fecha} required />
+              <Label className="text-xs font-bold uppercase text-slate-500">Fecha del Registro</Label>
+              <Input name="fecha" type="date" defaultValue={editingMenu?.fecha} required className="h-11 rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label className="text-green-700 font-bold">Menú General</Label>
-              <Textarea name="descNoCeliaco" defaultValue={editingMenu?.descNoCeliaco} required className="min-h-[100px]" />
+              <Label className="text-xs font-bold uppercase text-green-700">Menú General</Label>
+              <Textarea name="descNoCeliaco" defaultValue={editingMenu?.descNoCeliaco} required className="min-h-[100px] resize-none rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label className="text-orange-700 font-bold">Menú Celiaco</Label>
-              <Textarea name="descCeliaco" defaultValue={editingMenu?.descCeliaco} required className="min-h-[100px]" />
+              <Label className="text-xs font-bold uppercase text-orange-700">Menú Celiaco</Label>
+              <Textarea name="descCeliaco" defaultValue={editingMenu?.descCeliaco} required className="min-h-[100px] resize-none rounded-xl" />
             </div>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setEditingMenu(null)}>Cancelar</Button>
-              <Button type="submit" disabled={isUpdating} className="bg-orange-600 text-white hover:bg-orange-700">
-                {isUpdating ? "Guardando..." : "Guardar Cambios"}
+            <DialogFooter className="pt-4 gap-3">
+              <Button type="button" variant="ghost" onClick={() => setEditingMenu(null)} className="flex-1 rounded-xl h-12">Cancelar</Button>
+              <Button type="submit" disabled={isUpdating} className="flex-1 bg-orange-600 text-white hover:bg-orange-700 rounded-xl h-12 font-bold shadow-lg shadow-orange-100">
+                {isUpdating ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />} Guardar Cambios
               </Button>
             </DialogFooter>
           </form>

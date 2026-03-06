@@ -3,7 +3,18 @@
 import { useState, useEffect, useCallback } from "react";
 import type { IntervencionDto } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Users, User, Home, Building, Calendar, Clock, Pencil, Trash2, X } from "lucide-react";
+import { 
+  Users, 
+  User, 
+  Home, 
+  Building, 
+  Calendar, 
+  Clock, 
+  Pencil, 
+  Trash2, 
+  X,
+  Loader2 
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +32,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { profesionalApi } from "@/service/api";
 import { useToast } from "@/hooks/use-toast";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationEllipsis, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { useLoader } from "@/lib/spinnerService";
 
 export function MisIntervenciones() {
@@ -43,7 +62,7 @@ export function MisIntervenciones() {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      showLoader("Cargando intervenciones..."); // Iniciamos loader global
+      showLoader("Cargando intervenciones...");
       const response = await profesionalApi.getMyIntervenciones(
         desde || undefined,
         hasta || undefined,
@@ -58,7 +77,7 @@ export function MisIntervenciones() {
       console.error("Error cargando intervenciones:", error);
     } finally {
       setIsLoading(false);
-      hideLoader(); // Cerramos loader global
+      hideLoader();
     }
   }, [desde, hasta, currentPage, showLoader, hideLoader]);
 
@@ -69,6 +88,40 @@ export function MisIntervenciones() {
   useEffect(() => {
     setCurrentPage(0);
   }, [desde, hasta]);
+
+  // --- LÓGICA DE PAGINACIÓN COMPACTA ---
+  const renderPageNumbers = () => {
+    const pages = [];
+    const delta = 1; 
+
+    for (let i = 0; i < totalPages; i++) {
+      if (
+        i === 0 || 
+        i === totalPages - 1 || 
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer h-8 w-8 text-xs"
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (i === currentPage - delta - 1 || i === currentPage + delta + 1) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis className="h-8 w-8" />
+          </PaginationItem>
+        );
+      }
+    }
+    return pages;
+  };
 
   const formatDate = (fecha: string) => {
     if (!fecha) return "Sin fecha";
@@ -129,7 +182,6 @@ export function MisIntervenciones() {
       </div>
 
       <div className="relative min-h-[200px]">
-        {/* LOADER REMOVIDO DE AQUÍ */}
         {intervenciones.length === 0 && !isLoading ? (
           <div className="text-center py-12 border rounded-lg border-dashed">
             <p className="text-muted-foreground">No se encontraron intervenciones</p>
@@ -137,39 +189,44 @@ export function MisIntervenciones() {
         ) : (
           <div className="flex flex-col gap-4">
             {intervenciones.map((intervencion) => (
-              <div key={intervencion.intervencionId} className="p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors">
+              <div key={intervencion.intervencionId} className="p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors shadow-sm">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={intervencion.intervencion === "EQUIPO" ? "default" : "secondary"}>
-                      {intervencion.intervencion === "EQUIPO" ? <Users className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                    <Badge variant={intervencion.intervencion === "EQUIPO" ? "default" : "secondary"} className="text-[10px] h-5">
+                      {intervencion.intervencion === "EQUIPO" ? <Users className="w-3 h-3 mr-1" /> : <User className="w-3 h-3 mr-1" />}
                       {intervencion.intervencion === "EQUIPO" ? "Equipo" : "Individual"}
                     </Badge>
-                    <Badge variant="outline">
-                      {intervencion.tipo === "FAMILIA" ? <Home className="w-3 h-3" /> : <Building className="w-3 h-3" />}
+                    <Badge variant="outline" className="text-[10px] h-5">
+                      {intervencion.tipo === "FAMILIA" ? <Home className="w-3 h-3 mr-1" /> : <Building className="w-3 h-3 mr-1" />}
                       {intervencion.tipo === "FAMILIA" ? "Familia" : "Institución"}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedIntervencion(intervencion); setIsDialogOpen(true); }}>
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>Eliminar</AlertDialogTitle></AlertDialogHeader>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Confirmar eliminación?</AlertDialogTitle>
+                          <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+                        </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteIntervencion(intervencion.intervencionId.toString())} className="bg-destructive">Eliminar</AlertDialogAction>
+                          <AlertDialogAction onClick={() => deleteIntervencion(intervencion.intervencionId.toString())} className="bg-destructive hover:bg-destructive/90 text-white">Eliminar</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
                 </div>
-                <h3 className="font-semibold">{intervencion.nombre}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{intervencion.motivo}</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <h3 className="font-semibold text-sm">{intervencion.nombre}</h3>
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{intervencion.motivo}</p>
+                <div className="flex items-center gap-4 text-[10px] font-medium text-muted-foreground">
                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(intervencion.fecha)}</span>
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {intervencion.hora}</span>
                 </div>
@@ -179,36 +236,31 @@ export function MisIntervenciones() {
         )}
       </div>
 
+      {/* PAGINACIÓN COMPACTA IMPLEMENTADA */}
       {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(0, p - 1)); }} 
-                className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink 
+        <div className="mt-4 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
                   href="#" 
-                  isActive={currentPage === i} 
-                  onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
-                >
-                  {i + 1}
-                </PaginationLink>
+                  onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(0, p - 1)); }} 
+                  className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
               </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages - 1, p + 1)); }} 
-                className={currentPage === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+
+              {renderPageNumbers()}
+
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(totalPages - 1, p + 1)); }} 
+                  className={currentPage === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
 
       <EditProfesionalDialog 

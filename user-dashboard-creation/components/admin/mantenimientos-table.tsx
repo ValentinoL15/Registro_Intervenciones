@@ -6,7 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationEllipsis, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { Calendar, User2, ClipboardCheck, X, Loader2 } from "lucide-react";
 import { MantenimientoDto } from "@/lib/types";
 import { EmpleadoApi } from "@/service/api";
@@ -25,7 +33,6 @@ export function MantenimientosTable() {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Quitamos el showLoader global para usar solo el local de la tabla
       const response = await EmpleadoApi.getAllMantenimientos(
         filtroDesde,
         filtroHasta,
@@ -51,9 +58,45 @@ export function MantenimientosTable() {
     setCurrentPage(0);
   }, [filtroDesde, filtroHasta]);
 
+  // --- LÓGICA DE PAGINACIÓN COMPACTA (MISMO ESTILO QUE TABLAS ANTERIORES) ---
+  const renderPageNumbers = () => {
+    const pages = [];
+    const delta = 1; 
+
+    for (let i = 0; i < totalPages; i++) {
+      if (
+        i === 0 || 
+        i === totalPages - 1 || 
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              href="#" 
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className={`cursor-pointer h-8 w-8 text-xs ${
+                currentPage === i ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white" : ""
+              }`}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (i === currentPage - delta - 1 || i === currentPage + delta + 1) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis className="h-8 w-8" />
+          </PaginationItem>
+        );
+      }
+    }
+    return pages;
+  };
+
   return (
     <div className="space-y-4">
-      {/* SECCIÓN DE FILTROS */}
+      {/* SECCIÓN DE FILTROS (Se mantiene igual) */}
       <div className="flex flex-wrap items-end gap-4 bg-muted/20 p-4 rounded-lg border border-dashed border-border">
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase text-muted-foreground">Desde</Label>
@@ -88,16 +131,12 @@ export function MantenimientosTable() {
         </div>
       </div>
 
-      {/* CONTENEDOR DE TABLA AUTO-AJUSTABLE (Sin min-h) */}
-      <div className="rounded-md border border-border overflow-hidden relative">
-        
-        {/* OVERLAY DE CARGA LOCAL */}
+      {/* TABLA CON OVERLAY DE CARGA */}
+      <div className="rounded-md border border-border overflow-hidden relative bg-card">
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[1px] transition-all duration-300">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/50 backdrop-blur-[1px]">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <p className="mt-2 text-[10px] font-bold uppercase text-muted-foreground animate-pulse">
-              Sincronizando tareas...
-            </p>
+            <p className="mt-2 text-[10px] font-bold uppercase text-muted-foreground">Sincronizando...</p>
           </div>
         )}
 
@@ -141,7 +180,7 @@ export function MantenimientosTable() {
               !isLoading && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center py-10 text-muted-foreground italic text-sm border-t border-dashed">
-                    No hay tareas registradas en este periodo.
+                    No hay tareas registradas.
                   </TableCell>
                 </TableRow>
               )
@@ -150,9 +189,9 @@ export function MantenimientosTable() {
         </Table>
       </div>
 
-      {/* PAGINACIÓN */}
+      {/* PAGINACIÓN TRUNCADA */}
       {totalPages > 1 && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col items-center gap-2">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
@@ -163,18 +202,7 @@ export function MantenimientosTable() {
                 />
               </PaginationItem>
 
-              {[...Array(totalPages)].map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink 
-                    href="#" 
-                    isActive={currentPage === i}
-                    onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
-                    className="cursor-pointer"
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {renderPageNumbers()}
 
               <PaginationItem>
                 <PaginationNext 
@@ -185,7 +213,7 @@ export function MantenimientosTable() {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-          <p className="text-center text-[10px] text-muted-foreground mt-2 uppercase font-medium">
+          <p className="text-[10px] text-muted-foreground uppercase font-medium">
             Página {currentPage + 1} de {totalPages}
           </p>
         </div>

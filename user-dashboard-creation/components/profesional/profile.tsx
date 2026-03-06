@@ -265,58 +265,6 @@ export function Profile({
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="hourly">Carga Horaria (hs/semana)</Label>
-              <Input id="hourly" type="number" value={hourly} onChange={(e) => setHourly(e.target.value)} />
-            </div>
-
-            {/* --- NUEVA SECCIÓN DE DISPONIBILIDAD DINÁMICA --- */}
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Mis Horarios</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addDisponibilidad}>
-                  <Plus className="w-4 h-4 mr-2" /> Añadir
-                </Button>
-              </div>
-
-              <div className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/20">
-                {disponibilidades.map((disp, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Select
-                      value={disp.dia}
-                      onValueChange={(v) => updateDisponibilidad(index, "dia", v)}
-                    >
-                      <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {DIAS_OPTIONS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      value={disp.turno}
-                      onValueChange={(v) => updateDisponibilidad(index, "turno", v)}
-                    >
-                      <SelectTrigger className="bg-background w-[130px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MAÑANA">Mañana</SelectItem>
-                        <SelectItem value="TARDE">Tarde</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeDisponibilidad(index)}
-                      disabled={disponibilidades.length <= 1}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {error && (
               <div className="flex items-center gap-2 p-3 mt-4 rounded-md bg-destructive/10 text-destructive text-sm">

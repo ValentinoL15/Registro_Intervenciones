@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 import { GlobalLoader } from "@/components/ui/global-loader";
 import { Toaster } from "@/components/ui/toaster";
+import { ProfesionalHeader } from "@/components/profesional/profesional-header";
 
 export default function ProfesionalLayout({
   children,
@@ -48,6 +49,7 @@ export default function ProfesionalLayout({
   // 4. Renderizado final si todo está OK
   return (
     <>
+     <ProfesionalHeader userName={`${user.username}`} />
       {children}
       <GlobalLoader />
       <Toaster />

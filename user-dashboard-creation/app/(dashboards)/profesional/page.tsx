@@ -16,6 +16,7 @@ import { useLoader } from "@/lib/spinnerService";
 export default function ProfesionalDashboard() {
   const { user } = useAuth();
   const [intervenciones, setIntervenciones] = useState<IntervencionDto[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
   const [activeTab, setActiveTab] = useState("nueva");
   const { toast } = useToast();
   const { showLoader, hideLoader } = useLoader();
@@ -23,13 +24,20 @@ export default function ProfesionalDashboard() {
   // Mantenemos tu nombre de función exacto
   const loadIntervenciones = useCallback(async () => {
     try {
-      // Llamamos a la API (asegurate que api.ts devuelva data.content)
-      const data = await profesionalApi.getMyIntervenciones();
-      setIntervenciones(data.content || []);
-    } catch(err:any) {
+      // Llamamos a la API. Pasamos un size grande si queremos calcular estadísticas 
+      // en el front, o simplemente usamos totalElements de la respuesta.
+      const response = await profesionalApi.getMyIntervenciones("", "", 0, 100); 
+      
+      setIntervenciones(response.content || []);
+      setTotalElements(response.totalElements || 0); // Aquí capturamos los 51 reales
+    } catch(err: any) {
       console.error(err);
     }
   }, []);
+
+  useEffect(() => {    
+    loadIntervenciones();
+  }, [loadIntervenciones]);
 
   useEffect(() => {    
     loadIntervenciones();
@@ -53,15 +61,21 @@ export default function ProfesionalDashboard() {
     }
   };
 
-  const intervencionesEsteMes = intervenciones.filter((i) => {
-    const fecha = new Date(i.fecha + "T00:00:00");
+const intervencionesEsteMes = intervenciones.filter((i) => {
+    if (!i.fecha) return false;
+
+    // Si ya es un objeto Date
+    const fechaIntervencion = new Date(i.fecha); 
     const now = new Date();
-    return (fecha.getMonth() === now.getMonth() && fecha.getFullYear() === now.getFullYear());
-  }).length;
+
+    return (
+        fechaIntervencion.getMonth() === now.getMonth() &&
+        fechaIntervencion.getFullYear() === now.getFullYear()
+    );
+}).length;
 
   return (
     <div className="min-h-screen bg-background">
-      <ProfesionalHeader userName={`${user?.name} ${user?.lastname}`} />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Panel de Intervenciones</h1>
