@@ -46,7 +46,7 @@ public class EmailServiceImp implements IEmailService {
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom("pichilongo1@gmail.com");
+        helper.setFrom("escuela.losbuenoshijos@gmail.com");
         helper.setTo(mail.getTo());
         helper.setSubject(mail.getSubject());
         helper.setText(mail.getBody(), true);
@@ -74,7 +74,7 @@ public class EmailServiceImp implements IEmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setSubject(mail.getSubject());
-        helper.setFrom("Pichilongo1@gmail.com");
+        helper.setFrom("escuela.losbuenoshijos@gmail.com");
         helper.setText(process, true); // ✅ true = HTML
         helper.setTo(recipient);
 
@@ -100,7 +100,7 @@ public class EmailServiceImp implements IEmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setSubject(mail.getSubject());
-        helper.setFrom("Pichilongo1@gmail.com");
+        helper.setFrom("escuela.losbuenoshijos@gmail.com");
         helper.setText(process, true); // ✅ true = HTML
         helper.setTo(recipient);
 
