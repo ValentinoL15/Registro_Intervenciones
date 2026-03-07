@@ -40,7 +40,7 @@ public class UserServiceImp implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("No se encuentra el usuario con: " + loginInput));
 
         if(!user.isActive()){
-            throw new DisabledException("El usuario no está dado de alta o fue dado de baja...");
+            throw new DisabledException("El usuario no está dado de alta o fue dado de baja, por favor comuníquese con un administrador...");
         }
 
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();

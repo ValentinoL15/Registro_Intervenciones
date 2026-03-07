@@ -20,7 +20,6 @@ const DIAS_OPTIONS = [
   { label: "Miércoles", value: "MIÉRCOLES" },
   { label: "Jueves", value: "JUEVES" },
   { label: "Viernes", value: "VIERNES" },
-  { label: "Sábado", value: "SABADO" },
 ];
 
 const ORDEN_DIAS: Record<string, number> = {

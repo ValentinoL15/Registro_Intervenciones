@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { profesionalApi } from "@/service/api";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, AlertTriangle, Eye, EyeOff } from "lucide-react"; // Importamos los iconos de ojo
+import { Loader2, KeyRound, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 
 export default function ResetPasswordPage() {
@@ -18,12 +18,12 @@ export default function ResetPasswordPage() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Estado para ojo 1
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Estado para ojo 2
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [tokenError, setTokenError] = useState(false);
-  
+
   useEffect(() => {
     const validateToken = async () => {
       try {
@@ -45,8 +45,22 @@ export default function ResetPasswordPage() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // NUEVA VALIDACIÓN: Mínimo 5 caracteres
+    if (password.length < 5) {
+      return toast({ 
+        title: "Contraseña muy corta", 
+        description: "La contraseña debe tener al menos 5 caracteres.", 
+        variant: "destructive" 
+      });
+    }
+
     if (password !== confirmPassword) {
-      return toast({ title: "Error", description: "Las contraseñas no coinciden", variant: "destructive" });
+      return toast({ 
+        title: "Error", 
+        description: "Las contraseñas no coinciden", 
+        variant: "destructive" 
+      });
     }
 
     setIsSubmitting(true);
@@ -65,6 +79,8 @@ export default function ResetPasswordPage() {
       setIsSubmitting(false);
     }
   };
+
+  // ... (Resto del componente de carga y error de token permanece igual)
 
   if (isValidating) {
     return (
@@ -112,13 +128,12 @@ export default function ResetPasswordPage() {
           </div>
           <CardTitle className="text-center text-2xl">Nueva Contraseña</CardTitle>
           <CardDescription className="text-center">
-            Ingresa tu nueva clave de acceso.
+            Ingresa tu nueva clave de acceso (mínimo 5 caracteres).
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleReset}>
-          <CardContent className="space-y-5"> {/* Aumentado el espacio entre filas */}
+          <CardContent className="space-y-5">
             
-            {/* INPUT NUEVA CONTRASEÑA */}
             <div className="grid gap-2">
               <Label htmlFor="pass">Nueva Contraseña</Label>
               <div className="relative">
@@ -128,6 +143,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pr-10"
+                  minLength={5} // Atributo HTML para refuerzo visual
                   required
                 />
                 <button
@@ -140,7 +156,6 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
-            {/* INPUT CONFIRMAR CONTRASEÑA */}
             <div className="grid gap-2">
               <Label htmlFor="confirm">Confirmar Contraseña</Label>
               <div className="relative">
@@ -164,7 +179,6 @@ export default function ResetPasswordPage() {
 
           </CardContent>
           
-          {/* BOTÓN CON MARGEN SUPERIOR (pt-2) PARA QUE NO ESTÉ PEGADO */}
           <CardFooter className="pt-2"> 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Restablecer Contraseña"}

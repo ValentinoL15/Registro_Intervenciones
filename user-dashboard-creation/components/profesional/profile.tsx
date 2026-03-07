@@ -67,7 +67,6 @@ export function Profile({
     { label: "Miércoles", value: "MIÉRCOLES" },
     { label: "Jueves", value: "JUEVES" },
     { label: "Viernes", value: "VIERNES" },
-    { label: "Sábado", value: "SABADO" },
   ];
 
   const hasChanges =

@@ -9,7 +9,7 @@ import { Plus, Trash2, Loader2, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, HorarioAsistenciaDto } from "@/lib/types";
 
-const DIAS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SABADO"];
+const DIAS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"];
 
 interface Props {
   open: boolean;

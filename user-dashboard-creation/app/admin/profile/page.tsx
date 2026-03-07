@@ -25,7 +25,7 @@ export default function CocineroProfile() {
     <main className="container mx-auto p-10 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="space-y-6">
         <div className="border-b pb-4">
-          <h1 className="text-2xl font-bold text-foreground">Mi Perfil de Cocina</h1>
+          <h1 className="text-2xl font-bold text-foreground">Mi Perfil de Administrador</h1>
           <p className="text-sm text-muted-foreground">Gestiona tus datos de acceso y preferencias.</p>
         </div>
         <ProfileContent user={user} />

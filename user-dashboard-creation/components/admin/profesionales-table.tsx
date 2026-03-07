@@ -56,7 +56,7 @@ export function ProfesionalesTable({
 
   const diasAbreviados: Record<string, string> = {
     LUNES: "Lun", MARTES: "Mar", MIÉRCOLES: "Mie",
-    JUEVES: "Jue", VIERNES: "Vie", SABADO: "Sab", DOMINGO: "Dom"
+    JUEVES: "Jue", VIERNES: "Vie"
   };
 
   // LÓGICA DE PAGINACIÓN EN FRONTEND

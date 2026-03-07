@@ -98,7 +98,9 @@ public class IntervencionService implements InIntervencionService {
         Profesional prof = profesionalRepository.findByUsername(currentUser)
                 .orElseThrow(() -> new RuntimeException("El usuario con nombre " + currentUser + " no se encuentra en la base de datos"));
 
-        List<Profesional> participantes = profesionalRepository.findAllById(intervencionDto.getProfesionalesIds());
+        if(intervencionDto.getFecha().isAfter(LocalDateTime.now())){
+            throw new RuntimeException("No puedes colocar una intervención futura");
+        }
 
         Intervencion intervencion = new Intervencion();
         intervencion.setCreador(prof);

@@ -43,7 +43,11 @@ import {
 } from "@/components/ui/pagination";
 import { useLoader } from "@/lib/spinnerService";
 
-export function MisIntervenciones() {
+export function MisIntervenciones({ 
+  onRefresh // <--- Nueva prop recibida del padre
+}: { 
+  onRefresh?: () => void 
+}) {
   const [intervenciones, setIntervenciones] = useState<IntervencionDto[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -135,7 +139,11 @@ export function MisIntervenciones() {
     try {
       showLoader("Eliminando...");
       await profesionalApi.delteIntervencion(intervencionId);
+      
       loadData();
+      if (onRefresh) {
+        onRefresh(); 
+      }
       toast({ title: "Eliminado", description: "Intervención eliminada con éxito" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
