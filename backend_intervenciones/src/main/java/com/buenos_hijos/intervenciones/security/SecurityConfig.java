@@ -54,7 +54,8 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "https://losbuenoshijos.org",
                 "https://www.losbuenoshijos.org",
-                "https://registro-intervenciones.vercel.app"
+                "https://registro-intervenciones.vercel.app",
+                "https://staging.losbuenoshijos.org"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
