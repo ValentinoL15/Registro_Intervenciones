@@ -12,15 +12,15 @@ spring:
         max-page-size: 2000
   mail:
     host: smtp.gmail.com
-    port: 587
-    username: pichilongo1@gmail.com
-    password: ${MAIL_PASSWORD}
+    port: 465        # cambiar de 587 a 465
     properties:
       mail:
         smtp:
           auth: true
+          ssl:
+            enable: true    # cambiar starttls por ssl
           starttls:
-            enable: true
+            enable: false   # deshabilitar esto
   main:
     allow-bean-definition-overriding: true
 
