@@ -5,9 +5,13 @@ import com.buenos_hijos.intervenciones.model.Mail;
 import com.buenos_hijos.intervenciones.model.User;
 import com.buenos_hijos.intervenciones.repository.IUserRepository;
 import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IEmailService;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,16 +31,27 @@ public class EmailServiceImp implements IEmailService {
     private final JavaMailSender javaMailSender;
     private final IUserRepository userRepository;
 
+    @Value("${resend.api-key}")
+    private String resendApiKey;
+
 
     @Override
     @Async
     public void sendSimpleEmail(Mail mail) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(mail.getTo());
-        message.setSubject(mail.getSubject());
-        message.setText(mail.getBody());
+        Resend resend = new Resend(resendApiKey);
 
-        javaMailSender.send(message);
+        CreateEmailOptions params = CreateEmailOptions.builder()
+                .from("pichilongo1@gmail.com")
+                .to(mail.getTo())
+                .subject(mail.getSubject())
+                .html(mail.getBody())
+                .build();
+
+        try {
+            resend.emails().send(params);
+        } catch (ResendException e) {
+            System.err.println("Error en sendHTMLEmail: " + e.getMessage());
+        }
     }
 
     @Override
@@ -57,7 +72,8 @@ public class EmailServiceImp implements IEmailService {
     @Override
     @Async
     @SneakyThrows
-    public void sendEmailWithThymeLeaf(Mail mail, String rawPassword) {
+    public void sendEmailWithThymeLeaf(Mail mail,String rawPassword) {
+        Resend resend = new Resend(resendApiKey);
         String recipient = mail.getTo();
 
         User user = userRepository.findByEmail(recipient)
@@ -68,23 +84,31 @@ public class EmailServiceImp implements IEmailService {
         context.setVariable("email", user.getEmail());
         context.setVariable("password", rawPassword);
 
-        String process = templateEngine.process("ThymeLeafMail", context);
+        String htmlContent = templateEngine.process("ThymeLeafMail", context);
 
-        MimeMessage message = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        /*MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");*/
 
-        helper.setSubject(mail.getSubject());
-        helper.setFrom("pichilongo1@gmail.com");
-        helper.setText(process, true); // ✅ true = HTML
-        helper.setTo(recipient);
+        CreateEmailOptions params = CreateEmailOptions.builder()
+                .from("pichilongo1@gmail.com")
+                .to(mail.getTo())
+                .subject(mail.getSubject())
+                .html(htmlContent)
+                .build();
 
-        javaMailSender.send(message);
+        try{
+            resend.emails().send(params);
+        }catch (ResendException e) {
+            throw new RuntimeException("Error enviando con Resend", e);
+        }
+
     }
 
     @Async
     @SneakyThrows
     @Override
     public void sendEmailToChangePassword(Mail mail, String token) {
+        Resend resend = new Resend(resendApiKey);
         String recipient = mail.getTo();
 
         User user = userRepository.findByEmail(recipient)
@@ -95,17 +119,23 @@ public class EmailServiceImp implements IEmailService {
         String recoveryUrl = "https://losbuenoshijos.org/reset-password/" + token;
         context.setVariable("url", recoveryUrl);
 
-        String process = templateEngine.process("ForgotPassword", context);
+        String htmlProcess = templateEngine.process("ForgotPassword", context);
 
-        MimeMessage message = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        /*MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");*/
 
-        helper.setSubject(mail.getSubject());
-        helper.setFrom("pichilongo1@gmail.com");
-        helper.setText(process, true); // ✅ true = HTML
-        helper.setTo(recipient);
+        CreateEmailOptions params = CreateEmailOptions.builder()
+                .from("pichilongo1@gmail.com") //
+                .to(recipient)
+                .subject(mail.getSubject())
+                .html(htmlProcess)
+                .build();
 
-        javaMailSender.send(message);
+        try {
+            resend.emails().send(params);
+        } catch (ResendException e) {
+            System.err.println("Error enviando email con Resend: " + e.getMessage());
+        }
     }
 
     @Override
