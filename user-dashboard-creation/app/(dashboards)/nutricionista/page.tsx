@@ -67,6 +67,7 @@ export default function NutricionistaPage() {
   const [nuevaNota, setNuevaNota] = useState("");
   const [fechaNota, setFechaNota] = useState(new Date().toISOString().split('T')[0]);
   const [editingDescription, setEditingDescription] = useState<any | null>(null);
+  const [editingMenu, setEditingMenu] = useState<any | null>(null);
 
   // --- FUNCIÓN DE UTILIDAD: PAGINACIÓN COMPACTA ---
   const renderPaginationItems = (current: number, total: number, onChange: (p: number) => void) => {
@@ -107,6 +108,26 @@ export default function NutricionistaPage() {
     } catch (error: any) { toast({ variant: "destructive", title: "Error", description: error.message }); } 
     finally { hideLoader(); }
   };
+
+  const handleEditMenu = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  if (!editingMenu) return;
+
+  const formData = new FormData(e.currentTarget);
+  showLoader("Actualizando planificación...");
+  
+  try {
+    // Aquí llamamos a tu API. El ID viene del estado editingMenu
+    await NutricionistaApi.editReporte(editingMenu.id, formData); 
+    toast({ title: "Planificación actualizada con éxito" });
+    setEditingMenu(null);
+    loadMenus();
+  } catch (error: any) {
+    toast({ variant: "destructive", title: "Error", description: error.message });
+  } finally {
+    hideLoader();
+  }
+};
 
   // --- CARGA DE DATOS ---
   const loadMenus = useCallback(async () => {
@@ -267,10 +288,27 @@ export default function NutricionistaPage() {
                 <TableBody>
                   {menus.length > 0 ? menus.map((m) => (
                     <TableRow key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                      <TableCell className="py-5 pl-6 font-semibold text-sm">{new Date(m.fechaInicio + "T00:00:00").toLocaleDateString()}</TableCell>
+                      <TableCell className="py-5 pl-6">
+  <div className="flex flex-col">
+    <span className="font-bold text-slate-800 text-sm">
+      {new Date(m.fechaInicio + "T00:00:00").toLocaleDateString()}
+    </span>
+    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+      al {new Date(m.fechaFinal + "T00:00:00").toLocaleDateString()}
+    </span>
+  </div>
+</TableCell>
                       <TableCell className="text-center"><Badge variant="outline" className={new Date() >= new Date(m.fechaInicio) && new Date() <= new Date(m.fechaFinal) ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-500"}>{new Date() >= new Date(m.fechaInicio) && new Date() <= new Date(m.fechaFinal) ? "Vigente" : "Histórico"}</Badge></TableCell>
                       <TableCell className="text-center"><Button variant="link" onClick={() => setPreviewImage({ url: m.archivo, fecha: m.fechaInicio })} className="text-blue-600 font-bold text-xs gap-2"><Eye className="w-4 h-4" /> Ver</Button></TableCell>
                       <TableCell className="text-right pr-6">
+                        <Button 
+    variant="ghost" 
+    size="icon" 
+    className="text-blue-500 hover:text-blue-700"
+    onClick={() => setEditingMenu(m)} // 'm' es el objeto del menú actual en el map
+  >
+    <Edit className="w-4 h-4" />
+  </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-red-300 hover:text-red-600"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
                           <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Eliminar?</AlertDialogTitle><AlertDialogDescription>Se borrará permanentemente del sistema.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>No</AlertDialogCancel><AlertDialogAction className="bg-red-600" onClick={() => handleDeleteReporte(m.id)}>Eliminar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
@@ -427,6 +465,61 @@ export default function NutricionistaPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* MODAL EDITAR PLANIFICACIÓN */}
+<Dialog open={!!editingMenu} onOpenChange={() => setEditingMenu(null)}>
+  <DialogContent className="sm:max-w-[500px] border-none shadow-2xl rounded-3xl p-0 overflow-hidden">
+    <div className="bg-green-700 p-6 text-white">
+      <DialogTitle className="text-xl font-bold flex items-center gap-2">
+        <Edit className="w-5 h-5" /> Editar Planificación
+      </DialogTitle>
+    </div>
+    <form onSubmit={handleEditMenu} className="p-6 space-y-5 bg-white">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-500 uppercase">Fecha Inicio</Label>
+          <Input 
+            name="fechaInicio" 
+            type="date" 
+            defaultValue={editingMenu?.fechaInicio} 
+            required 
+            className="h-11 rounded-xl"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-bold text-slate-500 uppercase">Fecha Fin</Label>
+          <Input 
+            name="fechaFinal" 
+            type="date" 
+            defaultValue={editingMenu?.fechaFinal} 
+            required 
+            className="h-11 rounded-xl"
+          />
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label className="text-xs font-bold text-slate-500 uppercase">Reemplazar Archivo (Opcional)</Label>
+        <Input 
+          name="archivo" 
+          type="file" 
+          accept=".pdf,image/*" 
+          className="h-11 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+        />
+        <p className="text-[10px] text-slate-400 italic">Si no seleccionas un archivo, se mantendrá el actual.</p>
+      </div>
+
+      <div className="flex gap-3 pt-4">
+        <Button type="button" variant="ghost" onClick={() => setEditingMenu(null)} className="flex-1 h-12 rounded-xl">
+          Cancelar
+        </Button>
+        <Button type="submit" className="flex-1 bg-green-700 hover:bg-green-800 text-white rounded-xl h-12 font-bold">
+          Guardar Cambios
+        </Button>
+      </div>
+    </form>
+  </DialogContent>
+</Dialog>
     </main>
   );
 }
