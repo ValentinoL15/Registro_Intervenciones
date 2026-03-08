@@ -12,7 +12,7 @@ spring:
         max-page-size: 2000
   mail:
     host: smtp.gmail.com
-    port: 587
+    port: 465
     username: escuela.losbuenoshijos@gmail.com
     password: ${MAIL_PASSWORD}
     properties:
