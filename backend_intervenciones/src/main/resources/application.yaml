@@ -55,7 +55,9 @@ security:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    root: INFO
+    org.springframework.mail: INFO
+    com.sun.mail.smtp: INFO
 
 server:
   port: 8080
