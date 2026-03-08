@@ -8,14 +8,9 @@ import com.buenos_hijos.intervenciones.service.ServicesInterfaces.IEmailService;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Pageable;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -28,7 +23,6 @@ import java.util.List;
 public class EmailServiceImp implements IEmailService {
 
     private final TemplateEngine templateEngine;
-    private final JavaMailSender javaMailSender;
     private final IUserRepository userRepository;
 
     @Value("${resend.api-key}")
@@ -41,7 +35,7 @@ public class EmailServiceImp implements IEmailService {
         Resend resend = new Resend(resendApiKey);
 
         CreateEmailOptions params = CreateEmailOptions.builder()
-                .from("pichilongo1@gmail.com")
+                .from("contacto@losbuenoshijos.org")
                 .to(mail.getTo())
                 .subject(mail.getSubject())
                 .html(mail.getBody())
@@ -58,7 +52,7 @@ public class EmailServiceImp implements IEmailService {
     @Async
     @SneakyThrows
     public void sendHTMLEmail(Mail mail) {
-        MimeMessage message = javaMailSender.createMimeMessage();
+        /*MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setFrom("pichilongo1@gmail.com");
@@ -66,7 +60,8 @@ public class EmailServiceImp implements IEmailService {
         helper.setSubject(mail.getSubject());
         helper.setText(mail.getBody(), true);
 
-        javaMailSender.send(message);
+        javaMailSender.send(message);*/
+        sendSimpleEmail(mail);
     }
 
     @Override
@@ -90,7 +85,7 @@ public class EmailServiceImp implements IEmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");*/
 
         CreateEmailOptions params = CreateEmailOptions.builder()
-                .from("pichilongo1@gmail.com")
+                .from("contacto@losbuenoshijos.org")
                 .to(mail.getTo())
                 .subject(mail.getSubject())
                 .html(htmlContent)
@@ -125,7 +120,7 @@ public class EmailServiceImp implements IEmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");*/
 
         CreateEmailOptions params = CreateEmailOptions.builder()
-                .from("pichilongo1@gmail.com") //
+                .from("contacto@losbuenoshijos.org") //
                 .to(recipient)
                 .subject(mail.getSubject())
                 .html(htmlProcess)
