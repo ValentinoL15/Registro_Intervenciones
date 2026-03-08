@@ -21,9 +21,11 @@ spring:
           auth: true
           starttls:
             enable: true
-
-    main:
-      allow-bean-definition-overriding: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  main:
+    allow-bean-definition-overriding: true
 
   datasource:
     url: ${DB_URL_APP}

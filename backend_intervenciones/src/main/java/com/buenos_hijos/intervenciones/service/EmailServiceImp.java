@@ -81,6 +81,7 @@ public class EmailServiceImp implements IEmailService {
         javaMailSender.send(message);
     }
 
+    @Async
     @SneakyThrows
     @Override
     public void sendEmailToChangePassword(Mail mail, String token) {
@@ -91,7 +92,7 @@ public class EmailServiceImp implements IEmailService {
 
         Context context = new Context();
         context.setVariable("username", user.getUsername());
-        String recoveryUrl = "http://localhost:3000/reset-password/" + token;
+        String recoveryUrl = "https://losbuenoshijos.org/reset-password/" + token;
         context.setVariable("url", recoveryUrl);
 
         String process = templateEngine.process("ForgotPassword", context);
