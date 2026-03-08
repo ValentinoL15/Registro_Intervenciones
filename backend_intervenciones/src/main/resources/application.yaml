@@ -12,7 +12,8 @@ spring:
         max-page-size: 2000
   mail:
     host: smtp.gmail.com
-    port: 465        # cambiar de 587 a 465
+    port: 465
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
