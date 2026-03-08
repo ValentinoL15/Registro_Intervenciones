@@ -386,6 +386,11 @@ useEffect(() => {
   loadNutriDescriptions(0); 
 }, [filtroDesde, filtroHasta, loadNutriDescriptions]);
 
+// Efecto específico para filtrar la Bitácora de Técnicos
+useEffect(() => {
+  loadTecnicoDescriptions(0); // Reinicia a la página 0 al filtrar
+}, [filtroDesde, filtroHasta, loadTecnicoDescriptions]);
+
 
  useEffect(() => {
   if (!isLoading && user?.role === "ADMIN") {
