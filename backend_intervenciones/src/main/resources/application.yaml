@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: intervenciones
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 15MB
+  data:
+    web:
+      pageable:
+        default-page-size: 100
+        max-page-size: 2000
+  resend:
+    api-key: ${RESEND_API_KEY}
+
+  datasource:
+    url: ${DB_URL_APP}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+cloudinary:
+  cloud-name: ${CLOUD_NAME}
+  api-key: ${API_KEY}
+  api-secret: ${API_SECRET}
+
+security:
+  jwt:
+    private:
+      key: ${PRIVATE_KEY}
+    user:
+      generator: ${USER_GENERATOR}
+    expiration: 2592000000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.mail: INFO
+    com.sun.mail.smtp: INFO
+
+server:
+  port: 8080

@@ -1,0 +1,383 @@
+package com.buenos_hijos.intervenciones.service;
+
+import com.buenos_hijos.intervenciones.config.CloudinaryConfig;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.CreateDescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.DescriptionDto;
+import com.buenos_hijos.intervenciones.dto.DescriptionTecDTOs.EditDescriptionDto;
+import com.buenos_hijos.intervenciones.dto.GeneralResponse;
+import com.buenos_hijos.intervenciones.dto.HorarioAsistenciaDTOs.HorarioAsistenciaDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.EditNutricionSemanalDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionSemanalDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.NutricionistaDto;
+import com.buenos_hijos.intervenciones.dto.NutricionistaDTOs.SaveNutricionSemanalDto;
+import com.buenos_hijos.intervenciones.exceptions.ExceptionsHandler.AccessDeniedException;
+import com.buenos_hijos.intervenciones.model.*;
+import com.buenos_hijos.intervenciones.repository.INutDescriptionRepository;
+import com.buenos_hijos.intervenciones.repository.INutricion_SemanalRepository;
+import com.buenos_hijos.intervenciones.repository.INutricionistaRepository;
+import com.buenos_hijos.intervenciones.repository.IUserRepository;
+import com.buenos_hijos.intervenciones.service.ServicesInterfaces.INutricionService;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class NutricionService implements INutricionService {
+
+    private final INutricionistaRepository nutricionistaRepository;
+    private final INutricion_SemanalRepository nutricionSemanalRepository;
+    private final IUserRepository userRepository;
+    private final INutDescriptionRepository nutDescriptionRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
+
+
+    @Override
+    public NutricionistaDto getNutricionista(Long nutricionistaId) {
+        Nutricionista nutricionista = nutricionistaRepository.findById(nutricionistaId)
+                .orElseThrow(() -> new RuntimeException("El nutricionista no se encuentra"));
+        NutricionistaDto nutricionistaDto = new NutricionistaDto();
+        nutricionistaDto.setUserId(nutricionista.getUserId());
+        nutricionistaDto.setName(nutricionista.getName());
+        nutricionistaDto.setLastname(nutricionista.getLastname());
+        nutricionistaDto.setEmail(nutricionista.getEmail());
+        nutricionistaDto.setHourly(nutricionista.getHourly());
+        nutricionistaDto.setActive(nutricionista.isActive());
+        if (nutricionista.getHorarioAsistencias() != null) {
+            List<HorarioAsistenciaDto> horarioDtos = nutricionista.getHorarioAsistencias().stream()
+                    .map(horario -> {
+                        HorarioAsistenciaDto hDto = new HorarioAsistenciaDto();
+                        hDto.setDia(horario.getDia());
+                        hDto.setInicio(horario.getInicio());
+                        hDto.setFin(horario.getFin());
+                        return hDto;
+                    })
+                    .collect(Collectors.toList());
+
+            nutricionistaDto.setHorarioAsistencias(horarioDtos);
+        }
+        return nutricionistaDto;
+    }
+
+    @Override
+    public List<NutricionistaDto> getNutricionistas() {
+
+        List<Nutricionista> nutricionistasPage = nutricionistaRepository.findAll();
+
+        return nutricionistasPage.stream().map(nutricionista -> {
+            NutricionistaDto dto = new NutricionistaDto();
+            dto.setUserId(nutricionista.getUserId());
+            dto.setName(nutricionista.getName());
+            dto.setLastname(nutricionista.getLastname());
+            dto.setEmail(nutricionista.getEmail());
+            dto.setHourly(nutricionista.getHourly());
+            if (nutricionista.getHorarioAsistencias() != null) {
+                List<HorarioAsistenciaDto> horarioDtos = nutricionista.getHorarioAsistencias().stream()
+                        .map(horario -> {
+                            HorarioAsistenciaDto hDto = new HorarioAsistenciaDto();
+                            hDto.setDia(horario.getDia());
+                            hDto.setInicio(horario.getInicio());
+                            hDto.setFin(horario.getFin());
+                            hDto.setUser_id(nutricionista.getUserId());
+                            return hDto;
+                        })
+                        .collect(Collectors.toList());
+
+                dto.setHorarioAsistencias(horarioDtos);
+            }
+            dto.setActive(nutricionista.isActive());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public NutricionSemanalDto getReporte(Long id) {
+        return nutricionSemanalRepository.findById(id)
+                .map(reporte -> {
+                    NutricionSemanalDto dto = new NutricionSemanalDto();
+                    dto.setFechaInicio(reporte.getFechaInicio());
+                    dto.setFechaFinal(reporte.getFechaFinal());
+                    dto.setArchivo(reporte.getUrlPdf());
+                    return dto;
+                })
+                .orElseThrow(() -> new RuntimeException("Reporte nutricional no encontrado"));
+    }
+
+    @Override
+    public Page<NutricionSemanalDto> getReportes(Pageable pageable,LocalDate desde, LocalDate hasta) {
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
+
+        Page<Nutricion_Semanal> reportes = nutricionSemanalRepository.findByFechaInicioBetween(start, end, pageable);
+
+        return reportes.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<NutricionSemanalDto> getMisReportes(Pageable pageable,LocalDate desde, LocalDate hasta, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Nutricionista no encontrado"));
+
+        LocalDate start = (desde != null) ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate end = (hasta != null) ? hasta : LocalDate.of(2100, 12, 31);
+
+        Page<Nutricion_Semanal> reportes = nutricionSemanalRepository.findByNutricionistaAndFechaInicioBetween(nutricionista, start, end, pageable);
+
+        return reportes.map(this::convertToDto);
+    }
+
+    private NutricionSemanalDto convertToDto(Nutricion_Semanal reporte) {
+        NutricionSemanalDto dto = new NutricionSemanalDto();
+        dto.setId(reporte.getId());
+        dto.setFechaInicio(reporte.getFechaInicio());
+        dto.setFechaFinal(reporte.getFechaFinal());
+        dto.setArchivo(reporte.getUrlPdf());
+
+        if (reporte.getNutricionista() != null) {
+            dto.setNombreNutricionista(reporte.getNutricionista().getName() + " " + reporte.getNutricionista().getLastname());
+        } else {
+            dto.setNombreNutricionista("Sin asignar");
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse saveNutricionSemanal(SaveNutricionSemanalDto dto, MultipartFile archivo, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("Nutricionista no encontrado"));
+
+        if(dto.getFechaFinal().isBefore(dto.getFechaInicio())){
+            throw new RuntimeException("La fecha de inicio debe ser anterior a la final");
+        }
+
+
+        try {
+            String contentType = archivo.getContentType();
+
+            Map uploadResult = cloudinary.uploader().upload(
+                    archivo.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", "auto",
+                            "folder", "reportes_nutricion",
+                            "use_filename", true,
+                            "unique_filename", true,
+                            "overwrite", false
+                    )
+            );
+
+            String urlGenerada = (String) uploadResult.get("secure_url");
+            String publicId = (String) uploadResult.get("public_id");
+
+            Nutricion_Semanal reporte = new Nutricion_Semanal();
+            reporte.setFechaInicio(dto.getFechaInicio());
+            reporte.setFechaFinal(dto.getFechaFinal());
+            reporte.setUrlPdf(urlGenerada);
+            reporte.setPublicId(publicId);
+            reporte.setNombreArchivo(archivo.getOriginalFilename());
+            reporte.setTipoArchivo(contentType);
+            reporte.setNutricionista(nutricionista);
+            nutricionista.getNutricion().add(reporte);
+
+            nutricionistaRepository.save(nutricionista);
+
+            return new GeneralResponse(
+                    new Date(),
+                    "Reporte semanal subido con éxito: " + urlGenerada,
+                    HttpStatus.CREATED.value()
+            );
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error al procesar el archivo: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public GeneralResponse editNutricionSemanal(Long id, EditNutricionSemanalDto dto, MultipartFile nuevoArchivo, String currentUser) {
+
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new RuntimeException("Nutricionista no encontrado"));
+
+        Nutricion_Semanal reporte = nutricionSemanalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reporte no encontrado"));
+
+        if(dto.getFechaFinal().isBefore(dto.getFechaInicio())){
+            throw new RuntimeException("La fecha de inicio debe ser anterior a la final");
+        }
+
+        reporte.setFechaInicio(dto.getFechaInicio());
+        reporte.setFechaFinal(dto.getFechaFinal());
+
+        if (nuevoArchivo != null && !nuevoArchivo.isEmpty()) {
+            try {
+                cloudinary.uploader().destroy(reporte.getPublicId(), ObjectUtils.emptyMap());
+
+                Map uploadResult = cloudinary.uploader().upload(nuevoArchivo.getBytes(),
+                        ObjectUtils.asMap("resource_type", "auto", "folder", "reportes_nutricion"));
+
+                reporte.setUrlPdf((String) uploadResult.get("secure_url"));
+                reporte.setPublicId((String) uploadResult.get("public_id"));
+                reporte.setNombreArchivo(nuevoArchivo.getOriginalFilename());
+
+            } catch (IOException e) {
+                throw new RuntimeException("Error al actualizar el archivo en Cloudinary");
+            }
+        }
+
+        nutricionSemanalRepository.save(reporte);
+
+        return new GeneralResponse(
+                new Date(),
+                "Reporte actualizado con éxito",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Override
+    public GeneralResponse deleteNutricionSemanal(Long nutricionSemanalId, String currentUser) {
+        // 1. Buscar el reporte
+        Nutricion_Semanal reporte = nutricionSemanalRepository.findById(nutricionSemanalId)
+                .orElseThrow(() -> new RuntimeException("El reporte no existe"));
+
+        try {
+
+            cloudinary.uploader().destroy(reporte.getPublicId(), ObjectUtils.emptyMap());
+
+            nutricionSemanalRepository.delete(reporte);
+
+            return new GeneralResponse(
+                    new Date(),
+                    "Reporte eliminado correctamente de la base de datos y la nube",
+                    HttpStatus.OK.value()
+            );
+        } catch (IOException e) {
+            throw new RuntimeException("Error al eliminar el archivo de Cloudinary");
+        }
+    }
+
+    @Override
+    public Page<DescriptionDto> getMyDescriptions(LocalDate desde, LocalDate hasta, Pageable pageable, String currentUser) {
+        LocalDate fechaDesde = (desde != null) ? desde : LocalDate.of(1970, 1, 1);
+        LocalDate fechaHasta = (hasta != null) ? hasta : LocalDate.of(2099, 12, 31);
+
+        // Llamamos al nuevo método filtrado
+        Page<Nutricionista_Description> descriptionPage = nutDescriptionRepository
+                .findByNutricionista_UsernameAndFechaBetween(currentUser, fechaDesde, fechaHasta, pageable);
+
+        return descriptionPage.map(description -> new DescriptionDto(
+                description.getId(),
+                description.getDescription(),
+                description.getFecha(),
+                description.getNutricionista().getUserId()
+        ));
+    }
+
+    @Override
+    public Page<DescriptionDto> getAllDescriptions(LocalDate desde, LocalDate hasta, Pageable pageable) {
+        LocalDate fechaDesde = (desde != null) ? desde : LocalDate.of(1970, 1, 1);
+        LocalDate fechaHasta = (hasta != null) ? hasta : LocalDate.of(2099, 12, 31);
+
+        // Usamos un método del repo que busque por rango de fechas para TODOS los técnicos
+        Page<Nutricionista_Description> descriptionPage = nutDescriptionRepository.findByFechaBetween(fechaDesde, fechaHasta, pageable);
+
+        return descriptionPage.map(description -> new DescriptionDto(
+                description.getId(),
+                description.getDescription(),
+                description.getFecha(),
+                description.getNutricionista().getUserId()
+        ));
+    }
+
+    @Override
+    public GeneralResponse saveDescription(CreateDescriptionDto descriptionDto, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        if(descriptionDto.getFecha().isAfter(LocalDate.now())){
+            throw new RuntimeException("No puedes asignar una tarea posterior al dia de hoy");
+        }
+
+        Nutricionista_Description nutricionistaDescription = new Nutricionista_Description();
+        nutricionistaDescription.setDescription(descriptionDto.getDescription());
+        nutricionistaDescription.setFecha(descriptionDto.getFecha());
+        nutricionistaDescription.setNutricionista(nutricionista);
+        nutDescriptionRepository.save(nutricionistaDescription);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción creada con éxito",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Override
+    public GeneralResponse editDescription(Long descriptionId, EditDescriptionDto descriptionDto,String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        Nutricionista_Description nutricionistaDescription = nutDescriptionRepository.findById(descriptionId)
+                .orElseThrow(() -> new RuntimeException("Descripción no encontrada"));
+
+        if(!nutricionista.getUserId().equals(nutricionistaDescription.getNutricionista().getUserId())){
+            throw new AccessDeniedException();
+        }
+
+        if(descriptionDto.getDescription() != null) {
+            String desc = descriptionDto.getDescription().trim();
+            if(desc.length() < 10 || desc.length() > 500){
+                throw new IllegalArgumentException("La descripción debe tener entre 10 y 500 caracteres.");
+            }
+            nutricionistaDescription.setDescription(descriptionDto.getDescription());
+        }
+        if(descriptionDto.getFecha() != null){
+            if(descriptionDto.getFecha().isAfter(LocalDate.now())){
+                throw new RuntimeException("No puedes asignar una tarea posterior al dia de hoy");
+            }
+            nutricionistaDescription.setFecha(descriptionDto.getFecha());
+        }
+
+        nutDescriptionRepository.save(nutricionistaDescription);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción actualizada correctamente",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Override
+    public GeneralResponse deleteDescription(Long descriptionId, String currentUser) {
+        Nutricionista nutricionista = nutricionistaRepository.findByUsername(currentUser)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        Nutricionista_Description nutricionistaDescription = nutDescriptionRepository.findById(descriptionId)
+                .orElseThrow(() -> new RuntimeException("Descripción no encontrada"));
+
+        if(!nutricionista.getUserId().equals(nutricionistaDescription.getNutricionista().getUserId())){
+            throw new AccessDeniedException();
+        }
+
+        nutDescriptionRepository.deleteById(descriptionId);
+        return new GeneralResponse(
+                new Date(),
+                "Descripción eliminada correctamente",
+                HttpStatus.OK.value()
+        );
+    }
+
+}
