@@ -133,7 +133,6 @@ public class AdminService implements IAdminService {
     }
 
     @Override
-    @Transactional
     public GeneralResponse saveUser(CreateUserDto userDto, String currentUser) {
 
         Admin admin = adminRepository.findByUsername(currentUser)
