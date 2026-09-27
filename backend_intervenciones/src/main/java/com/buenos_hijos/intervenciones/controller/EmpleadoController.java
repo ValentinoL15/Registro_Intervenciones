@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -47,7 +48,7 @@ public class EmpleadoController {
     }
 
     @GetMapping("/mantenimiento")
-    public ResponseEntity<Page<MantenimientoDto>> getAllMantenimientos(@PageableDefault(size = 10) Pageable pageable,
+    public ResponseEntity<Page<MantenimientoDto>> getAllMantenimientos(@PageableDefault(size = 10, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable,
                                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
                                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta){
         return ResponseEntity.ok(empleadoService.getAllMantenimientos(desde, hasta,pageable));
